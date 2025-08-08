@@ -1,0 +1,511 @@
+<template>
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4 pt-[80px]">
+      <div v-if="evento" class="max-w-4xl mx-auto">
+        <!-- Información del evento -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+          <img 
+            :src="evento.imagen" 
+            :alt="evento.titulo"
+            class="w-full h-64 object-cover"
+          >
+          <div class="p-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ evento.titulo }}</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="flex items-center text-gray-700">
+                <i class="fas fa-calendar mr-3 text-blue-600"></i>
+                {{ formatearFecha(evento.fecha) }}
+              </div>
+              <div class="flex items-center text-gray-700">
+                <i class="fas fa-map-marker-alt mr-3 text-blue-600"></i>
+                {{ evento.ubicacion }}
+              </div>
+              <div class="flex items-center text-gray-700">
+                <i class="fas fa-dollar-sign mr-3 text-green-600"></i>
+                <span class="font-semibold">Costo: ${{ evento.precio || '15.00' }}</span>
+              </div>
+            </div>
+            <p class="text-gray-600">{{ evento.descripcion }}</p>
+            
+            <!-- Información de pago -->
+            <div class="bg-blue-50 p-6 rounded-lg mt-6">
+              <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-credit-card mr-2 text-blue-600"></i>
+                Información de Pago
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <strong>Yappy:</strong> 6305-1268<br>
+                  <strong>Nequi:</strong> 6305-1268<br>
+                  <strong>ACH:</strong> Banco General - 04-99-99-999999-9
+                </div>
+                <div>
+                  <strong>Concepto:</strong> Inscripción {{ evento.titulo }}<br>
+                  <strong>Monto:</strong> ${{ evento.precio || '15.00' }}<br>
+                  <strong>Beneficiario:</strong> El Aposento Alto Internacional
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 p-6 rounded-lg mt-6">
+              <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                Información Importante
+              </h3>
+              <ul class="space-y-2 text-gray-700">
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Realiza el pago antes de completar la inscripción</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Adjunta la captura de pantalla del pago</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Recibirás confirmación una vez verificado el pago</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
+                  <span>Los boletos no son reembolsables</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario de inscripción -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-user-plus mr-2 text-blue-600"></i>
+            Formulario de Inscripción
+          </h2>
+
+          <form @submit.prevent="enviarInscripcion" class="space-y-6">
+            <!-- Información Personal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre Completo *
+                </label>
+                <input 
+                  v-model="formulario.nombre"
+                  type="text" 
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Tu nombre completo"
+                >
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Correo Electrónico *
+                </label>
+                <input 
+                  v-model="formulario.email"
+                  type="email" 
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="tu@email.com"
+                >
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Teléfono *
+                </label>
+                <input 
+                  v-model="formulario.telefono"
+                  type="tel" 
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="+507 6305-1268"
+                >
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Edad
+                </label>
+                <input 
+                  v-model="formulario.edad"
+                  type="number" 
+                  min="1" 
+                  max="120"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="25"
+                >
+              </div>
+            </div>
+
+            <!-- Comprobante de Pago -->
+            <div class="border-t pt-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-receipt mr-2 text-green-500"></i>
+                Comprobante de Pago *
+              </h3>
+              
+              <div class="space-y-4">
+                <!-- Upload de imagen -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Adjuntar Captura de Pantalla del Pago *
+                  </label>
+                  <div class="flex items-center justify-center w-full">
+                    <label 
+                      for="comprobante-upload"
+                      :class="[
+                        'flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors',
+                        formulario.comprobante ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                      ]"
+                    >
+                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i :class="['text-3xl mb-2', formulario.comprobante ? 'fas fa-check-circle text-green-500' : 'fas fa-cloud-upload-alt text-gray-400']"></i>
+                        <p class="mb-2 text-sm text-gray-500">
+                          <span class="font-semibold">
+                            {{ formulario.comprobante ? 'Imagen cargada' : 'Click para subir' }}
+                          </span> 
+                          {{ !formulario.comprobante ? 'o arrastra y suelta' : '' }}
+                        </p>
+                        <p class="text-xs text-gray-500">PNG, JPG o JPEG (MAX. 5MB)</p>
+                      </div>
+                      <input 
+                        id="comprobante-upload" 
+                        type="file" 
+                        class="hidden" 
+                        accept="image/*"
+                        required
+                        @change="manejarArchivo"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Preview de la imagen -->
+                <div v-if="formulario.comprobante" class="relative">
+                  <img 
+                    :src="previewUrl" 
+                    alt="Preview del comprobante"
+                    class="max-w-full h-48 object-contain mx-auto border rounded-lg"
+                  >
+                  <button 
+                    type="button"
+                    @click="eliminarArchivo"
+                    class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <i class="fas fa-times text-xs"></i>
+                  </button>
+                </div>
+
+                <!-- Procesando OCR -->
+                <div v-if="procesandoOCR" class="bg-blue-50 p-4 rounded-lg">
+                  <div class="flex items-center">
+                    <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i>
+                    <span class="text-blue-700">Analizando comprobante de pago...</span>
+                  </div>
+                </div>
+
+                <!-- Datos extraídos del OCR -->
+                <div v-if="datosExtraidos.monto || datosExtraidos.fecha || datosExtraidos.confirmacion" class="bg-green-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-green-800 mb-2">
+                    <i class="fas fa-robot mr-2"></i>
+                    Datos Detectados Automáticamente
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div v-if="datosExtraidos.monto">
+                      <label class="block text-green-700 font-medium">Monto:</label>
+                      <span :class="[
+                        'block p-2 rounded border  text-gray-800',
+                        validarMonto(datosExtraidos.monto) ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300'
+                      ]">
+                        ${{ datosExtraidos.monto }}
+                        <i :class="['ml-2', validarMonto(datosExtraidos.monto) ? 'fas fa-check text-green-500' : 'fas fa-times text-red-500']"></i>
+                      </span>
+                    </div>
+                    <div v-if="datosExtraidos.fecha">
+                      <label class="block text-green-700 font-medium">Fecha:</label>
+                      <span :class="[
+                        'block p-2 rounded border text-gray-800',
+                        validarFecha(datosExtraidos.fecha) ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300'
+                      ]">
+                        {{ datosExtraidos.fecha }}
+                        <i :class="['ml-2', validarFecha(datosExtraidos.fecha) ? 'fas fa-check text-green-500' : 'fas fa-times text-red-500']"></i>
+                      </span>
+                    </div>
+                    <div v-if="datosExtraidos.confirmacion">
+                      <label class="block text-green-700 font-medium">Confirmación:</label>
+                      <span class="block p-2 rounded border bg-green-100 border-green-300  text-gray-800">
+                        {{ datosExtraidos.confirmacion }}
+                        <i class="fas fa-check text-green-500 ml-2"></i>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Estado de validación -->
+                  <div class="mt-4 p-3 rounded-lg" :class="pagoValido ? 'bg-green-100 border border-green-300' : 'bg-yellow-100 border border-yellow-300'">
+                    <div class="flex items-center">
+                      <i :class="['mr-2', pagoValido ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-triangle text-yellow-500']"></i>
+                      <span :class="pagoValido ? 'text-green-700' : 'text-yellow-700'">
+                        {{ pagoValido ? 'Pago verificado correctamente' : 'Verifica que el monto y la fecha sean correctos' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error en OCR -->
+                <div v-if="errorOCR" class="bg-red-50 p-4 rounded-lg">
+                  <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                    <span class="text-red-700">{{ errorOCR }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex gap-4 pt-6">
+              <button 
+                type="button"
+                @click="$router.go(-1)"
+                class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
+              >
+                <i class="fas fa-arrow-left mr-2"></i>
+                Volver
+              </button>
+              <button 
+                type="submit"
+                :disabled="procesando || !formulario.comprobante || (!pagoValido && datosExtraidos.monto)"
+                :class="[
+                  'flex-1 px-6 py-3 rounded-lg font-semibold transition-colors',
+                  (procesando || !formulario.comprobante || (!pagoValido && datosExtraidos.monto)) 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700',
+                  'text-white'
+                ]"
+              >
+                <i :class="['mr-2', procesando ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane']"></i>
+                {{ procesando ? 'Enviando...' : 'Confirmar Inscripción' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div v-else class="flex justify-center items-center py-16">
+        <i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useEventosStore } from '../stores/eventos'
+
+const route = useRoute()
+const router = useRouter()
+const eventosStore = useEventosStore()
+
+const procesando = ref(false)
+const procesandoOCR = ref(false)
+const errorOCR = ref('')
+const previewUrl = ref('')
+
+const formulario = ref({
+  nombre: '',
+  email: '',
+  telefono: '',
+  edad: '',
+  comprobante: null
+})
+
+const datosExtraidos = ref({
+  monto: '',
+  fecha: '',
+  confirmacion: ''
+})
+
+const evento = computed(() => {
+  return eventosStore.eventos.find(e => e.id === parseInt(route.params.id))
+})
+
+const pagoValido = computed(() => {
+  if (!datosExtraidos.value.monto) return false
+  return validarMonto(datosExtraidos.value.monto) && validarFecha(datosExtraidos.value.fecha)
+})
+
+const formatearFecha = (fecha) => {
+  return new Date(fecha).toLocaleDateString('es-ES', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+const manejarArchivo = async (event) => {
+  const archivo = event.target.files[0]
+  if (!archivo) return
+
+  // Validar tipo de archivo
+  if (!archivo.type.startsWith('image/')) {
+    alert('Por favor selecciona una imagen válida')
+    return
+  }
+
+  // Validar tamaño (5MB max)
+  if (archivo.size > 5 * 1024 * 1024) {
+    alert('La imagen no puede ser mayor a 5MB')
+    return
+  }
+
+  formulario.value.comprobante = archivo
+  
+  // Crear preview
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    previewUrl.value = e.target.result
+  }
+  reader.readAsDataURL(archivo)
+
+  // Procesar con OCR
+  await procesarOCR(archivo)
+}
+
+const eliminarArchivo = () => {
+  formulario.value.comprobante = null
+  previewUrl.value = ''
+  datosExtraidos.value = { monto: '', fecha: '', confirmacion: '' }
+  errorOCR.value = ''
+}
+
+const procesarOCR = async (archivo) => {
+  procesandoOCR.value = true
+  errorOCR.value = ''
+  datosExtraidos.value = { monto: '', fecha: '', confirmacion: '' }
+
+  try {
+    // Opción 1: Usar Tesseract.js (OCR en el navegador)
+    if (window.Tesseract) {
+      const { data: { text } } = await window.Tesseract.recognize(archivo, 'spa', {
+        logger: m => console.log(m)
+      })
+      console.log('Texto OCR:', text)
+      extraerDatos(text)
+    } else {
+      // Opción 2: Simular OCR para demo
+      await simularOCR()
+    }
+
+  } catch (error) {
+    console.error('Error en OCR:', error)
+    errorOCR.value = 'Error al procesar la imagen. Verifica que sea una captura clara del pago.'
+  } finally {
+    procesandoOCR.value = false
+  }
+}
+
+const simularOCR = async () => {
+  // Simular delay de procesamiento
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  // Datos de ejemplo basados en la imagen que proporcionaste
+  datosExtraidos.value = {
+    monto: '3.50',
+    fecha: '22 jul 2025',
+    confirmacion: 'JILLY-35761063'
+  }
+}
+
+const extraerDatos = (texto) => {
+  console.log('Texto extraído:', texto)
+  
+  // Expresiones regulares para extraer datos
+  const regexMonto = /\$?(\d+\.?\d*)/g
+  const regexFecha = /(\d{1,2}\s(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\s\d{4})/i
+  const regexConfirmacion = /(?:#|ID|CONF|REF)?\s?([A-Z0-9-]{8,})/i
+
+  // Extraer monto
+  const montos = [...texto.matchAll(regexMonto)]
+  if (montos.length > 0) {
+    // Buscar el monto más probable (generalmente el más grande o el que aparece cerca de palabras clave)
+    const montosNumeros = montos.map(m => parseFloat(m[1])).filter(m => m > 0)
+    if (montosNumeros.length > 0) {
+      datosExtraidos.value.monto = Math.max(...montosNumeros).toFixed(2)
+    }
+  }
+
+  // Extraer fecha
+  const fecha = texto.match(regexFecha)
+  if (fecha) {
+    datosExtraidos.value.fecha = fecha[1]
+  }
+
+  // Extraer número de confirmación
+  const confirmacion = texto.match(regexConfirmacion)
+  if (confirmacion) {
+    datosExtraidos.value.confirmacion = confirmacion[1]
+  }
+}
+
+const validarMonto = (monto) => {
+  if (!monto || !evento.value) return false
+  const montoNumerico = parseFloat(monto)
+  const precioEvento = parseFloat(evento.value.precio || 15.00)
+  return Math.abs(montoNumerico - precioEvento) < 0.01 // Tolerancia de 1 centavo
+}
+
+const validarFecha = (fecha) => {
+  if (!fecha) return true // La fecha es opcional para validación
+  
+  // Verificar que la fecha sea reciente (últimos 7 días)
+  const fechaPago = new Date(fecha)
+  const fechaActual = new Date()
+  const diferenciaDias = (fechaActual - fechaPago) / (1000 * 60 * 60 * 24)
+  
+  return diferenciaDias >= 0 && diferenciaDias <= 7
+}
+
+const enviarInscripcion = async () => {
+  procesando.value = true
+  
+  try {
+    // Preparar datos para envío
+    const formData = new FormData()
+    formData.append('nombre', formulario.value.nombre)
+    formData.append('email', formulario.value.email)
+    formData.append('telefono', formulario.value.telefono)
+    formData.append('edad', formulario.value.edad)
+    formData.append('comprobante', formulario.value.comprobante)
+    formData.append('datosOCR', JSON.stringify(datosExtraidos.value))
+    formData.append('eventoId', evento.value.id)
+
+    // Simular envío
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Agregar inscripción al store
+    eventosStore.inscribirParticipante(evento.value.id, {
+      ...formulario.value,
+      datosOCR: datosExtraidos.value,
+      fechaInscripcion: new Date().toISOString()
+    })
+    
+    alert('¡Inscripción exitosa! Hemos recibido tu comprobante de pago y lo verificaremos pronto.')
+    router.push('/eventos')
+    
+  } catch (error) {
+    console.error('Error:', error)
+    alert('Error al procesar la inscripción. Por favor, inténtalo nuevamente.')
+  } finally {
+    procesando.value = false
+  }
+}
+
+onMounted(() => {
+  eventosStore.cargarEventos()
+  
+  // Cargar Tesseract.js para OCR (opcional)
+  const script = document.createElement('script')
+  script.src = 'https://unpkg.com/tesseract.js@v4.1.1/dist/tesseract.min.js'
+  document.head.appendChild(script)
+})
+</script>
