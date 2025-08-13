@@ -23,41 +23,44 @@
         <div class="hidden lg:flex items-center space-x-8 right-0 absolute">
           <router-link 
             to="/" 
-            :class="['px-3 py-2 rounded-lg font-medium transition-colors hover:text-blue-600',
-                     $route.path === '/' ? 'text-black bg-blue-50' : 'text-white']"
+            :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
           >
             <i class="fas fa-home mr-2"></i>Inicio
           </router-link>
           <router-link 
             to="/eventos" 
-            :class="['px-3 py-2 rounded-lg font-medium transition-colors hover:text-blue-600',
+            :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
                      $route.path.includes('/eventos') || $route.path.includes('/evento') || $route.path.includes('/inscripcion') 
-                     ? 'text-blue-600 bg-blue-50' : 'text-white']"
+                     ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
           >
             <i class="fas fa-calendar-alt mr-2"></i>Eventos
           </router-link>
+          <div class="flex items-center space-x-2">
+            <router-link 
+              to="/nosotros" 
+              :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
+                       $route.path === '/nosotros' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
+            >
+              <i class="fas fa-users mr-2"></i>Nosotros
+            </router-link>
+            <span class="text-gray-400">|</span>
+            <router-link 
+              to="/contacto" 
+              :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
+                       $route.path === '/contacto' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
+            >
+              <i class="fas fa-envelope mr-2"></i>Contacto
+            </router-link>
+          </div>
+          <!-- Opción Iniciar sesión -->
           <router-link 
-            to="/nosotros" 
-            :class="['px-3 py-2 rounded-lg font-medium transition-colors hover:text-blue-600',
-                     $route.path === '/nosotros' ? 'text-blue-600 bg-blue-50' : 'text-white']"
+            to="/admin-login" 
+            :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/admin-login' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-700']"
           >
-            <i class="fas fa-users mr-2"></i>Nosotros
+            <i class="fas fa-sign-in-alt mr-2"></i>Iniciar sesión
           </router-link>
-          <router-link 
-            to="/contacto" 
-            :class="['px-3 py-2 rounded-lg font-medium transition-colors hover:text-blue-600',
-                     $route.path === '/contacto' ? 'text-blue-600 bg-blue-50' : 'text-white']"
-          >
-            <i class="fas fa-envelope mr-2"></i>Contacto
-          </router-link>
-          
-          <!-- Botón CTA -->
-          <!-- <router-link 
-            to="/eventos"
-            class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-md"
-          >
-            <i class="fas fa-user-plus mr-2"></i>Únete
-          </router-link> -->
         </div>
 
         <!-- Botón Menú Mobile -->
@@ -78,37 +81,48 @@
           <router-link 
             to="/" 
             @click="menuMovilAbierto = false"
-            :class="['px-4 py-3 rounded-lg font-medium transition-colors hover:bg-blue-50 hover:text-blue-600',
-                     $route.path === '/' ? 'text-blue-600 bg-blue-50' : 'text-gray-700']"
+            :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
           >
             <i class="fas fa-home mr-3"></i>Inicio
           </router-link>
           <router-link 
             to="/eventos" 
             @click="menuMovilAbierto = false"
-            :class="['px-4 py-3 rounded-lg font-medium transition-colors hover:bg-blue-50 hover:text-blue-600',
+            :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
                      $route.path.includes('/eventos') || $route.path.includes('/evento') || $route.path.includes('/inscripcion') 
-                     ? 'text-blue-600 bg-blue-50' : 'text-gray-700']"
+                     ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
           >
             <i class="fas fa-calendar-alt mr-3"></i>Eventos
           </router-link>
+          <div class="flex items-center space-x-2 px-4">
+            <router-link 
+              to="/nosotros" 
+              @click="menuMovilAbierto = false"
+              :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+                       $route.path === '/nosotros' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
+            >
+              <i class="fas fa-users mr-3"></i>Nosotros
+            </router-link>
+            <span class="text-gray-400">|</span>
+            <router-link 
+              to="/contacto" 
+              @click="menuMovilAbierto = false"
+              :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+                       $route.path === '/contacto' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
+            >
+              <i class="fas fa-envelope mr-3"></i>Contacto
+            </router-link>
+          </div>
+          <!-- Opción Iniciar sesión -->
           <router-link 
-            to="/nosotros" 
+            to="/admin-login" 
             @click="menuMovilAbierto = false"
-            :class="['px-4 py-3 rounded-lg font-medium transition-colors hover:bg-blue-50 hover:text-blue-600',
-                     $route.path === '/nosotros' ? 'text-blue-600 bg-blue-50' : 'text-gray-700']"
+            :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/admin-login' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-100 hover:text-purple-700']"
           >
-            <i class="fas fa-users mr-3"></i>Nosotros
+            <i class="fas fa-sign-in-alt mr-3"></i>Iniciar sesión
           </router-link>
-          <router-link 
-            to="/contacto" 
-            @click="menuMovilAbierto = false"
-            :class="['px-4 py-3 rounded-lg font-medium transition-colors hover:bg-blue-50 hover:text-blue-600',
-                     $route.path === '/contacto' ? 'text-blue-600 bg-blue-50' : 'text-gray-700']"
-          >
-            <i class="fas fa-envelope mr-3"></i>Contacto
-          </router-link>
-          
           <div class="px-4 py-2">
             <router-link 
               to="/eventos"
