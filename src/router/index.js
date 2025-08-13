@@ -5,6 +5,9 @@ import EventoDetalleView from '../views/EventoDetalleView.vue'
 import InscripcionView from '../views/InscripcionView.vue'
 import NosotrosView from '../views/NosotrosView.vue'
 import ContactoView from '../views/ContactoView.vue'
+import AdminLogin from '../views/AdminLogin.vue'
+import AdminPanel from '../views/AdminPanel.vue'
+import { auth } from '../firebase'
 
 const routes = [
     {   
@@ -37,6 +40,17 @@ const routes = [
         name: 'Contacto',
         component: ContactoView
     },
+    {
+        path: '/admin-login',
+        name: 'AdminLogin',
+        component: AdminLogin
+    },
+    {
+        path: '/admin',
+        name: 'AdminPanel',
+        component: AdminPanel,
+        meta: { requiresAuth: true }
+    },
     // Ruta de fallback para páginas no encontradas
     {
         path: '/:pathMatch(.*)*',
@@ -54,6 +68,22 @@ const router = createRouter({
         } else {
             return { top: 0 }
         }
+    }
+})
+
+// Protección de ruta admin
+router.beforeEach((to, from, next) => {
+    if (to.meta.requiresAuth) {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            unsubscribe()
+            if (user) {
+                next()
+            } else {
+                next('/admin-login')
+            }
+        })
+    } else {
+        next()
     }
 })
 
