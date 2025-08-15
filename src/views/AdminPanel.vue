@@ -25,93 +25,62 @@
         </button>
       </div>
 
-      <!-- Tarjetas de opciones -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        
-        <!-- Opción: Crear Nuevo Evento -->
-        <div @click="mostrarCrearEvento = true" class="cursor-pointer bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200 hover:scale-105 transition-all duration-300">
-          <div class="text-center">
-            <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <i class="fas fa-plus text-white text-2xl"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-purple-700 mb-2">Crear Nuevo Evento</h3>
-            <p class="text-purple-400">Agrega un nuevo evento a la programación de la iglesia</p>
-          </div>
-        </div>
 
-        <!-- Opción: Ver Eventos Creados -->
-        <div @click="mostrarEventos = true" class="cursor-pointer bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200 hover:scale-105 transition-all duration-300">
-          <div class="text-center">
-            <div class="w-16 h-16 bg-gradient-to-br from-blue-400 via-purple-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <i class="fas fa-calendar-alt text-white text-2xl"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-purple-700 mb-2">Ver Eventos Creados</h3>
-            <p class="text-purple-400">Consulta y gestiona todos los eventos existentes</p>
+      <!-- Crear Nuevo Evento -->
+      <div class="max-w-2xl mx-auto bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200 relative z-10 mb-12">
+        <div class="flex flex-col items-center mb-6">
+          <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center mb-2 shadow-lg">
+            <i class="fas fa-plus text-white text-2xl"></i>
           </div>
+          <h3 class="text-2xl font-bold text-purple-700 mb-2">Crear Nuevo Evento</h3>
+          <p class="text-purple-400">Agrega un nuevo evento a la programación de la iglesia</p>
         </div>
-
+        <form @submit.prevent="addEvent">
+          <div class="space-y-4 mb-6">
+            <input v-model="newEvent.titulo" placeholder="Título del evento" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 placeholder-gray-400" required />
+            <input v-model="newEvent.fecha" type="date" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800" required />
+            <input v-model="newEvent.lugar" placeholder="Lugar del evento" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 placeholder-gray-400" required />
+            <textarea v-model="newEvent.descripcion" placeholder="Descripción del evento" rows="3" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 placeholder-gray-400" required></textarea>
+          </div>
+          <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-gray-900 font-bold shadow-md hover:from-yellow-500 hover:to-purple-600 transition-all">
+            <i class="fas fa-plus mr-2"></i>Crear Evento
+          </button>
+        </form>
       </div>
 
-      <!-- Modal: Crear Evento -->
-      <div v-if="mostrarCrearEvento" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl p-8 w-full max-w-lg border border-purple-200">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold text-purple-700">Crear Nuevo Evento</h3>
-            <button @click="mostrarCrearEvento = false" class="text-gray-500 hover:text-red-500 text-2xl">
-              <i class="fas fa-times"></i>
-            </button>
+      <!-- Lista de Eventos -->
+      <div class="max-w-4xl mx-auto bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200 relative z-10">
+        <div class="flex flex-col items-center mb-6">
+          <div class="w-16 h-16 bg-gradient-to-br from-blue-400 via-purple-500 to-cyan-400 rounded-full flex items-center justify-center mb-2 shadow-lg">
+            <i class="fas fa-calendar-alt text-white text-2xl"></i>
           </div>
-          <form @submit.prevent="addEvent">
-            <div class="space-y-4 mb-6">
-              <input v-model="newEvent.titulo" placeholder="Título del evento" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 placeholder-gray-400" required />
-              <input v-model="newEvent.fecha" type="date" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800" required />
-              <input v-model="newEvent.lugar" placeholder="Lugar del evento" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 placeholder-gray-400" required />
-              <textarea v-model="newEvent.descripcion" placeholder="Descripción del evento" rows="3" class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 placeholder-gray-400" required></textarea>
-            </div>
-            <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-gray-900 font-bold shadow-md hover:from-yellow-500 hover:to-purple-600 transition-all">
-              <i class="fas fa-plus mr-2"></i>Crear Evento
-            </button>
-          </form>
+          <h3 class="text-2xl font-bold text-purple-700 mb-2">Eventos Creados</h3>
+          <p class="text-purple-400">Consulta y gestiona todos los eventos existentes</p>
         </div>
-      </div>
-
-      <!-- Modal: Ver Eventos -->
-      <div v-if="mostrarEventos" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl p-8 w-full max-w-4xl border border-purple-200 max-h-[80vh] overflow-y-auto">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold text-purple-700">Eventos Creados</h3>
-            <button @click="mostrarEventos = false" class="text-gray-500 hover:text-red-500 text-2xl">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <div v-if="loading" class="text-center py-8 text-purple-400">
-            <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
-            <p>Cargando eventos...</p>
-          </div>
-          
-          <div v-else-if="eventos.length === 0" class="text-center py-8 text-purple-400">
-            <i class="fas fa-calendar-times text-3xl mb-4"></i>
-            <p>No hay eventos creados</p>
-          </div>
-          
-          <div v-else class="space-y-4">
-            <div v-for="evento in eventos" :key="evento.id" class="bg-gradient-to-r from-purple-100 via-blue-100 to-pink-100 rounded-xl p-6 shadow-md">
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <h4 class="font-bold text-xl text-purple-700 mb-2">{{ evento.titulo }}</h4>
-                  <div class="flex items-center text-purple-500 mb-2">
-                    <i class="fas fa-calendar mr-2"></i>
-                    <span>{{ evento.fecha }}</span>
-                    <i class="fas fa-map-marker-alt ml-4 mr-2"></i>
-                    <span>{{ evento.lugar }}</span>
-                  </div>
-                  <p class="text-gray-700">{{ evento.descripcion }}</p>
+        <div v-if="loading" class="text-center py-8 text-purple-400">
+          <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+          <p>Cargando eventos...</p>
+        </div>
+        <div v-else-if="eventos.length === 0" class="text-center py-8 text-purple-400">
+          <i class="fas fa-calendar-times text-3xl mb-4"></i>
+          <p>No hay eventos creados</p>
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="evento in eventos" :key="evento.id" class="bg-gradient-to-r from-purple-100 via-blue-100 to-pink-100 rounded-xl p-6 shadow-md">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h4 class="font-bold text-xl text-purple-700 mb-2">{{ evento.titulo }}</h4>
+                <div class="flex items-center text-purple-500 mb-2">
+                  <i class="fas fa-calendar mr-2"></i>
+                  <span>{{ evento.fecha }}</span>
+                  <i class="fas fa-map-marker-alt ml-4 mr-2"></i>
+                  <span>{{ evento.lugar }}</span>
                 </div>
-                <button @click="deleteEvent(evento.id)" class="ml-4 px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold shadow hover:from-red-600 hover:to-pink-600 transition-all">
-                  <i class="fas fa-trash mr-1"></i>Eliminar
-                </button>
+                <p class="text-gray-700">{{ evento.descripcion }}</p>
               </div>
+              <button @click="deleteEvent(evento.id)" class="ml-4 px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold shadow hover:from-red-600 hover:to-pink-600 transition-all">
+                <i class="fas fa-trash mr-1"></i>Eliminar
+              </button>
             </div>
           </div>
         </div>
