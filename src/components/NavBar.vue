@@ -53,14 +53,21 @@
               <i class="fas fa-envelope mr-2"></i>Contacto
             </router-link>
           </div>
-          <!-- Opción Iniciar sesión -->
-          <router-link 
-            to="/admin-login" 
-            :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
-                     $route.path === '/admin-login' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-700']"
-          >
-            <i class="fas fa-sign-in-alt mr-2"></i>Iniciar sesión
-          </router-link>
+          <!-- Opción Iniciar/Cerrar sesión -->
+          <template v-if="isLoggedIn">
+            <button @click="logout" class="px-2 py-1 rounded-lg text-sm font-medium transition-colors text-white hover:text-red-500 bg-gradient-to-r from-red-500 to-pink-500">
+              <i class="fas fa-sign-out-alt mr-2"></i>Cerrar sesión
+            </button>
+          </template>
+          <template v-else>
+            <router-link 
+              to="/admin-login" 
+              :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
+                       $route.path === '/admin-login' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-700']"
+            >
+              <i class="fas fa-sign-in-alt mr-2"></i>Iniciar sesión
+            </router-link>
+          </template>
         </div>
 
         <!-- Botón Menú Mobile -->
@@ -114,15 +121,22 @@
               <i class="fas fa-envelope mr-3"></i>Contacto
             </router-link>
           </div>
-          <!-- Opción Iniciar sesión -->
-          <router-link 
-            to="/admin-login" 
-            @click="menuMovilAbierto = false"
-            :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
-                     $route.path === '/admin-login' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-100 hover:text-purple-700']"
-          >
-            <i class="fas fa-sign-in-alt mr-3"></i>Iniciar sesión
-          </router-link>
+          <!-- Opción Iniciar/Cerrar sesión -->
+          <template v-if="isLoggedIn">
+            <button @click="logout" class="w-full px-2 py-2 rounded-lg text-sm font-medium transition-colors text-white hover:text-red-500 bg-gradient-to-r from-red-500 to-pink-500">
+              <i class="fas fa-sign-out-alt mr-3"></i>Cerrar sesión
+            </button>
+          </template>
+          <template v-else>
+            <router-link 
+              to="/admin-login" 
+              @click="menuMovilAbierto = false"
+              :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+                       $route.path === '/admin-login' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-100 hover:text-purple-700']"
+            >
+              <i class="fas fa-sign-in-alt mr-3"></i>Iniciar sesión
+            </router-link>
+          </template>
           <div class="px-4 py-2">
             <router-link 
               to="/eventos"
@@ -156,10 +170,14 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { auth } from '../firebase'
+import { signOut } from 'firebase/auth'
 
 const menuMovilAbierto = ref(false)
 const mostrarNav = ref(true)
 let ultimoScroll = window.scrollY
+
+const isLoggedIn = ref(false)
 
 const handleScroll = () => {
   const actualScroll = window.scrollY
@@ -171,8 +189,16 @@ const handleScroll = () => {
   ultimoScroll = actualScroll
 }
 
+const logout = async () => {
+  await signOut(auth)
+  window.location.href = '/admin-login'
+}
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  auth.onAuthStateChanged(user => {
+    isLoggedIn.value = !!user
+  })
 })
 
 onUnmounted(() => {
