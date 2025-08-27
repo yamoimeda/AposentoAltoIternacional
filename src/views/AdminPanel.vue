@@ -127,6 +127,7 @@ import { db, auth } from '../firebase'
 import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
 import { useRouter } from 'vue-router'
 import { signOut } from 'firebase/auth'
+import { v4 as uuidv4 } from 'uuid' // Add this import at the top
 
 const router = useRouter()
 const eventos = ref([])
@@ -146,7 +147,17 @@ const fetchEventos = () => {
 
 const addEvent = async () => {
   if (!newEvent.value.titulo || !newEvent.value.fecha || !newEvent.value.lugar || !newEvent.value.descripcion) return
-  await addDoc(collection(db, 'eventos'), { ...newEvent.value })
+  
+  const eventId = uuidv4() // Generate unique ID
+  const storagePath = `eventos/${eventId}/imagenes` // Create storage path for images
+  
+  await addDoc(collection(db, 'eventos'), {
+    ...newEvent.value,
+    eventId,
+    storagePath,
+    createdAt: new Date().toISOString()
+  })
+  
   newEvent.value = { titulo: '', fecha: '', lugar: '', descripcion: '' }
   mostrarCrearEvento.value = false
 }
