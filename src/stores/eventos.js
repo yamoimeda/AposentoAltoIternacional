@@ -16,6 +16,7 @@ export const useEventosStore = defineStore('eventos', () => {
     onSnapshot(q, (snapshot) => {
       eventos.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       loading.value = false
+      
     })
   }
 

@@ -186,7 +186,7 @@ const router = useRouter()
 const eventosStore = useEventosStore()
 
 const evento = computed(() => {
-  return eventosStore.eventos.find(e => e.id === parseInt(route.params.id))
+  return eventosStore.obtenerEventoPorId(route.params.id)
 })
 
 const eventosRelacionados = computed(() => {
@@ -230,7 +230,9 @@ const compartir = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(() => { 
+  console.log(evento.value);
+
   eventosStore.cargarEventos()
 })
 </script>

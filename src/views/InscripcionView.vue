@@ -18,11 +18,11 @@
               </div>
               <div class="flex items-center text-gray-700">
                 <i class="fas fa-map-marker-alt mr-3 text-blue-600"></i>
-                {{ evento.ubicacion }}
+                {{ evento.lugar }}
               </div>
-              <div class="flex items-center text-gray-700">
+              <div v-if="evento.precio" class="flex items-center text-gray-700">
                 <i class="fas fa-dollar-sign mr-3 text-green-600"></i>
-                <span class="font-semibold">Costo: ${{ evento.precio || '15.00' }}</span>
+                <span class="font-semibold">Costo: ${{ evento.precio || '' }}</span>
               </div>
             </div>
             <p class="text-gray-600">{{ evento.descripcion }}</p>
@@ -33,16 +33,13 @@
                 <i class="fas fa-credit-card mr-2 text-blue-600"></i>
                 Información de Pago
               </h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
                 <div>
                   <strong>Yappy:</strong> 6305-1268<br>
-                  <strong>Nequi:</strong> 6305-1268<br>
                   <strong>ACH:</strong> Banco General - 04-99-99-999999-9
                 </div>
                 <div>
                   <strong>Concepto:</strong> Inscripción {{ evento.titulo }}<br>
-                  <strong>Monto:</strong> ${{ evento.precio || '15.00' }}<br>
-                  <strong>Beneficiario:</strong> El Aposento Alto Internacional
                 </div>
               </div>
             </div>
@@ -325,7 +322,7 @@ const datosExtraidos = ref({
 })
 
 const evento = computed(() => {
-  return eventosStore.eventos.find(e => e.id === parseInt(route.params.id))
+  return eventosStore.obtenerEventoPorId(route.params.id)
 })
 
 const pagoValido = computed(() => {
@@ -501,6 +498,7 @@ const enviarInscripcion = async () => {
 }
 
 onMounted(() => {
+  console.log(route.params.id);
   eventosStore.cargarEventos()
   
   // Cargar Tesseract.js para OCR (opcional)
