@@ -156,7 +156,7 @@
 
               <div class="flex gap-3">
                 <button 
-                  v-if="evento.esFuturo && evento.cupos && evento.inscritos < evento.cupos"
+                  v-if="evento.esFuturo"
                   @click="inscribirse(evento)"
                   class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-2xl hover:shadow-xl hover:transform hover:scale-105 transition-all duration-300 font-bold"
                 >

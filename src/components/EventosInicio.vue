@@ -111,12 +111,12 @@
         </div>
         <h3 class="text-2xl font-bold text-gray-600 mb-4">No hay eventos próximos</h3>
         <p class="text-gray-500 mb-8">Mantente atento a nuestras redes sociales para próximos anuncios</p>
-        <router-link 
+        <!-- <router-link 
           to="/contacto"
           class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
         >
           Mantenerme informado
-        </router-link>
+        </router-link> -->
       </div>
 
       <!-- Botón para ver todos los eventos -->

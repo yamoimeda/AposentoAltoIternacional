@@ -5,7 +5,7 @@
         <!-- Información del evento -->
         <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
           <img 
-            :src="evento.imagen" 
+            :src="evento.bannerUrl || evento.imagen || ''" 
             :alt="evento.titulo"
             class="w-full h-64 object-cover"
           >
@@ -26,7 +26,32 @@
               </div>
             </div>
             <p class="text-gray-600">{{ evento.descripcion }}</p>
-            
+            <!-- Selector de tipo de boleto -->
+            <div v-if="ticketTypes.length" class="mt-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona tipo de boleto</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label v-for="(t, idx) in ticketTypes" :key="t.nombre + '-' + idx" class="flex items-center p-3 border rounded cursor-pointer" :class="selectedTicketIndex === idx ? 'border-blue-500 bg-blue-50' : ''">
+                  <input type="radio" :value="idx" v-model="selectedTicketIndex" class="mr-3" />
+                  <div>
+                    <div class="font-semibold">{{ t.nombre }}</div>
+                    <div class="text-sm text-gray-600">${{ t.precio }}</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Cantidad y total -->
+            <div v-if="ticketTypes.length" class="mt-4 flex items-center gap-4">
+              <div class="w-40">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
+                <input type="number" min="1" v-model.number="ticketQuantity" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Total estimado</label>
+                <div class="text-xl font-bold text-gray-800">${{ totalPrice }}</div>
+              </div>
+            </div>
+
             <!-- Información de pago -->
             <div class="bg-blue-50 p-6 rounded-lg mt-6">
               <h3 class="text-xl font-semibold text-gray-800 mb-4">
@@ -34,12 +59,15 @@
                 Información de Pago
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-                <div>
-                  <strong>Yappy:</strong> 6305-1268<br>
+                <!--<div>
+                   <strong>Yappy:</strong> 6305-1268<br>
                   <strong>ACH:</strong> Banco General - 04-99-99-999999-9
                 </div>
                 <div>
                   <strong>Concepto:</strong> Inscripción {{ evento.titulo }}<br>
+                </div> -->
+                <div v-if="evento.formaPago" class="text-sm text-gray-700 whitespace-pre-line">
+                  {{ evento.formaPago }}
                 </div>
               </div>
             </div>
@@ -58,10 +86,10 @@
                   <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
                   <span>Adjunta la captura de pantalla del pago</span>
                 </li>
-                <li class="flex items-start">
+                <!-- <li class="flex items-start">
                   <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
                   <span>Recibirás confirmación una vez verificado el pago</span>
-                </li>
+                </li> -->
                 <li class="flex items-start">
                   <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
                   <span>Los boletos no son reembolsables</span>
@@ -72,7 +100,7 @@
         </div>
 
         <!-- Formulario de inscripción -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
+        <div v-if="evento.esFuturo" class="bg-white rounded-lg shadow-lg p-6">
           <h2 class="text-2xl font-bold text-gray-800 mb-6">
             <i class="fas fa-user-plus mr-2 text-blue-600"></i>
             Formulario de Inscripción
@@ -107,7 +135,7 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Teléfono *
+                  whatsapp *
                 </label>
                 <input 
                   v-model="formulario.telefono"
@@ -117,7 +145,7 @@
                   placeholder="+507 6305-1268"
                 >
               </div>
-              <div>
+              <!-- <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Edad
                 </label>
@@ -129,7 +157,7 @@
                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="25"
                 >
-              </div>
+              </div> -->
             </div>
 
             <!-- Comprobante de Pago -->
@@ -283,6 +311,10 @@
             </div>
           </form>
         </div>
+        <div v-else class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Inscripciones cerradas</h3>
+          <p class="text-sm text-gray-700">Este evento no está activo para inscripciones en este momento.</p>
+        </div>
       </div>
 
       <!-- Loading state -->
@@ -294,7 +326,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
 
@@ -309,11 +341,13 @@ const previewUrl = ref('')
 
 const formulario = ref({
   nombre: '',
-  email: '',
-  telefono: '',
-  edad: '',
+  whatsapp: '',
   comprobante: null
 })
+
+const selectedTicketIndex = ref(null)
+const ticketTypes = ref([])
+const ticketQuantity = ref(1)
 
 const datosExtraidos = ref({
   monto: '',
@@ -323,6 +357,39 @@ const datosExtraidos = ref({
 
 const evento = computed(() => {
   return eventosStore.obtenerEventoPorId(route.params.id)
+})
+
+// Cuando el evento cambie, inicializar la selección de ticket si existen tipos
+watch(evento, (ev) => {
+  // Mantener una copia local de los tipos de ticket para evitar mutaciones directas
+  ticketTypes.value = ev && ev.ticketTypes ? [...ev.ticketTypes] : []
+
+  if (ev && ticketTypes.value.length > 0) {
+    // seleccionar el primero por defecto si no hay selección
+    if (selectedTicketIndex.value === null) selectedTicketIndex.value = 0
+  } else {
+    selectedTicketIndex.value = null
+    ticketQuantity.value = 1
+  }
+})
+
+const selectedTicket = computed(() => {
+  if (!evento.value) return null
+  const types = ticketTypes.value || []
+  if (types.length === 0 || selectedTicketIndex.value === null) return null
+  return types[selectedTicketIndex.value]
+})
+
+const selectedTicketPrice = computed(() => {
+  const priceFromTicket = selectedTicket.value ? selectedTicket.value.precio : null
+  const p = priceFromTicket ?? evento.value?.precio ?? 0
+  const parsed = parseFloat(p)
+  return isNaN(parsed) ? 0 : parsed
+})
+
+const totalPrice = computed(() => {
+  const qty = Number(ticketQuantity.value) || 1
+  return (selectedTicketPrice.value * qty).toFixed(2)
 })
 
 const pagoValido = computed(() => {
@@ -447,8 +514,8 @@ const extraerDatos = (texto) => {
 const validarMonto = (monto) => {
   if (!monto || !evento.value) return false
   const montoNumerico = parseFloat(monto)
-  const precioEvento = parseFloat(evento.value.precio || 15.00)
-  return Math.abs(montoNumerico - precioEvento) < 0.01 // Tolerancia de 1 centavo
+  const precioEsperado = selectedTicketPrice.value || parseFloat(evento.value.precio || 0)
+  return Math.abs(montoNumerico - precioEsperado) < 0.01 // Tolerancia de 1 centavo
 }
 
 const validarFecha = (fecha) => {
@@ -466,6 +533,20 @@ const enviarInscripcion = async () => {
   procesando.value = true
   
   try {
+    // Si hay tipos de boletos, asegurar que se haya seleccionado uno
+    if (ticketTypes.value && ticketTypes.value.length && selectedTicketIndex.value === null) {
+      alert('Por favor selecciona un tipo de boleto antes de continuar.')
+      procesando.value = false
+      return
+    }
+
+    // Validar cantidad
+    const qty = Number(ticketQuantity.value) || 0
+    if (qty < 1) {
+      alert('La cantidad debe ser al menos 1')
+      procesando.value = false
+      return
+    }
     // Preparar datos para envío
     const formData = new FormData()
     formData.append('nombre', formulario.value.nombre)
@@ -475,19 +556,42 @@ const enviarInscripcion = async () => {
     formData.append('comprobante', formulario.value.comprobante)
     formData.append('datosOCR', JSON.stringify(datosExtraidos.value))
     formData.append('eventoId', evento.value.id)
+    // incluir info de ticket seleccionado
+    if (selectedTicket.value) {
+      formData.append('ticketType', selectedTicket.value.nombre)
+      formData.append('ticketPrice', selectedTicket.value.precio)
+      formData.append('ticketQuantity', String(ticketQuantity.value))
+      formData.append('totalPrice', String(totalPrice.value))
+    } else {
+      formData.append('ticketType', 'General')
+      formData.append('ticketPrice', evento.value.precio || '')
+      formData.append('ticketQuantity', String(ticketQuantity.value))
+      formData.append('totalPrice', String(totalPrice.value))
+    }
 
-    // Simular envío
+  // Calcular total numérico para guardar
+  const numericTotal = parseFloat(totalPrice.value) || (selectedTicketPrice.value * qty)
+
+  // Simular envío
     await new Promise(resolve => setTimeout(resolve, 2000))
     
     // Agregar inscripción al store
     eventosStore.inscribirParticipante(evento.value.id, {
       ...formulario.value,
       datosOCR: datosExtraidos.value,
+      ticketType: selectedTicket.value ? selectedTicket.value.nombre : 'General',
+      ticketPrice: selectedTicket.value ? Number(selectedTicket.value.precio) : Number(evento.value.precio) || 0,
+      ticketQuantity: qty,
+      totalPrice: numericTotal,
       fechaInscripcion: new Date().toISOString()
     })
     
     alert('¡Inscripción exitosa! Hemos recibido tu comprobante de pago y lo verificaremos pronto.')
     router.push('/eventos')
+    
+    // Reset ticket selection for next time
+    selectedTicketIndex.value = null
+    ticketQuantity.value = 1
     
   } catch (error) {
     console.error('Error:', error)
