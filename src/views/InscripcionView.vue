@@ -4,7 +4,7 @@
       <div v-if="evento" class="max-w-4xl mx-auto">
         <!-- Información del evento -->
         <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-          <img 
+          <img  v-if="evento.bannerUrl || evento.imagen"
             :src="evento.bannerUrl || evento.imagen || ''" 
             :alt="evento.titulo"
             class="w-full h-64 object-cover"
@@ -117,20 +117,20 @@
                   v-model="formulario.nombre"
                   type="text" 
                   required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400"
                   placeholder="Tu nombre completo"
                 >
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Correo Electrónico *
+                  Cédula *
                 </label>
                 <input 
-                  v-model="formulario.email"
-                  type="email" 
+                  v-model="formulario.cedula"
+                  type="text" 
                   required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="tu@email.com"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400"
+                  placeholder="con guiones ejemplo 0-123-4567"
                 >
               </div>
               <div>
@@ -141,7 +141,7 @@
                   v-model="formulario.telefono"
                   type="tel" 
                   required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400"
                   placeholder="+507 6305-1268"
                 >
               </div>
@@ -219,56 +219,38 @@
                   </button>
                 </div>
 
-                <!-- Procesando OCR -->
-                <div v-if="procesandoOCR" class="bg-blue-50 p-4 rounded-lg">
-                  <div class="flex items-center">
-                    <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i>
-                    <span class="text-blue-700">Analizando comprobante de pago...</span>
-                  </div>
-                </div>
-
-                <!-- Datos extraídos del OCR -->
-                <div v-if="datosExtraidos.monto || datosExtraidos.fecha || datosExtraidos.confirmacion" class="bg-green-50 p-4 rounded-lg">
+                <!-- OCR deshabilitado: ingresar monto manualmente -->
+                <div class="bg-green-50 p-4 rounded-lg">
                   <h4 class="font-semibold text-green-800 mb-2">
-                    <i class="fas fa-robot mr-2"></i>
-                    Datos Detectados Automáticamente
+                    <!-- <i class="fas fa-robot mr-2"></i> -->
+                    Información del comprobante
                   </h4>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div v-if="datosExtraidos.monto">
-                      <label class="block text-green-700 font-medium">Monto:</label>
-                      <span :class="[
-                        'block p-2 rounded border  text-gray-800',
-                        validarMonto(datosExtraidos.monto) ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300'
-                      ]">
-                        ${{ datosExtraidos.monto }}
-                        <i :class="['ml-2', validarMonto(datosExtraidos.monto) ? 'fas fa-check text-green-500' : 'fas fa-times text-red-500']"></i>
-                      </span>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm items-start">
+                    <div>
+                      <label class="block text-green-700 font-medium">Monto (USD):</label>
+                      <input required type="number" step="0.01" min="0" v-model.number="datosExtraidos.monto" class="mt-1 block w-40 px-3 py-2 border rounded text-gray-800 placeholder-gray-400" />
+                      <p class="text-xs text-gray-600 mt-1">Ingresa el monto pagado manualmente.</p>
                     </div>
                     <div v-if="datosExtraidos.fecha">
                       <label class="block text-green-700 font-medium">Fecha:</label>
-                      <span :class="[
-                        'block p-2 rounded border text-gray-800',
-                        validarFecha(datosExtraidos.fecha) ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300'
-                      ]">
+                      <span class="block p-2 rounded border bg-green-100 border-green-300  text-gray-800">
                         {{ datosExtraidos.fecha }}
-                        <i :class="['ml-2', validarFecha(datosExtraidos.fecha) ? 'fas fa-check text-green-500' : 'fas fa-times text-red-500']"></i>
                       </span>
                     </div>
                     <div v-if="datosExtraidos.confirmacion">
                       <label class="block text-green-700 font-medium">Confirmación:</label>
                       <span class="block p-2 rounded border bg-green-100 border-green-300  text-gray-800">
                         {{ datosExtraidos.confirmacion }}
-                        <i class="fas fa-check text-green-500 ml-2"></i>
                       </span>
                     </div>
                   </div>
-                  
+
                   <!-- Estado de validación -->
                   <div class="mt-4 p-3 rounded-lg" :class="pagoValido ? 'bg-green-100 border border-green-300' : 'bg-yellow-100 border border-yellow-300'">
                     <div class="flex items-center">
                       <i :class="['mr-2', pagoValido ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-triangle text-yellow-500']"></i>
                       <span :class="pagoValido ? 'text-green-700' : 'text-yellow-700'">
-                        {{ pagoValido ? 'Pago verificado correctamente' : 'Verifica que el monto y la fecha sean correctos' }}
+                        {{ pagoValido ? 'Pago verificado correctamente' : 'Verifica que el monto sea correcto' }}
                       </span>
                     </div>
                   </div>
@@ -296,10 +278,10 @@
               </button>
               <button 
                 type="submit"
-                :disabled="procesando || !formulario.comprobante || (!pagoValido && datosExtraidos.monto)"
+                :disabled="procesando || !formulario.comprobante "
                 :class="[
                   'flex-1 px-6 py-3 rounded-lg font-semibold transition-colors',
-                  (procesando || !formulario.comprobante || (!pagoValido && datosExtraidos.monto)) 
+                  (procesando || !formulario.comprobante ) 
                     ? 'bg-gray-400 cursor-not-allowed' 
                     : 'bg-blue-600 hover:bg-blue-700',
                   'text-white'
@@ -341,7 +323,9 @@ const previewUrl = ref('')
 
 const formulario = ref({
   nombre: '',
-  whatsapp: '',
+  cedula: '',
+  telefono: '',
+  edad: '',
   comprobante: null
 })
 
@@ -432,7 +416,8 @@ const manejarArchivo = async (event) => {
   reader.readAsDataURL(archivo)
 
   // Procesar con OCR
-  await procesarOCR(archivo)
+  // OCR deshabilitado: solicitamos ingresar el monto manualmente
+  // await procesarOCR(archivo)
 }
 
 const eliminarArchivo = () => {
@@ -442,74 +427,45 @@ const eliminarArchivo = () => {
   errorOCR.value = ''
 }
 
+/*
 const procesarOCR = async (archivo) => {
-  procesandoOCR.value = true
-  errorOCR.value = ''
-  datosExtraidos.value = { monto: '', fecha: '', confirmacion: '' }
-
-  try {
-    // Opción 1: Usar Tesseract.js (OCR en el navegador)
-    if (window.Tesseract) {
-      const { data: { text } } = await window.Tesseract.recognize(archivo, 'spa', {
-        logger: m => console.log(m)
-      })
-      console.log('Texto OCR:', text)
-      extraerDatos(text)
-    } else {
-      // Opción 2: Simular OCR para demo
-      await simularOCR()
-    }
-
-  } catch (error) {
-    console.error('Error en OCR:', error)
-    errorOCR.value = 'Error al procesar la imagen. Verifica que sea una captura clara del pago.'
-  } finally {
-    procesandoOCR.value = false
-  }
+  // OCR temporalmente deshabilitado; si necesitas reactivar, descomenta
+  // procesandoOCR.value = true
+  // errorOCR.value = ''
+  // datosExtraidos.value = { monto: '', fecha: '', confirmacion: '' }
+  // try {
+  //   if (window.Tesseract) {
+  //     const { data: { text } } = await window.Tesseract.recognize(archivo, 'spa', { logger: m => console.log(m) })
+  //     extraerDatos(text)
+  //   } else {
+  //     await simularOCR()
+  //   }
+  // } catch (error) {
+  //   console.error('Error en OCR:', error)
+  //   errorOCR.value = 'Error al procesar la imagen.'
+  // } finally {
+  //   procesandoOCR.value = false
+  // }
 }
+*/
 
+/*
 const simularOCR = async () => {
-  // Simular delay de procesamiento
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  // Datos de ejemplo basados en la imagen que proporcionaste
+  // Simular delay de procesamiento (deshabilitado)
+  await new Promise(resolve => setTimeout(resolve, 200))
   datosExtraidos.value = {
-    monto: '3.50',
-    fecha: '22 jul 2025',
-    confirmacion: 'JILLY-35761063'
+    monto: '',
+    fecha: '',
+    confirmacion: ''
   }
 }
+*/
 
+/*
 const extraerDatos = (texto) => {
-  console.log('Texto extraído:', texto)
-  
-  // Expresiones regulares para extraer datos
-  const regexMonto = /\$?(\d+\.?\d*)/g
-  const regexFecha = /(\d{1,2}\s(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\s\d{4})/i
-  const regexConfirmacion = /(?:#|ID|CONF|REF)?\s?([A-Z0-9-]{8,})/i
-
-  // Extraer monto
-  const montos = [...texto.matchAll(regexMonto)]
-  if (montos.length > 0) {
-    // Buscar el monto más probable (generalmente el más grande o el que aparece cerca de palabras clave)
-    const montosNumeros = montos.map(m => parseFloat(m[1])).filter(m => m > 0)
-    if (montosNumeros.length > 0) {
-      datosExtraidos.value.monto = Math.max(...montosNumeros).toFixed(2)
-    }
-  }
-
-  // Extraer fecha
-  const fecha = texto.match(regexFecha)
-  if (fecha) {
-    datosExtraidos.value.fecha = fecha[1]
-  }
-
-  // Extraer número de confirmación
-  const confirmacion = texto.match(regexConfirmacion)
-  if (confirmacion) {
-    datosExtraidos.value.confirmacion = confirmacion[1]
-  }
+  // Lógica OCR deshabilitada. Si se reactiva, parsear texto aquí y asignar a datosExtraidos
 }
+*/
 
 const validarMonto = (monto) => {
   if (!monto || !evento.value) return false
@@ -531,7 +487,7 @@ const validarFecha = (fecha) => {
 
 const enviarInscripcion = async () => {
   procesando.value = true
-  
+
   try {
     // Si hay tipos de boletos, asegurar que se haya seleccionado uno
     if (ticketTypes.value && ticketTypes.value.length && selectedTicketIndex.value === null) {
@@ -547,15 +503,17 @@ const enviarInscripcion = async () => {
       procesando.value = false
       return
     }
+
     // Preparar datos para envío
     const formData = new FormData()
     formData.append('nombre', formulario.value.nombre)
-    formData.append('email', formulario.value.email)
+    formData.append('cedula', formulario.value.cedula)
     formData.append('telefono', formulario.value.telefono)
     formData.append('edad', formulario.value.edad)
     formData.append('comprobante', formulario.value.comprobante)
     formData.append('datosOCR', JSON.stringify(datosExtraidos.value))
     formData.append('eventoId', evento.value.id)
+
     // incluir info de ticket seleccionado
     if (selectedTicket.value) {
       formData.append('ticketType', selectedTicket.value.nombre)
@@ -569,12 +527,12 @@ const enviarInscripcion = async () => {
       formData.append('totalPrice', String(totalPrice.value))
     }
 
-  // Calcular total numérico para guardar
-  const numericTotal = parseFloat(totalPrice.value) || (selectedTicketPrice.value * qty)
+    // Calcular total numérico para guardar
+    const numericTotal = parseFloat(totalPrice.value) || (selectedTicketPrice.value * qty)
 
-  // Simular envío
+    // Simular envío / espera
     await new Promise(resolve => setTimeout(resolve, 2000))
-    
+
     // Agregar inscripción al store
     eventosStore.inscribirParticipante(evento.value.id, {
       ...formulario.value,
@@ -585,14 +543,14 @@ const enviarInscripcion = async () => {
       totalPrice: numericTotal,
       fechaInscripcion: new Date().toISOString()
     })
-    
+
     alert('¡Inscripción exitosa! Hemos recibido tu comprobante de pago y lo verificaremos pronto.')
-    router.push('/eventos')
-    
+    // router.push('/eventos')
+
     // Reset ticket selection for next time
     selectedTicketIndex.value = null
     ticketQuantity.value = 1
-    
+
   } catch (error) {
     console.error('Error:', error)
     alert('Error al procesar la inscripción. Por favor, inténtalo nuevamente.')
@@ -606,8 +564,6 @@ onMounted(() => {
   eventosStore.cargarEventos()
   
   // Cargar Tesseract.js para OCR (opcional)
-  const script = document.createElement('script')
-  script.src = 'https://unpkg.com/tesseract.js@v4.1.1/dist/tesseract.min.js'
-  document.head.appendChild(script)
+  // OCR disabled: no cargamos Tesseract automáticamente
 })
 </script>

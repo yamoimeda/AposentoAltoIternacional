@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { db } from '../firebase'
+import { db, storage } from '../firebase'
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 
 export const useEventosStore = defineStore('eventos', () => {
@@ -26,11 +27,30 @@ export const useEventosStore = defineStore('eventos', () => {
 
   // Inscribir participante en Firestore (colección inscripciones)
   const inscribirParticipante = async (eventoId, datosParticipante) => {
+    // Si el participante adjuntó un archivo 'comprobante', súbelo a Storage
+    try {
+      if (datosParticipante && datosParticipante.comprobante && typeof File !== 'undefined' && datosParticipante.comprobante instanceof File) {
+        const file = datosParticipante.comprobante
+        const path = `inscripciones/${eventoId}/${Date.now()}_${file.name}`
+        const sRef = storageRef(storage, path)
+        await uploadBytes(sRef, file)
+        const url = await getDownloadURL(sRef)
+        // Guardar la URL en lugar del objeto File
+        datosParticipante.comprobanteUrl = url
+        delete datosParticipante.comprobante
+      }
+    } catch (uploadError) {
+      console.error('Error subiendo comprobante a Storage:', uploadError)
+      // continuar sin la URL si falla la subida
+    }
+
     const inscripcion = {
       eventoId,
       participante: datosParticipante,
       fechaInscripcion: new Date().toISOString()
     }
+
+    console.log('Guardando inscripcion:', inscripcion)
     await addDoc(collection(db, 'inscripciones'), inscripcion)
     inscripciones.value.push(inscripcion)
     return inscripcion
