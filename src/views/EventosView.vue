@@ -70,24 +70,30 @@
     <!-- Grid de eventos moderno -->
     <div class="pb-20 relative">
       <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
-      <div class="relative container mx-auto px-4">
+      <div class="relative container mx-auto px-4 py-2">
         <div v-if="eventosFiltrados.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <div 
             v-for="(evento, index) in eventosFiltrados" 
             :key="evento.id"
-            class="card-modern overflow-hidden hover-lift animate-fade-in-up group"
+            class="card-modern overflow-hidden hover-lift animate-fade-in-up group flex flex-col h-full"
             :style="`animation-delay: ${index * 0.1}s`"
           >
             <div class="relative overflow-hidden">
-              <img 
-                :src="evento.imagen" 
-                :alt="evento.titulo"
-                class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
-              >
+              <!-- Imagen del evento o fondo de color si no hay imagen -->
+              <div v-if="evento.bannerUrl || evento.imagen" class="w-full h-56 overflow-hidden">
+                <img 
+                  :src="evento.bannerUrl || evento.imagen" 
+                  :alt="evento.titulo"
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                >
+              </div>
+              <div v-else class="w-full h-56 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-white text-6xl opacity-30"></i>
+              </div>
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
               
               <!-- Badge de estado -->
-              <div class="absolute top-4 right-4">
+              <div class="absolute top-4 right-4 ">
                 <span 
                   :class="['px-4 py-2 rounded-2xl text-sm font-bold shadow-lg',
                            evento.esFuturo 
@@ -99,7 +105,7 @@
               </div>
 
               <!-- Fecha destacada -->
-              <div class="absolute bottom-4 left-4">
+              <div class="absolute bottom-4 left-4 ">
                 <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-2xl">
                   <div class="text-center">
                     <div class="text-2xl font-black text-indigo-600">
@@ -113,11 +119,11 @@
               </div>
             </div>
             
-            <div class="p-8">
-              <h3 class="text-2xl font-bold text-gray-800 mb-4 group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-purple-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
+            <div class="p-8 flex flex-col flex-grow">
+              <h3 class="text-2xl font-bold text-gray-800 mb-4 group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-purple-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 line-clamp-2 min-h-[4rem]">
                 {{ evento.titulo }}
               </h3>
-              <p class="text-gray-600 mb-6 line-clamp-3 leading-relaxed">{{ evento.descripcion }}</p>
+              <p class="text-gray-600 mb-6 line-clamp-3 leading-relaxed min-h-[4.5rem]">{{ evento.descripcion }}</p>
               
               <div class="space-y-3 mb-6">
                 <div class="flex items-center text-gray-700">
@@ -127,16 +133,10 @@
                   <span class="font-medium">{{ formatearFecha(evento.fecha) }}</span>
                 </div>
                 <div class="flex items-center text-gray-700">
-                  <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mr-3">
-                    <i class="fas fa-clock text-white text-sm"></i>
-                  </div>
-                  <span class="font-medium">{{ evento.hora }}</span>
-                </div>
-                <div class="flex items-center text-gray-700">
                   <div class="w-10 h-10 bg-gradient-to-r from-red-400 to-pink-500 rounded-2xl flex items-center justify-center mr-3">
                     <i class="fas fa-map-marker-alt text-white text-sm"></i>
                   </div>
-                  <span class="font-medium">{{ evento.ubicacion }}</span>
+                  <span class="font-medium">{{ evento.lugar }}</span>
                 </div>
                 <div v-if="evento.cupos" class="flex items-center text-gray-700">
                   <div class="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mr-3">
@@ -154,26 +154,35 @@
                 </div>
               </div>
 
-              <div class="flex gap-3">
+              <div class="space-y-2 mt-auto pt-4">
+                <div class="flex gap-3">
+                  <button 
+                    v-if="evento.esFuturo"
+                    @click="inscribirse(evento)"
+                    class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-2xl hover:shadow-xl hover:transform hover:scale-105 transition-all duration-300 font-bold"
+                  >
+                    <i class="fas fa-user-plus mr-2"></i>Inscribirse
+                  </button>
+                  <button 
+                    v-else-if="evento.esFuturo && evento.cupos && evento.inscritos >= evento.cupos"
+                    disabled
+                    class="flex-1 bg-gray-400 text-white py-3 px-6 rounded-2xl cursor-not-allowed font-bold opacity-60"
+                  >
+                    <i class="fas fa-times mr-2"></i>Cupos Llenos
+                  </button>
+                  <button 
+                    @click="verDetalles(evento)"
+                    class="px-6 py-3 border-2 border-indigo-500 text-indigo-600 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all duration-300 font-bold hover:transform hover:scale-105"
+                  >
+                    <i class="fas fa-eye mr-2"></i>Ver Más
+                  </button>
+                </div>
+                <!-- Botón para verificar inscripción -->
                 <button 
-                  v-if="evento.esFuturo"
-                  @click="inscribirse(evento)"
-                  class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-2xl hover:shadow-xl hover:transform hover:scale-105 transition-all duration-300 font-bold"
+                  @click="verificarInscripcion(evento)"
+                  class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl hover:shadow-lg hover:transform hover:scale-105 transition-all duration-300 font-semibold text-sm"
                 >
-                  <i class="fas fa-user-plus mr-2"></i>Inscribirse
-                </button>
-                <button 
-                  v-else-if="evento.esFuturo && evento.cupos && evento.inscritos >= evento.cupos"
-                  disabled
-                  class="flex-1 bg-gray-400 text-white py-3 px-6 rounded-2xl cursor-not-allowed font-bold opacity-60"
-                >
-                  <i class="fas fa-times mr-2"></i>Cupos Llenos
-                </button>
-                <button 
-                  @click="verDetalles(evento)"
-                  class="px-6 py-3 border-2 border-indigo-500 text-indigo-600 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all duration-300 font-bold hover:transform hover:scale-105"
-                >
-                  <i class="fas fa-eye mr-2"></i>Ver Más
+                  <i class="fas fa-search-plus mr-2"></i>Verificar mi Inscripción
                 </button>
               </div>
             </div>
@@ -231,6 +240,10 @@ const inscribirse = (evento) => {
 
 const verDetalles = (evento) => {
   router.push(`/evento/${evento.id}`)
+}
+
+const verificarInscripcion = (evento) => {
+  router.push(`/verificar-inscripcion/${evento.id}`)
 }
 
 onMounted(() => {

@@ -18,90 +18,24 @@
         <!-- <div class="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
           <i class="fas fa-cogs text-white text-3xl"></i>
         </div> -->
-        <h1 class="text-5xl font-black text-blue-700 mb-4">Panel de Administración</h1>
+        <h1 class="text-5xl font-black text-white mb-4">Panel de Administración</h1>
         <p class="text-xl text-gray-200 mb-6">Gestiona los eventos de la iglesia</p>
-        <button @click="mostrarCrearEvento = true" class="py-2 px-6 rounded-lg bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition-all">
-          Crear Nuevo Evento
-        </button>
+        <div class="flex gap-4 justify-center">
+          <button @click="mostrarCrearEvento = true" class="py-2 px-6 rounded-lg bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition-all flex items-center gap-2">
+            <i class="fas fa-plus-circle"></i>
+            Crear Nuevo Evento
+          </button>
+          <!-- <button @click="irAInscripciones" class="py-2 px-6 rounded-lg bg-purple-600 text-white font-semibold shadow-md hover:bg-purple-700 transition-all flex items-center gap-2">
+            <i class="fas fa-users-cog"></i>
+            Gestionar Inscripciones
+          </button> -->
+        </div>
       </div>
 
 
       <!-- Crear Nuevo Evento -->
       <!-- <div class="max-w-2xl mx-auto bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-purple-200 relative z-10 mb-12"> -->
-  <div v-if="mostrarCrearEvento" class="fixed inset-0 bg-black/50 bg-opacity-50 flex items-start sm:items-center justify-center z-50 py-12 px-4">
-  <div class="bg-white rounded-3xl shadow-md p-6 w-full max-w-lg border border-gray-200 max-h-[80vh] overflow-y-auto">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold text-gray-800">
-              {{ editingEvent ? 'Editar Evento' : 'Crear Nuevo Evento' }}
-            </h3>
-            <button @click="closeForm" class="text-gray-500 hover:text-red-500 text-2xl">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <form @submit.prevent="addEvent">
-            <div class="space-y-4 mb-6">
-              <input v-model="newEvent.titulo" placeholder="Título del evento" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800 placeholder-gray-400" required />
-              <input v-model="newEvent.fecha" type="date" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800" required />
-              <input v-model="newEvent.lugar" placeholder="Lugar del evento" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800 placeholder-gray-400" required />
-              <textarea v-model="newEvent.descripcion" placeholder="Descripción del evento" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800 placeholder-gray-400"></textarea>
-
-              <!-- Precio base obligatorio -->
-              <div>
-                <label class="block text-sm font-medium text-gray-800">Precio base (USD)</label>
-                <input v-model="newEvent.precio" type="number" step="0.01" min="0" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800 placeholder-gray-400" />
-              </div>
-
-              <!-- Tipos de boletos -->
-              <div class="mt-4 border-t pt-4">
-                <h4 class="text-md font-semibold text-gray-800 mb-2">Tipos de boletos (opcional)</h4>
-                <div class="flex gap-2">
-                  <input v-model="newTicket.nombre" placeholder="Nombre (ej: General)" class="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-400" />
-                  <input v-model="newTicket.precio" type="number" step="0.01" min="0" placeholder="Precio" class="w-28 px-3 py-2 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-400" />
-                  <button type="button" @click="addTicketType" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Añadir</button>
-                </div>
-
-                <div v-if="newEvent.ticketTypes.length" class="mt-3 space-y-2">
-                  <div v-for="(t,i) in newEvent.ticketTypes" :key="i" class="flex items-center justify-between bg-white p-2 rounded border border-gray-100">
-                    <div class="text-sm text-gray-800 placeholder-gray-400">
-                      <strong>{{ t.nombre }}</strong> — ${{ t.precio }}
-                    </div>
-                    <button type="button" @click="removeTicketType(i)" class="text-red-600">Eliminar</button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Nuevo campo para forma de pago (texto largo) -->
-              <div class="space-y-2">
-                <label class="block text-sm font-medium text-gray-800">Forma de pago / Instrucciones</label>
-                <textarea v-model="newEvent.formaPago" rows="4" placeholder="Describe cómo se puede pagar (ej: datos de transferencia, instrucciones para pago presencial, link de pago, etc.)" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800"></textarea>
-              </div>
-
-              <!-- Campo esFuturo -->
-              <div class="flex items-center gap-3 mt-2">
-                <input id="esFuturo" type="checkbox" v-model="newEvent.esFuturo" class="w-4 h-4" />
-                <label for="esFuturo" class="text-sm text-gray-700">Evento activo / Futuro</label>
-              </div>
-
-              <!-- Nuevo campo para imagen -->
-              <div class="space-y-2">
-                <label class="block text-sm font-medium text-gray-800">Banner del evento</label>
-                <input 
-                  type="file" 
-                  @change="handleImageUpload" 
-                  accept="image/*"
-                  class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800"
-                  :required=false
-                />
-              </div>
-            </div>
-            <button type="submit" 
-                    class="w-full py-3 rounded-lg bg-blue-600 text-white font-bold shadow-md hover:bg-blue-700 transition-all">
-              <i :class="editingEvent ? 'fas fa-save' : 'fas fa-plus'" class="mr-2"></i>
-              {{ editingEvent ? 'Guardar Cambios' : 'Crear Evento' }}
-            </button>
-          </form>
-        </div>
-      </div>
+      <EventForm v-if="mostrarCrearEvento" :initialEvent="editingEvent" @save="onFormSave" @close="closeForm" />
 
       <!-- Lista de Eventos -->
       <div class="mx-auto bg-white rounded-3xl shadow-md p-8 border border-gray-200 relative z-10">
@@ -140,15 +74,21 @@
               </div>
               <p class="text-gray-700 text-sm line-clamp-3">{{ evento.descripcion }}</p>
             </div>
-            <div class="flex gap-2 mt-4">
-              <button @click="editEvent(evento)" 
-                      class="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 transition-all">
-                <i class="fas fa-edit mr-1"></i>Editar
+            <div class="flex flex-col gap-2 mt-4">
+              <button @click="verInscripcionesEvento(evento.id)" 
+                      class="w-full px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold shadow hover:bg-green-700 transition-all">
+                <i class="fas fa-users mr-1"></i>Ver Inscripciones
               </button>
-              <button @click="deleteEvent(evento.id)" 
-                      class="flex-1 px-4 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm font-semibold shadow hover:bg-gray-300 transition-all">
-                <i class="fas fa-trash mr-1"></i>Eliminar
-              </button>
+              <div class="flex gap-2">
+                <button @click="editEvent(evento)" 
+                        class="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 transition-all">
+                  <i class="fas fa-edit mr-1"></i>Editar
+                </button>
+                <button @click="confirmDelete(evento)" 
+                        class="flex-1 px-4 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm font-semibold shadow hover:bg-gray-300 transition-all">
+                  <i class="fas fa-trash mr-1"></i>Eliminar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -160,34 +100,34 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { db, auth, storage } from '../firebase' // Agregar storage
-import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc } from 'firebase/firestore'// Importar updateDoc
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage' // Importar funciones de storage
+import { db, auth, storage } from '../firebase'
+import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc } from 'firebase/firestore'
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { useRouter } from 'vue-router'
 import { signOut } from 'firebase/auth'
-import { v4 as uuidv4 } from 'uuid' // Add this import at the top
+import { v4 as uuidv4 } from 'uuid'
+import EventForm from '../components/EventForm.vue'
 
 
 const router = useRouter()
 const eventos = ref([])
 const loading = ref(true)
-const newEvent = ref({ titulo: '', fecha: '', lugar: '', descripcion: '', formaPago: '', esFuturo: true, precio: '', ticketTypes: [] })
-const newTicket = ref({ nombre: '', precio: '' })
-
-const addTicketType = () => {
-  if (!newTicket.value.nombre || newTicket.value.precio === '') return
-  // ensure precio is a number string
-  newEvent.value.ticketTypes.push({ nombre: newTicket.value.nombre, precio: parseFloat(newTicket.value.precio).toFixed(2) })
-  newTicket.value = { nombre: '', precio: '' }
-}
-
-const removeTicketType = (index) => {
-  newEvent.value.ticketTypes.splice(index, 1)
-}
+// form state moved to EventForm component
 const mostrarCrearEvento = ref(false)
 const mostrarEventos = ref(false)
-const selectedImage = ref(null)
 const editingEvent = ref(null)
+const selectedImage = ref(null) // used temporarily when saving from child
+
+const irAInscripciones = () => {
+  router.push('/admin/inscripciones')
+}
+
+const verInscripcionesEvento = (eventoId) => {
+  router.push({
+    path: '/admin/inscripciones',
+    query: { eventoId }
+  })
+}
 
 const fetchEventos = () => {
   const eventosRef = collection(db, 'eventos')
@@ -198,85 +138,116 @@ const fetchEventos = () => {
   })
 }
 
-const handleImageUpload = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    selectedImage.value = file
-  }
-}
+// image handling is done in EventForm and passed up on save
 
-const uploadImage = async (eventId) => {
-  if (!selectedImage.value) return null
-  
+const uploadImage = async (eventId, file) => {
+  if (!file) return null
   const imageRef = storageRef(storage, `eventos/${eventId}/banner.jpg`)
-  await uploadBytes(imageRef, selectedImage.value)
+  await uploadBytes(imageRef, file)
   const imageUrl = await getDownloadURL(imageRef)
   return imageUrl
 }
 
-const addEvent = async () => {
-  // Validación: titulo, fecha y lugar siempre requeridos. descripcion y banner pueden ser opcionales en edición.
-  if (!newEvent.value.titulo || !newEvent.value.fecha || !newEvent.value.lugar) return
+const deleteStorageFileByUrl = async (url) => {
+  if (!url) return
+  try {
+    // Create a reference from the URL and delete
+    const fileRef = storageRef(storage, url)
+    // Note: storageRef(storage, url) expects a path, not a full URL. Try extracting path if needed.
+    // If url is a full download URL, attempt to extract the path after '/o/' and decode it.
+    if (url.startsWith('http')) {
+      try {
+        const decoded = decodeURIComponent(url.split('/o/')[1].split('?')[0])
+        const path = decoded
+        const r = storageRef(storage, path)
+        await deleteObject(r)
+        return
+      } catch (e) {
+        // fallback below
+      }
+    }
+    await deleteObject(fileRef)
+  } catch (e) {
+    console.warn('Could not delete previous banner:', e)
+  }
+}
+
+// Handler called when EventForm emits save
+const onFormSave = async ({ eventData, imageFile }) => {
+  // basic validation
+  if (!eventData.titulo || !eventData.fecha || !eventData.lugar) return
 
   try {
     if (editingEvent.value) {
-      // Si estamos editando, actualizar el documento existente
       const eventRef = doc(db, 'eventos', editingEvent.value.id)
-      let updateData = { ...newEvent.value }
+      let updateData = { ...eventData }
 
-      // Si hay una nueva imagen, subirla
-      if (selectedImage.value) {
-        const bannerUrl = await uploadImage(editingEvent.value.eventId)
+      if (imageFile) {
+        // delete previous banner if exists
+        if (editingEvent.value.bannerUrl) {
+          await deleteStorageFileByUrl(editingEvent.value.bannerUrl)
+        }
+        const bannerUrl = await uploadImage(editingEvent.value.eventId, imageFile)
         updateData.bannerUrl = bannerUrl
       }
 
       await updateDoc(eventRef, updateData)
     } else {
-      // Si estamos creando uno nuevo
       const eventId = uuidv4()
       const storagePath = `eventos/${eventId}/imagenes`
-      const bannerUrl = selectedImage.value ? await uploadImage(eventId) : null
+      const bannerUrl = imageFile ? await uploadImage(eventId, imageFile) : null
 
       await addDoc(collection(db, 'eventos'), {
-        ...newEvent.value,
+        ...eventData,
         eventId,
         storagePath,
         bannerUrl,
         createdAt: new Date().toISOString()
       })
     }
-
     closeForm()
+    return true
   } catch (error) {
     console.error('Error:', error)
-    // Aquí podrías agregar un manejo de errores más amigable
+    return false
   }
 }
 
 const editEvent = (evento) => {
+  // Pass the selected event object to the EventForm via the `editingEvent` prop
   editingEvent.value = evento
-  newEvent.value = { 
-    titulo: evento.titulo,
-    fecha: evento.fecha,
-    lugar: evento.lugar,
-    descripcion: evento.descripcion,
-    formaPago: evento.formaPago || '',
-    esFuturo: evento.esFuturo !== undefined ? evento.esFuturo : true,
-    precio: evento.precio || '',
-    ticketTypes: evento.ticketTypes ? [...evento.ticketTypes] : []
-  }
   mostrarCrearEvento.value = true
 }
 
 const closeForm = () => {
-  newEvent.value = { titulo: '', fecha: '', lugar: '', descripcion: '', formaPago: '', esFuturo: true, precio: '', ticketTypes: [] }
   selectedImage.value = null
   editingEvent.value = null
   mostrarCrearEvento.value = false
 }
 
 const deleteEvent = async (id) => {
-  await deleteDoc(doc(db, 'eventos', id))
+  try {
+    await deleteDoc(doc(db, 'eventos', id))
+  } catch (e) {
+    console.error('Error deleting event:', e)
+  }
+}
+
+// Ask for confirmation and delete event + banner if confirmed
+const confirmDelete = async (evento) => {
+  const confirmed = window.confirm(`¿Seguro que deseas eliminar el evento "${evento.titulo}"? Esta acción no se puede deshacer.`)
+  if (!confirmed) return
+
+  // Attempt to delete banner from storage if present
+  if (evento.bannerUrl) {
+    try {
+      await deleteStorageFileByUrl(evento.bannerUrl)
+    } catch (e) {
+      console.warn('No se pudo eliminar el banner del storage:', e)
+    }
+  }
+
+  await deleteEvent(evento.id)
 }
 
 const logout = async () => {

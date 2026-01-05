@@ -26,22 +26,10 @@
               </div>
             </div>
             <p class="text-gray-600">{{ evento.descripcion }}</p>
-            <!-- Selector de tipo de boleto -->
-            <div v-if="ticketTypes.length" class="mt-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona tipo de boleto</label>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <label v-for="(t, idx) in ticketTypes" :key="t.nombre + '-' + idx" class="flex items-center p-3 border rounded cursor-pointer" :class="selectedTicketIndex === idx ? 'border-blue-500 bg-blue-50' : ''">
-                  <input type="radio" :value="idx" v-model="selectedTicketIndex" class="mr-3" />
-                  <div>
-                    <div class="font-semibold">{{ t.nombre }}</div>
-                    <div class="text-sm text-gray-600">${{ t.precio }}</div>
-                  </div>
-                </label>
-              </div>
-            </div>
+            
 
             <!-- Cantidad y total -->
-            <div v-if="ticketTypes.length" class="mt-4 flex items-center gap-4">
+            <!-- <div v-if="ticketTypes.length" class="mt-4 flex items-center gap-4">
               <div class="w-40">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
                 <input type="number" min="1" v-model.number="ticketQuantity" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
@@ -50,7 +38,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Total estimado</label>
                 <div class="text-xl font-bold text-gray-800">${{ totalPrice }}</div>
               </div>
-            </div>
+            </div> -->
 
             <!-- Información de pago -->
             <div class="bg-blue-50 p-6 rounded-lg mt-6">
@@ -96,6 +84,17 @@
                 </li>
               </ul>
             </div>
+
+            <div class="mt-6">
+            <button
+              type="button"
+              @click="$router.push({ name: 'VerificarInscripcion', params: { eventoId: evento.id } })"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+            >
+              Verificar Inscripción
+            </button>
+          </div>
+          
           </div>
         </div>
 
@@ -105,6 +104,7 @@
             <i class="fas fa-user-plus mr-2 text-blue-600"></i>
             Formulario de Inscripción
           </h2>
+          
 
           <form @submit.prevent="enviarInscripcion" class="space-y-6">
             <!-- Información Personal -->
@@ -125,13 +125,16 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Cédula *
                 </label>
-                <input 
-                  v-model="formulario.cedula"
-                  type="text" 
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400"
-                  placeholder="con guiones ejemplo 0-123-4567"
-                >
+                                <input 
+                                  ref="cedulaInput"
+                                  v-model="formulario.cedula"
+                                  type="text" 
+                                  required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400"
+                                  placeholder="con guiones ejemplo 0-123-4567"
+                                  @input="cedulaError = ''"
+                                >
+                <p v-if="cedulaError" class="text-sm text-red-600 mt-2">{{ cedulaError }}</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -159,10 +162,24 @@
                 >
               </div> -->
             </div>
-
+            <!-- Selector de tipo de boleto -->
+           <div class="border-t pt-6">
+              <h3 class="text-md font-semibold text-gray-800 mb-4">
+                Selecciona tipo de boleto *
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label v-for="(t, idx) in ticketTypes" :key="t.nombre + '-' + idx" class="flex items-center p-3 border rounded cursor-pointer text-gray-700" :class="selectedTicketIndex === idx ? 'border-blue-500 bg-blue-50' : ''">
+                  <input type="radio" :value="idx" v-model="selectedTicketIndex" class="mr-3" />
+                  <div>
+                    <div class="font-semibold">{{ t.nombre }}</div>
+                    <div class="text-sm text-gray-600">${{ t.precio }}</div>
+                  </div>
+                </label>
+              </div>
+            </div>
             <!-- Comprobante de Pago -->
             <div class="border-t pt-6">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+              <h3 class="text-md font-semibold text-gray-800 mb-4">
                 <i class="fas fa-receipt mr-2 text-green-500"></i>
                 Comprobante de Pago *
               </h3>
@@ -228,10 +245,10 @@
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm items-start">
                     <div>
                       <label class="block text-green-700 font-medium">Monto (USD):</label>
-                      <input required type="number" step="0.01" min="0" v-model.number="datosExtraidos.monto" class="mt-1 block w-40 px-3 py-2 border rounded text-gray-800 placeholder-gray-400" />
+                      <input required type="number" step="0.01" min="0" v-model.number="formulario.monto" class="mt-1 block w-40 px-3 py-2 border rounded text-gray-800 placeholder-gray-400" />
                       <p class="text-xs text-gray-600 mt-1">Ingresa el monto pagado manualmente.</p>
                     </div>
-                    <div v-if="datosExtraidos.fecha">
+                    <!-- <div v-if="datosExtraidos.fecha">
                       <label class="block text-green-700 font-medium">Fecha:</label>
                       <span class="block p-2 rounded border bg-green-100 border-green-300  text-gray-800">
                         {{ datosExtraidos.fecha }}
@@ -242,7 +259,7 @@
                       <span class="block p-2 rounded border bg-green-100 border-green-300  text-gray-800">
                         {{ datosExtraidos.confirmacion }}
                       </span>
-                    </div>
+                    </div> -->
                   </div>
 
                   <!-- Estado de validación -->
@@ -304,13 +321,24 @@
         <i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i>
       </div>
     </div>
+
+    <!-- Modal de éxito con QR -->
+    <RegistrationSuccessModal 
+      :show="showSuccessModal" 
+      :registrationData="registrationResult || {}" 
+      @close="showSuccessModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
+import { v4 as uuidv4 } from 'uuid'
+import RegistrationSuccessModal from '../components/RegistrationSuccessModal.vue'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '../firebase'
 
 const route = useRoute()
 const router = useRouter()
@@ -320,14 +348,20 @@ const procesando = ref(false)
 const procesandoOCR = ref(false)
 const errorOCR = ref('')
 const previewUrl = ref('')
+const showSuccessModal = ref(false)
+const registrationResult = ref(null)
 
 const formulario = ref({
   nombre: '',
   cedula: '',
   telefono: '',
   edad: '',
+  monto:0,
   comprobante: null
 })
+
+const cedulaError = ref('')
+const cedulaInput = ref(null)
 
 const selectedTicketIndex = ref(null)
 const ticketTypes = ref([])
@@ -530,24 +564,90 @@ const enviarInscripcion = async () => {
     // Calcular total numérico para guardar
     const numericTotal = parseFloat(totalPrice.value) || (selectedTicketPrice.value * qty)
 
+    // Generar token único de registro
+    const registrationToken = uuidv4()
+
     // Simular envío / espera
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    // Agregar inscripción al store
-    eventosStore.inscribirParticipante(evento.value.id, {
-      ...formulario.value,
-      datosOCR: datosExtraidos.value,
+    // Preparar datos de registro (sin incluir el archivo directamente)
+    const registrationData = {
+      nombre: formulario.value.nombre,
+      cedula: formulario.value.cedula,
+      telefono: formulario.value.telefono,
+      edad: formulario.value.edad,
+      comprobante: formulario.value.comprobante, // Se pasará al store para ser subido
+      monto: formulario.monto,
       ticketType: selectedTicket.value ? selectedTicket.value.nombre : 'General',
       ticketPrice: selectedTicket.value ? Number(selectedTicket.value.precio) : Number(evento.value.precio) || 0,
       ticketQuantity: qty,
       totalPrice: numericTotal,
-      fechaInscripcion: new Date().toISOString()
-    })
+      fechaInscripcion: new Date().toISOString(),
+      registrationToken: registrationToken,
+      eventoId: evento.value.id,
+      eventoTitulo: evento.value.titulo
+    }
 
-    alert('¡Inscripción exitosa! Hemos recibido tu comprobante de pago y lo verificaremos pronto.')
-    // router.push('/eventos')
+    // Normalizar cédula: trim y mayúsculas para evitar duplicados por formato
+    const cedulaNormalizada = String(registrationData.cedula || '').trim().toUpperCase()
+    registrationData.cedula = cedulaNormalizada
 
-    // Reset ticket selection for next time
+    // Verificar si ya existe una inscripción con la misma cédula para este evento
+    try {
+      const inscripcionesRef = collection(db, 'inscripciones')
+      const q = query(inscripcionesRef, where('participante.cedula', '==', cedulaNormalizada), where('eventoId', '==', evento.value.id))
+      const snapshot = await getDocs(q)
+      if (!snapshot.empty) {
+        cedulaError.value = 'Ya existe una inscripción con esa cédula para este evento.'
+        await nextTick()
+        if (cedulaInput.value && cedulaInput.value.scrollIntoView) {
+          cedulaInput.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+        if (cedulaInput.value && cedulaInput.value.focus) cedulaInput.value.focus()
+        procesando.value = false
+        return
+      }
+    } catch (e) {
+      console.error('Error comprobando duplicados:', e)
+      cedulaError.value = 'No se pudo verificar si la cédula está registrada. Intenta nuevamente más tarde.'
+      await nextTick()
+      if (cedulaInput.value && cedulaInput.value.scrollIntoView) {
+        cedulaInput.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      if (cedulaInput.value && cedulaInput.value.focus) cedulaInput.value.focus()
+      procesando.value = false
+      return
+    }
+
+    // Agregar inscripción al store
+    await eventosStore.inscribirParticipante(evento.value.id, registrationData)
+
+    // Preparar datos para el modal
+    registrationResult.value = {
+      nombre: formulario.value.nombre,
+      cedula: formulario.value.cedula,
+      telefono: formulario.value.telefono,
+      ticketType: registrationData.ticketType,
+      ticketPrice: registrationData.ticketPrice,
+      registrationToken: registrationToken,
+      eventoId: evento.value.id,
+      eventoTitulo: evento.value.titulo
+    }
+
+    // Mostrar modal de éxito
+    showSuccessModal.value = true
+
+    // Reset formulario y selección
+    formulario.value = {
+      nombre: '',
+      cedula: '',
+      telefono: '',
+      edad: '',
+      comprobante: null
+    }
+    cedulaError.value = ''
+    previewUrl.value = ''
+    datosExtraidos.value = { monto: '', fecha: '', confirmacion: '' }
     selectedTicketIndex.value = null
     ticketQuantity.value = 1
 

@@ -10,6 +10,24 @@ export const useEventosStore = defineStore('eventos', () => {
   const inscripciones = ref([])
   const loading = ref(true)
 
+  // Eliminar campos `undefined` recursivamente para que Firestore no rechace el documento
+  const sanitize = (value) => {
+    if (value === null) return null
+    if (Array.isArray(value)) return value.map(sanitize)
+    if (typeof value === 'object') {
+      const out = {}
+      Object.keys(value).forEach((k) => {
+        const v = value[k]
+        if (v === undefined) return
+        // Skip functions and symbols
+        if (typeof v === 'function' || typeof v === 'symbol') return
+        out[k] = sanitize(v)
+      })
+      return out
+    }
+    return value
+  }
+
   // Cargar eventos desde Firestore en tiempo real
   const cargarEventos = () => {
     const eventosRef = collection(db, 'eventos')
@@ -44,9 +62,12 @@ export const useEventosStore = defineStore('eventos', () => {
       // continuar sin la URL si falla la subida
     }
 
+    // Sanitize participant data to remove undefined fields (Firestore rejects undefined)
+    const participanteSanitizado = datosParticipante ? sanitize(datosParticipante) : datosParticipante
+
     const inscripcion = {
       eventoId,
-      participante: datosParticipante,
+      participante: participanteSanitizado,
       fechaInscripcion: new Date().toISOString()
     }
 
@@ -82,8 +103,28 @@ export const useEventosStore = defineStore('eventos', () => {
     const inscripcionesRef = collection(db, 'inscripciones')
     const snapshot = await getDocs(inscripcionesRef)
     return snapshot.docs
-      .map(doc => doc.data())
+      .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(insc => insc.eventoId === eventoId)
+  }
+
+  // Obtener todas las inscripciones (con paginación opcional)
+  const obtenerTodasInscripciones = async () => {
+    const inscripcionesRef = collection(db, 'inscripciones')
+    const q = query(inscripcionesRef, orderBy('fechaInscripcion', 'desc'))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+  }
+
+  // Actualizar inscripción
+  const actualizarInscripcion = async (id, datosActualizados) => {
+    const inscripcionRef = doc(db, 'inscripciones', id)
+    await updateDoc(inscripcionRef, datosActualizados)
+  }
+
+  // Eliminar inscripción
+  const eliminarInscripcion = async (id) => {
+    const inscripcionRef = doc(db, 'inscripciones', id)
+    await deleteDoc(inscripcionRef)
   }
 
   return {
@@ -96,6 +137,9 @@ export const useEventosStore = defineStore('eventos', () => {
     agregarEvento,
     actualizarEvento,
     eliminarEvento,
-    obtenerInscripcionesPorEvento
+    obtenerInscripcionesPorEvento,
+    obtenerTodasInscripciones,
+    actualizarInscripcion,
+    eliminarInscripcion
   }
 })

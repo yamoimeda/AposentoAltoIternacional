@@ -14,8 +14,8 @@
         <!-- Imagen y título principal -->
         <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
           <div class="relative">
-            <img 
-              :src="evento.imagen" 
+            <img v-if="evento.bannerUrl || evento.imagen"
+              :src="evento.bannerUrl" 
               :alt="evento.titulo"
               class="w-full h-80 object-cover"
             >
@@ -155,11 +155,17 @@
               class="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
               @click="$router.push(`/evento/${eventoRel.id}`)"
             >
-              <img 
-                :src="eventoRel.imagen" 
-                :alt="eventoRel.titulo"
-                class="w-full h-32 object-cover rounded mb-3"
-              >
+              <!-- Imagen del evento o fondo de color si no hay imagen -->
+              <div v-if="evento.bannerUrl || evento.imagen" class="w-full h-32 overflow-hidden">
+                <img 
+                  :src="evento.bannerUrl || evento.imagen" 
+                  :alt="evento.titulo"
+                  class="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+                >
+              </div>
+              <div v-else class="w-full h-32 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-white text-6xl opacity-30"></i>
+              </div>
               <h3 class="font-semibold text-gray-800 mb-2">{{ eventoRel.titulo }}</h3>
               <p class="text-sm text-gray-600 mb-2">{{ formatearFecha(eventoRel.fecha) }}</p>
               <p class="text-xs text-gray-500">{{ eventoRel.ubicacion }}</p>

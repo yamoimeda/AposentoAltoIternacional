@@ -3,10 +3,12 @@ import InicioView from '../views/InicioView.vue'
 import EventosView from '../views/EventosView.vue'
 import EventoDetalleView from '../views/EventoDetalleView.vue'
 import InscripcionView from '../views/InscripcionView.vue'
+import VerificarInscripcionView from '../views/VerificarInscripcionView.vue'
 import NosotrosView from '../views/NosotrosView.vue'
 import ContactoView from '../views/ContactoView.vue'
 import AdminLogin from '../views/AdminLogin.vue'
 import AdminPanel from '../views/AdminPanel.vue'
+import AdminInscripcionesView from '../views/AdminInscripcionesView.vue'
 import { auth } from '../firebase'
 
 const routes = [
@@ -31,6 +33,11 @@ const routes = [
         component: InscripcionView
     },
     {
+        path: '/verificar-inscripcion/:eventoId?',
+        name: 'VerificarInscripcion',
+        component: VerificarInscripcionView
+    },
+    {
         path: '/nosotros',
         name: 'Nosotros',
         component: NosotrosView
@@ -49,6 +56,12 @@ const routes = [
         path: '/admin',
         name: 'AdminPanel',
         component: AdminPanel,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/admin/inscripciones',
+        name: 'AdminInscripciones',
+        component: AdminInscripcionesView,
         meta: { requiresAuth: true }
     },
     // Ruta de fallback para páginas no encontradas

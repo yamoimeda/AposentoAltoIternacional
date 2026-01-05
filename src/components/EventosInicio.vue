@@ -15,7 +15,7 @@
         <button 
           @click="anteriorSlide"
           :disabled="currentSlide === 0"
-          class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg/40  rounded-full w-12 h-12 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <i class="fas fa-chevron-left text-gray-600"></i>
         </button>
@@ -23,7 +23,7 @@
         <button 
           @click="siguienteSlide"
           :disabled="currentSlide >= maxSlides - 1"
-          class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg/40 rounded-full w-12 h-12 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <i class="fas fa-chevron-right text-gray-600"></i>
         </button>
@@ -43,12 +43,18 @@
             >
               <div class="overflow-hidden pt-2">
                 <!-- Imagen del evento -->
-                <div class="relative rounded-2xl shadow-lg overflow-hidden h-84 transition-all duration-300 cursor-pointer group hover:-translate-y-1">
-                  <img 
-                    :src="evento.imagen || 'https://via.placeholder.com/400x300/667eea/ffffff?text=Evento'" 
-                    :alt="evento.titulo"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  >
+                <div class="relative rounded-2xl shadow-lg/40 overflow-hidden h-84 transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                  <!-- Imagen del evento o fondo de color si no hay imagen -->
+                  <div v-if="evento.bannerUrl || evento.imagen" class="w-full h-full">
+                    <img 
+                      :src="evento.bannerUrl || evento.imagen" 
+                      :alt="evento.titulo"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    >
+                  </div>
+                  <div v-else class="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-white text-6xl opacity-30"></i>
+                  </div>
                   <!-- Overlay gradient -->
                   <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                   
@@ -249,12 +255,8 @@ onUnmounted(() => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* Pausar auto-play al hacer hover */
-.container:hover {
-  /* El auto-play se puede pausar con JavaScript en el futuro */
 }
 </style>
