@@ -171,6 +171,7 @@
                       type="file" 
                       @change="handleNuevoComprobante"
                       accept="image/*"
+                      :multiple="eventoId && (eventosStore.obtenerEventoPorId(eventoId) && eventosStore.obtenerEventoPorId(eventoId).opciones ? eventosStore.obtenerEventoPorId(eventoId).opciones.permitirMultiplesAdjuntos : false)"
                       :disabled="subiendoComprobante"
                       class="w-full px-4 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
@@ -334,8 +335,12 @@ const calcularTotalAcumulado = computed(() => {
 })
 
 onMounted(async () => {
-  // Cargar eventos primero
-  await eventosStore.cargarEventos()
+  // Cargar eventos primero (si la función está disponible)
+  if (typeof eventosStore.cargarEventos === 'function') {
+    await eventosStore.cargarEventos()
+  } else {
+    console.warn('eventosStore.cargarEventos is not available')
+  }
   
   // Si viene de un evento específico, obtener el ID
   eventoId.value = route.params.eventoId || route.query.eventoId || null

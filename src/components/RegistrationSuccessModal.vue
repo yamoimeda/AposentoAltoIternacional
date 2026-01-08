@@ -1,7 +1,7 @@
 <template>
   <Transition name="modal-fade">
-    <div v-if="show" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="$emit('close')">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 animate-scale-in">
+    <div v-if="show" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 py-12 px-4" @click.self="$emit('close')">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[95vh] overflow-y-auto no-scrollbar transform transition-all duration-300 animate-scale-in">
         <!-- Header con animación de éxito -->
         <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-t-2xl text-center relative overflow-hidden">
           <!-- Confeti animado de fondo -->
@@ -12,7 +12,7 @@
           </div>
           
           <div class="relative z-10">
-            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-in">
+            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-in">
               <i class="fas fa-check text-green-500 text-4xl"></i>
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">¡Inscripción Exitosa!</h2>
@@ -25,8 +25,8 @@
           <!-- Código QR -->
           <div class="flex flex-col items-center bg-gray-50 p-6 rounded-xl">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Tu Boleto Digital</h3>
-            <div class="bg-white p-4 rounded-lg shadow-md">
-              <canvas ref="qrCanvas" class="max-w-full"></canvas>
+              <div class="bg-white p-4 rounded-lg shadow-md flex justify-center">
+              <canvas ref="qrCanvas" class="w-48 h-48 max-w-full max-h-[40vh]" ></canvas>
             </div>
             <p class="text-sm text-gray-600 mt-4 text-center">
               Guarda este código QR para presentarlo el día del evento
@@ -60,14 +60,18 @@
                 <span class="text-gray-600">Precio:</span>
                 <span class="font-semibold text-green-600">${{ registrationData.ticketPrice }}</span>
               </div>
+              <div v-if="registrationData.ticketPrice" class="flex justify-between">
+                <span class="text-gray-600">abonado:</span>
+                <span class="font-semibold text-green-600">${{ registrationData.monto }}</span>
+              </div>
             </div>
           </div>
 
           <!-- ID de registro -->
-          <div class="bg-gray-100 rounded-lg p-3">
+          <!-- <div class="bg-gray-100 rounded-lg p-3">
             <p class="text-xs text-gray-600 text-center">ID de Registro</p>
             <p class="text-sm font-mono text-gray-800 text-center break-all">{{ registrationData.registrationToken }}</p>
-          </div>
+          </div> -->
 
           <!-- Botones de acción -->
           <div class="flex gap-3">
@@ -115,7 +119,8 @@ const props = defineProps({
       telefono: '',
       ticketType: '',
       ticketPrice: '',
-      registrationToken: ''
+      registrationToken: '',
+      monto: ''
     })
   }
 })
@@ -233,4 +238,16 @@ onMounted(() => {
 .animate-confetti {
   animation: confetti 2s ease-out infinite;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
 </style>
+

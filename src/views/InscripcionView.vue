@@ -20,12 +20,9 @@
                 <i class="fas fa-map-marker-alt mr-3 text-blue-600"></i>
                 {{ evento.lugar }}
               </div>
-              <div v-if="evento.precio" class="flex items-center text-gray-700">
-                <i class="fas fa-dollar-sign mr-3 text-green-600"></i>
-                <span class="font-semibold">Costo: ${{ evento.precio || '' }}</span>
-              </div>
+              
             </div>
-            <p class="text-gray-600">{{ evento.descripcion }}</p>
+            <p class="text-gray-600 whitespace-pre-line">{{ evento.descripcion }}</p>
             
 
             <!-- Cantidad y total -->
@@ -60,7 +57,7 @@
               </div>
             </div>
 
-            <div class="bg-gray-50 p-6 rounded-lg mt-6">
+            <div v-if="evento.opciones.adjuntoRequerido" class="bg-gray-50 p-6 rounded-lg mt-6">
               <h3 class="text-xl font-semibold text-gray-800 mb-4">
                 <i class="fas fa-info-circle mr-2 text-blue-600"></i>
                 Información Importante
@@ -74,10 +71,26 @@
                   <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
                   <span>Adjunta la captura de pantalla del pago</span>
                 </li>
-                <!-- <li class="flex items-start">
+                <li class="flex items-start">
+                  <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
+                  <span>Los boletos no son reembolsables</span>
+                </li>
+              </ul>
+            </div>
+            <div v-else class="bg-gray-50 p-6 rounded-lg mt-6">
+              <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                Información Importante
+              </h3>
+              <ul class="space-y-2 text-gray-700">
+                <li class="flex items-start">
                   <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                  <span>Recibirás confirmación una vez verificado el pago</span>
-                </li> -->
+                  <span>Puede completar la inscripción sin previo abono.</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Al completar esta inscripción, usted garantiza su participación.</span>
+                </li>
                 <li class="flex items-start">
                   <i class="fas fa-times text-red-500 mr-2 mt-1"></i>
                   <span>Los boletos no son reembolsables</span>
@@ -148,6 +161,37 @@
                   placeholder="+507 6305-1268"
                 >
               </div>
+              <!-- Dropdowns condicionados por opciones del evento -->
+              <div v-if="evento && evento.opciones && evento.opciones.habilitarIglesia">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Iglesia *</label>
+                <select v-model="formulario.iglesia" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400">
+                  <option value="">Selecciona una iglesia</option>
+                  <option v-for="(i, idx) in iglesias" :key="idx" :value="i">{{ i }}</option>
+                </select>
+              </div>
+
+              <div v-if="evento && evento.opciones && evento.opciones.habilitarMentor && formulario.iglesia === 'Panamá'">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mentor *</label>
+                <select v-model="formulario.mentor" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400">
+                  <option value="">Selecciona un mentor</option>
+                  <option v-for="(m, idx) in mentores" :key="idx" :value="m">{{ m }}</option>
+                </select>
+              </div>
+              <!-- Edad, Correo y Nota condicionales -->
+              <div v-if="evento && evento.opciones && evento.opciones.habilitarEdad">
+                <label  class="block text-sm font-medium text-gray-700 mb-2">Edad *</label>
+                <input required v-model="formulario.edad" type="number" min="1" max="120" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400" placeholder="Ej: 30" />
+              </div>
+
+              <div v-if="evento && evento.opciones && evento.opciones.habilitarCorreo">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico *</label>
+                <input required v-model="formulario.correo" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400" placeholder="tu@correo.com" />
+              </div>
+
+              <div v-if="evento && evento.opciones && evento.opciones.habilitarNota">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nota (opcional)</label>
+                <textarea v-model="formulario.nota" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-400" placeholder="Alguna nota o información adicional..."></textarea>
+              </div>
               <!-- <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Edad
@@ -164,11 +208,12 @@
             </div>
             <!-- Selector de tipo de boleto -->
            <div class="border-t pt-6">
+            
               <h3 class="text-md font-semibold text-gray-800 mb-4">
-                Selecciona tipo de boleto *
+                Selecciona tipo de boleto * 
               </h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <label v-for="(t, idx) in ticketTypes" :key="t.nombre + '-' + idx" class="flex items-center p-3 border rounded cursor-pointer text-gray-700" :class="selectedTicketIndex === idx ? 'border-blue-500 bg-blue-50' : ''">
+                <label v-for="(t, idx) in evento.ticketTypes" :key="t.nombre + '-' + idx" class="flex items-center p-3 border rounded cursor-pointer text-gray-700" :class="selectedTicketIndex === idx ? 'border-blue-500 bg-blue-50' : ''">
                   <input type="radio" :value="idx" v-model="selectedTicketIndex" class="mr-3" />
                   <div>
                     <div class="font-semibold">{{ t.nombre }}</div>
@@ -181,39 +226,40 @@
             <div class="border-t pt-6">
               <h3 class="text-md font-semibold text-gray-800 mb-4">
                 <i class="fas fa-receipt mr-2 text-green-500"></i>
-                Comprobante de Pago *
+                Comprobante de Pago {{ evento.opciones.adjuntoRequerido ? '*' : '(puede inscribirse sin pago)' }}
               </h3>
               
               <div class="space-y-4">
                 <!-- Upload de imagen -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Adjuntar Captura de Pantalla del Pago *
+                    Adjuntar archivo(s)
                   </label>
                   <div class="flex items-center justify-center w-full">
                     <label 
                       for="comprobante-upload"
                       :class="[
                         'flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors',
-                        formulario.comprobante ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                        formulario.comprobante && formulario.comprobante.length ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
                       ]"
                     >
                       <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                        <i :class="['text-3xl mb-2', formulario.comprobante ? 'fas fa-check-circle text-green-500' : 'fas fa-cloud-upload-alt text-gray-400']"></i>
+                        <i :class="['text-3xl mb-2', formulario.comprobante && formulario.comprobante.length ? 'fas fa-check-circle text-green-500' : 'fas fa-cloud-upload-alt text-gray-400']"></i>
                         <p class="mb-2 text-sm text-gray-500">
                           <span class="font-semibold">
-                            {{ formulario.comprobante ? 'Imagen cargada' : 'Click para subir' }}
+                          {{ formulario.comprobante && formulario.comprobante.length ? 'Archivo(s) cargado(s)' : 'Click para subir' }}
                           </span> 
-                          {{ !formulario.comprobante ? 'o arrastra y suelta' : '' }}
+                          {{ !(formulario.comprobante && formulario.comprobante.length) ? 'o arrastra y suelta' : '' }}
                         </p>
-                        <p class="text-xs text-gray-500">PNG, JPG o JPEG (MAX. 5MB)</p>
+                        <p class="text-xs text-gray-500">PNG, JPG o JPEG (MAX. 5MB cada uno)</p>
                       </div>
                       <input 
                         id="comprobante-upload" 
                         type="file" 
                         class="hidden" 
                         accept="image/*"
-                        required
+                        :required="evento.opciones.adjuntoRequerido ?? false "
+                        :multiple="evento.opciones.permitirMultiplesAdjuntos ?? false"
                         @change="manejarArchivo"
                       />
                     </label>
@@ -221,23 +267,16 @@
                 </div>
 
                 <!-- Preview de la imagen -->
-                <div v-if="formulario.comprobante" class="relative">
-                  <img 
-                    :src="previewUrl" 
-                    alt="Preview del comprobante"
-                    class="max-w-full h-48 object-contain mx-auto border rounded-lg"
-                  >
-                  <button 
-                    type="button"
-                    @click="eliminarArchivo"
-                    class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                  >
-                    <i class="fas fa-times text-xs"></i>
-                  </button>
+                <div v-if="formulario.comprobante && formulario.comprobante.length" class="relative space-y-2">
+                  <div v-for="(f, i) in formulario.comprobante" :key="i" class="p-2 border rounded-lg bg-white flex items-center gap-3">
+                    <img :src="previews[i]" alt="Preview del comprobante" class="w-20 h-20 object-cover rounded" />
+                    <div class="flex-1 text-sm text-gray-700">{{ f.name }} <div class="text-xs text-gray-500">{{ (f.size/1024/1024).toFixed(2) }} MB</div></div>
+                    <button type="button" @click="eliminarArchivo(i)" class="bg-red-500 text-white rounded px-2 py-1 text-xs">Eliminar</button>
+                  </div>
                 </div>
 
                 <!-- OCR deshabilitado: ingresar monto manualmente -->
-                <div class="bg-green-50 p-4 rounded-lg">
+                <div class="bg-green-50 p-4 rounded-lg" v-if="evento.opciones.adjuntoRequerido || formulario.comprobante && formulario.comprobante.length">
                   <h4 class="font-semibold text-green-800 mb-2">
                     <!-- <i class="fas fa-robot mr-2"></i> -->
                     Información del comprobante
@@ -245,7 +284,7 @@
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm items-start">
                     <div>
                       <label class="block text-green-700 font-medium">Monto (USD):</label>
-                      <input required type="number" step="0.01" min="0" v-model.number="formulario.monto" class="mt-1 block w-40 px-3 py-2 border rounded text-gray-800 placeholder-gray-400" />
+                      <input required type="number" step="0.01" min="0" v-model="formulario.monto" class="mt-1 block w-40 px-3 py-2 border rounded text-gray-800 placeholder-gray-400" />
                       <p class="text-xs text-gray-600 mt-1">Ingresa el monto pagado manualmente.</p>
                     </div>
                     <!-- <div v-if="datosExtraidos.fecha">
@@ -295,10 +334,10 @@
               </button>
               <button 
                 type="submit"
-                :disabled="procesando || !formulario.comprobante "
+                :disabled="procesando || ((evento && evento.opciones && evento.opciones.adjuntoRequerido) ? !(formulario.comprobante && formulario.comprobante.length) : false)"
                 :class="[
                   'flex-1 px-6 py-3 rounded-lg font-semibold transition-colors',
-                  (procesando || !formulario.comprobante ) 
+                  (procesando || ((evento && evento.opciones && evento.opciones.adjuntoRequerido) ? !(formulario.comprobante && formulario.comprobante.length) : false)) 
                     ? 'bg-gray-400 cursor-not-allowed' 
                     : 'bg-blue-600 hover:bg-blue-700',
                   'text-white'
@@ -337,7 +376,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
 import { v4 as uuidv4 } from 'uuid'
 import RegistrationSuccessModal from '../components/RegistrationSuccessModal.vue'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 
 const route = useRoute()
@@ -348,6 +387,7 @@ const procesando = ref(false)
 const procesandoOCR = ref(false)
 const errorOCR = ref('')
 const previewUrl = ref('')
+const previews = ref([])
 const showSuccessModal = ref(false)
 const registrationResult = ref(null)
 
@@ -356,8 +396,10 @@ const formulario = ref({
   cedula: '',
   telefono: '',
   edad: '',
+  correo: '',
+  nota: '',
   monto:0,
-  comprobante: null
+  comprobante: []
 })
 
 const cedulaError = ref('')
@@ -372,6 +414,9 @@ const datosExtraidos = ref({
   fecha: '',
   confirmacion: ''
 })
+
+const iglesias = ref([])
+const mentores = ref([])
 
 const evento = computed(() => {
   return eventosStore.obtenerEventoPorId(route.params.id)
@@ -415,8 +460,24 @@ const pagoValido = computed(() => {
   return validarMonto(datosExtraidos.value.monto) && validarFecha(datosExtraidos.value.fecha)
 })
 
+const parseDateLocal = (fecha) => {
+  if (!fecha) return new Date(NaN)
+  if (fecha instanceof Date) return fecha
+  if (typeof fecha === 'string') {
+    if (fecha.includes('T') || fecha.includes(' ')) return new Date(fecha)
+    const parts = fecha.split('-')
+    if (parts.length === 3) {
+      const y = Number(parts[0])
+      const m = Number(parts[1]) - 1
+      const d = Number(parts[2])
+      return new Date(y, m, d)
+    }
+  }
+  return new Date(fecha)
+}
+
 const formatearFecha = (fecha) => {
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return parseDateLocal(fecha).toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -425,38 +486,63 @@ const formatearFecha = (fecha) => {
 }
 
 const manejarArchivo = async (event) => {
-  const archivo = event.target.files[0]
-  if (!archivo) return
+  const files = Array.from(event.target.files || [])
+  if (!files.length) return
 
-  // Validar tipo de archivo
-  if (!archivo.type.startsWith('image/')) {
-    alert('Por favor selecciona una imagen válida')
+  // Decide append vs replace based on event option
+  const permitirMultiples = evento.value && evento.value.opciones ? !!evento.value.opciones.permitirMultiplesAdjuntos : false
+
+  // If not allowing multiples, take only the first valid file and replace existing
+  if (!permitirMultiples) {
+    const archivo = files[0]
+    if (!archivo) return
+    if (!archivo.type.startsWith('image/')) {
+      alert('Por favor selecciona una imagen válida')
+      return
+    }
+    if (archivo.size > 5 * 1024 * 1024) {
+      alert(`El archivo ${archivo.name} supera el límite de 5MB y fue omitido.`)
+      return
+    }
+
+    // Replace existing single file
+    formulario.value.comprobante = [archivo]
+    previews.value = []
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      previews.value.push(e.target.result)
+    }
+    reader.readAsDataURL(archivo)
     return
   }
 
-  // Validar tamaño (5MB max)
-  if (archivo.size > 5 * 1024 * 1024) {
-    alert('La imagen no puede ser mayor a 5MB')
-    return
+  // If multiple allowed, append valid files
+  for (const archivo of files) {
+    if (!archivo.type.startsWith('image/')) {
+      alert('Por favor selecciona solo imágenes válidas')
+      continue
+    }
+    if (archivo.size > 5 * 1024 * 1024) {
+      alert(`El archivo ${archivo.name} supera el límite de 5MB y fue omitido.`)
+      continue
+    }
+    formulario.value.comprobante.push(archivo)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      previews.value.push(e.target.result)
+    }
+    reader.readAsDataURL(archivo)
   }
-
-  formulario.value.comprobante = archivo
-  
-  // Crear preview
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewUrl.value = e.target.result
-  }
-  reader.readAsDataURL(archivo)
-
-  // Procesar con OCR
-  // OCR deshabilitado: solicitamos ingresar el monto manualmente
-  // await procesarOCR(archivo)
 }
 
-const eliminarArchivo = () => {
-  formulario.value.comprobante = null
-  previewUrl.value = ''
+const eliminarArchivo = (index) => {
+  if (typeof index === 'number') {
+    formulario.value.comprobante.splice(index, 1)
+    previews.value.splice(index, 1)
+  } else {
+    formulario.value.comprobante = []
+    previews.value = []
+  }
   datosExtraidos.value = { monto: '', fecha: '', confirmacion: '' }
   errorOCR.value = ''
 }
@@ -512,7 +598,7 @@ const validarFecha = (fecha) => {
   if (!fecha) return true // La fecha es opcional para validación
   
   // Verificar que la fecha sea reciente (últimos 7 días)
-  const fechaPago = new Date(fecha)
+  const fechaPago = parseDateLocal(fecha)
   const fechaActual = new Date()
   const diferenciaDias = (fechaActual - fechaPago) / (1000 * 60 * 60 * 24)
   
@@ -544,7 +630,12 @@ const enviarInscripcion = async () => {
     formData.append('cedula', formulario.value.cedula)
     formData.append('telefono', formulario.value.telefono)
     formData.append('edad', formulario.value.edad)
-    formData.append('comprobante', formulario.value.comprobante)
+    // Attach comprobante files (if any)
+    if (formulario.value.comprobante && formulario.value.comprobante.length) {
+      formulario.value.comprobante.forEach((f, idx) => {
+        formData.append('comprobante_' + idx, f)
+      })
+    }
     formData.append('datosOCR', JSON.stringify(datosExtraidos.value))
     formData.append('eventoId', evento.value.id)
 
@@ -576,12 +667,16 @@ const enviarInscripcion = async () => {
       cedula: formulario.value.cedula,
       telefono: formulario.value.telefono,
       edad: formulario.value.edad,
-      comprobante: formulario.value.comprobante, // Se pasará al store para ser subido
-      monto: formulario.monto,
+      correo: formulario.value.correo || null,
+      nota: formulario.value.nota || null,
+      comprobante: formulario.value.comprobante && formulario.value.comprobante.length ? [...formulario.value.comprobante] : null, // Se pasará al store para ser subido
+      iglesia: formulario.value.iglesia || null,
+      mentor: formulario.value.mentor || null,
+      monto: formulario.value.monto,
       ticketType: selectedTicket.value ? selectedTicket.value.nombre : 'General',
       ticketPrice: selectedTicket.value ? Number(selectedTicket.value.precio) : Number(evento.value.precio) || 0,
       ticketQuantity: qty,
-      totalPrice: numericTotal,
+      totalPrice: formulario.value.monto,
       fechaInscripcion: new Date().toISOString(),
       registrationToken: registrationToken,
       eventoId: evento.value.id,
@@ -631,7 +726,8 @@ const enviarInscripcion = async () => {
       ticketPrice: registrationData.ticketPrice,
       registrationToken: registrationToken,
       eventoId: evento.value.id,
-      eventoTitulo: evento.value.titulo
+      eventoTitulo: evento.value.titulo,
+      monto: formulario.value.monto
     }
 
     // Mostrar modal de éxito
@@ -643,8 +739,11 @@ const enviarInscripcion = async () => {
       cedula: '',
       telefono: '',
       edad: '',
-      comprobante: null
+      correo: '',
+      nota: '',
+      comprobante: []
     }
+    previews.value = []
     cedulaError.value = ''
     previewUrl.value = ''
     datosExtraidos.value = { monto: '', fecha: '', confirmacion: '' }
@@ -661,9 +760,23 @@ const enviarInscripcion = async () => {
 
 onMounted(() => {
   console.log(route.params.id);
-  eventosStore.cargarEventos()
-  
+
   // Cargar Tesseract.js para OCR (opcional)
   // OCR disabled: no cargamos Tesseract automáticamente
+  // Cargar configuración de iglesias y mentores desde Firestore
+  (async () => {
+    try {
+      const configRef = doc(db, 'configuracion', 'igelsias')
+      const snap = await getDoc(configRef)
+      if (snap.exists()) {
+        const data = snap.data()
+        // Esperamos arrays: data.iglesias y data.mentores
+        iglesias.value = Array.isArray(data.nombre) ? data.nombre : []
+        mentores.value = Array.isArray(data.mentores) ? data.mentores : []
+      }
+    } catch (e) {
+      console.warn('No se pudo cargar configuracion de iglesias/mentores:', e)
+    }
+  })()
 })
 </script>

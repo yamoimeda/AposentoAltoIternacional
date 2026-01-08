@@ -4,7 +4,7 @@
       <div
         v-if="show"
         @click.self="cerrar"
-        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+        class="fixed inset-0 bg-black/60 bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
       >
         <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-8 animate-fade-in-up">
           <!-- Header -->
@@ -68,7 +68,7 @@
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
                     <i class="fas fa-phone mr-2 text-indigo-600"></i>
-                    WhatsApp *
+                    WhatsApp * 
                   </label>
                   <input
                     v-model="formulario.telefono"
@@ -76,6 +76,16 @@
                     required
                     class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-600"
                   />
+                </div>
+
+                <div v-if="effectiveOpciones.habilitarIglesia">
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Iglesia</label>
+                  <input v-model="formulario.iglesia" type="text" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-600" />
+                </div>
+
+                <div v-if="effectiveOpciones.habilitarMentor">
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Mentor</label>
+                  <input v-model="formulario.mentor" type="text" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-600" />
                 </div>
 
                 <div>
@@ -89,6 +99,15 @@
                     class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-600"
                   />
                 </div>
+                <div v-if="effectiveOpciones.habilitarCorreo">
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Correo electrónico</label>
+                  <input v-model="formulario.correo" type="email" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-600" />
+                </div>
+
+                <div v-if="effectiveOpciones.habilitarNota" class="md:col-span-2">
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Nota</label>
+                  <textarea v-model="formulario.nota" rows="3" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-600"></textarea>
+                </div>
               </div>
 
               <!-- Información del Ticket -->
@@ -97,7 +116,7 @@
                   <i class="fas fa-ticket-alt text-indigo-600"></i>
                   Información del Ticket
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Ticket</label>
                     <input
@@ -107,15 +126,6 @@
                     />
                   </div>
 
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Cantidad</label>
-                    <input
-                      v-model.number="formulario.ticketQuantity"
-                      type="number"
-                      min="1"
-                      class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-600"
-                    />
-                  </div>
 
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Total Pagado ($)</label>
@@ -169,7 +179,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
   show: {
@@ -183,6 +193,11 @@ const props = defineProps({
   eventoTitulo: {
     type: String,
     default: ''
+  }
+  ,
+  eventoOpciones: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -202,6 +217,13 @@ const formulario = ref({
   registrationToken: ''
 })
 
+// Prefer explicitly passed-in prop `eventoOpciones`, fallback to `inscripcion.eventoOpciones` when available
+const effectiveOpciones = computed(() => {
+  if (props.eventoOpciones && Object.keys(props.eventoOpciones).length) return props.eventoOpciones
+  if (props.inscripcion && props.inscripcion.eventoOpciones) return props.inscripcion.eventoOpciones
+  return {}
+})
+
 // Cargar datos cuando cambia la inscripción
 watch(() => props.inscripcion, (nuevaInscripcion) => {
   console.log('EditInscripcionModal: inscripcion changed:', nuevaInscripcion)
@@ -212,7 +234,9 @@ watch(() => props.inscripcion, (nuevaInscripcion) => {
       nombre: p.nombre || '',
       cedula: p.cedula || '',
       telefono: p.telefono || '',
-      edad: p.edad || '',
+        edad: p.edad || '',
+        correo: p.correo || '',
+        nota: p.nota || '',
       ticketType: p.ticketType || '',
       ticketQuantity: p.ticketQuantity || 1,
       totalPrice: p.totalPrice || 0,
@@ -237,7 +261,13 @@ const guardar = async () => {
     // Emitir evento con los datos actualizados
     await emit('save', {
       id: props.inscripcion.id,
-      participante: { ...formulario.value }
+      participante: { 
+        ...formulario.value,
+        correo: formulario.value.correo || '',
+        nota: formulario.value.nota || '',
+        iglesia: formulario.value.iglesia || '',
+        mentor: formulario.value.mentor || ''
+      }
     })
 
     mensaje.value = {

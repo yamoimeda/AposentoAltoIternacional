@@ -42,6 +42,46 @@
             <textarea v-model="localEvent.formaPago" rows="4" placeholder="Describe cómo se puede pagar (ej: datos de transferencia, instrucciones para pago presencial, link de pago, etc.)" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800"></textarea>
           </div>
 
+          <div class="mt-4 border-t pt-4">
+            <h4 class="text-md font-semibold text-gray-800 mb-2">Opciones de Inscripción</h4>
+            <div class="grid grid-cols-1 gap-2">
+              <label class="flex items-center gap-3">
+                <input type="checkbox" v-model="localEvent.opciones.habilitarIglesia" class="w-4 h-4" />
+                <span class="text-sm text-gray-700">Habilitar campo Iglesia (dropdown en inscripción)</span>
+              </label>
+
+              <label class="flex items-center gap-3">
+                <input type="checkbox" v-model="localEvent.opciones.habilitarMentor" class="w-4 h-4" />
+                <span class="text-sm text-gray-700">Habilitar campo Mentor (dropdown en inscripción)</span>
+              </label>
+
+              <label class="flex items-center gap-3">
+                <input type="checkbox" v-model="localEvent.opciones.adjuntoRequerido" class="w-4 h-4" />
+                <span class="text-sm text-gray-700">Adjunto requerido</span>
+              </label>
+
+              <label class="flex items-center gap-3">
+                <input type="checkbox" v-model="localEvent.opciones.permitirMultiplesAdjuntos" class="w-4 h-4" />
+                <span class="text-sm text-gray-700">Permitir múltiples archivos en comprobante</span>
+              </label>
+
+              <label class="flex items-center gap-3">
+                <input type="checkbox" v-model="localEvent.opciones.habilitarEdad" class="w-4 h-4" />
+                <span class="text-sm text-gray-700">Habilitar campo Edad en inscripción</span>
+              </label>
+
+              <label class="flex items-center gap-3">
+                <input type="checkbox" v-model="localEvent.opciones.habilitarCorreo" class="w-4 h-4" />
+                <span class="text-sm text-gray-700">Habilitar campo Correo electrónico en inscripción</span>
+              </label>
+
+              <label class="flex items-center gap-3">
+                <input type="checkbox" v-model="localEvent.opciones.habilitarNota" class="w-4 h-4" />
+                <span class="text-sm text-gray-700">Habilitar campo Nota (multilínea) en inscripción</span>
+              </label>
+            </div>
+          </div>
+
           <div class="flex items-center gap-3 mt-2">
             <input id="esFuturo" type="checkbox" v-model="localEvent.esFuturo" class="w-4 h-4" />
             <label for="esFuturo" class="text-sm text-gray-700">Evento activo / Futuro</label>
@@ -93,9 +133,9 @@ const emit = defineEmits(['save', 'close'])
 
 const isEditing = computed(() => !!props.initialEvent)
 
-const defaultEvent = () => ({ titulo: '', fecha: '', lugar: '', descripcion: '', formaPago: '', esFuturo: true, precio: '', ticketTypes: [] })
+const defaultEvent = () => ({ titulo: '', fecha: '', lugar: '', descripcion: '', formaPago: '', esFuturo: true, precio: '', ticketTypes: [], opciones: { habilitarIglesia: false, habilitarMentor: false, adjuntoRequerido: true, permitirMultiplesAdjuntos: false, habilitarEdad: false, habilitarCorreo: false, habilitarNota: false } })
 
-const localEvent = ref(props.initialEvent ? { ...props.initialEvent, ticketTypes: props.initialEvent.ticketTypes || [] } : defaultEvent())
+const localEvent = ref(props.initialEvent ? { ...props.initialEvent, ticketTypes: props.initialEvent.ticketTypes || [], opciones: { ...(props.initialEvent.opciones || {}), habilitarEdad: (props.initialEvent.opciones && props.initialEvent.opciones.habilitarEdad) || false, habilitarCorreo: (props.initialEvent.opciones && props.initialEvent.opciones.habilitarCorreo) || false, habilitarNota: (props.initialEvent.opciones && props.initialEvent.opciones.habilitarNota) || false } } : defaultEvent())
 const newTicket = ref({ nombre: '', precio: '' })
 const selectedImage = ref(null)
 const loading = ref(false)
@@ -104,7 +144,7 @@ const previewUrl = ref('')
 
 watch(() => props.initialEvent, (v) => {
   if (v) {
-    localEvent.value = { ...v, ticketTypes: v.ticketTypes || [] }
+    localEvent.value = { ...v, ticketTypes: v.ticketTypes || [], opciones: { ...(v.opciones || {}), habilitarEdad: (v.opciones && v.opciones.habilitarEdad) || false, habilitarCorreo: (v.opciones && v.opciones.habilitarCorreo) || false, habilitarNota: (v.opciones && v.opciones.habilitarNota) || false } }
     // Si hay bannerUrl existente, mostrarla en el preview
     if (v.bannerUrl) {
       previewUrl.value = v.bannerUrl

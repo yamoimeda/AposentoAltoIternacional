@@ -18,6 +18,15 @@
               </span>
             </div>
             <button
+              @click="exportarCSV"
+              :disabled="inscripcionesFiltradas.length === 0"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 flex items-center gap-2"
+              title="Exportar CSV"
+            >
+              <i class="fas fa-file-csv"></i>
+              Exportar CSV
+            </button>
+            <button
               @click="cargarInscripciones"
               :disabled="cargando"
               class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 flex items-center gap-2"
@@ -33,7 +42,7 @@
       <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Búsqueda -->
-          <div class="md:col-span-2">
+          <div class="md:col-span-3">
             <label class="block text-sm font-semibold text-gray-700 mb-2">
               <i class="fas fa-search mr-2"></i>
               Buscar por nombre, cédula o teléfono
@@ -47,13 +56,14 @@
           </div>
 
           <!-- Filtro por Evento -->
-          <div>
+          <div hidden>
             <label class="block text-sm font-semibold text-gray-700 mb-2">
               <i class="fas fa-calendar mr-2"></i>
               Filtrar por Evento
             </label>
             <div class="flex gap-2">
               <select
+              hidden
                 v-model="filtros.eventoId"
                 class="flex-1 px-4 py-2 border-2 text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
@@ -62,20 +72,20 @@
                   {{ evento.titulo }}
                 </option>
               </select>
-              <button
+              <!-- <button
                 v-if="filtros.eventoId"
                 @click="limpiarFiltroEvento"
                 class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                 title="Limpiar filtro"
               >
                 <i class="fas fa-times"></i>
-              </button>
+              </button> -->
             </div>
           </div>
         </div>
 
         <!-- Alerta de filtro activo -->
-        <div v-if="filtros.eventoId" class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded flex justify-between items-center">
+        <!-- <div v-if="filtros.eventoId" class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded flex justify-between items-center">
           <div class="flex items-center gap-2">
             <i class="fas fa-filter text-blue-600"></i>
             <p class="text-sm text-blue-800">
@@ -88,25 +98,29 @@
           >
             Ver todos
           </button>
-        </div>
+        </div> -->
 
         <!-- Estadísticas rápidas -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
             <p class="text-sm text-gray-600">Total Inscripciones</p>
-            <p class="text-2xl font-bold text-blue-600">{{ todasInscripciones.length }}</p>
+            <p class="text-2xl font-bold text-blue-600">{{ inscripcionesFiltradas.length }}</p>
           </div>
           <!-- <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
             <p class="text-sm text-gray-600">Eventos Activos</p>
             <p class="text-2xl font-bold text-green-600">{{ eventos.length }}</p>
           </div> -->
-          <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+          <!-- <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
             <p class="text-sm text-gray-600">Filtradas</p>
             <p class="text-2xl font-bold text-purple-600">{{ inscripcionesFiltradas.length }}</p>
-          </div>
+          </div> -->
           <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
-            <p class="text-sm text-gray-600">Ingresos Total</p>
+            <p class="text-sm text-gray-600">Ingresos abonado</p>
             <p class="text-2xl font-bold text-orange-600">${{ calcularIngresoTotal }}</p>
+          </div>
+          <div class="bg-teal-50 border-l-4 border-teal-500 p-4 rounded">
+            <p class="text-sm text-gray-600">Suma precios boletos (unit)</p>
+            <p class="text-2xl font-bold text-teal-600">${{ calcularSumaPreciosBoletos }}</p>
           </div>
         </div>
       </div>
@@ -134,7 +148,7 @@
             <thead class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
               <tr>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Participante</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Evento</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Iglesia</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Ticket</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Monto</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
@@ -161,12 +175,11 @@
                   </div>
                 </td>
 
-                <!-- Evento -->
+                <!-- Iglesia -->
                 <td class="px-4 py-4">
-                  <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                    {{ obtenerNombreEvento(inscripcion.eventoId) }}
-                  </span>
+                  <p class="text-sm text-gray-800">{{ inscripcion.participante?.iglesia || 'N/A' }}</p>
                 </td>
+
 
                 <!-- Ticket -->
                 <td class="px-4 py-4">
@@ -188,14 +201,29 @@
 
                 <!-- Comprobante -->
                 <td class="px-4 py-4">
-                  <FileViewer
-                    v-if="inscripcion.participante?.comprobanteUrl"
-                    :file-url="inscripcion.participante.comprobanteUrl"
-                    :titulo="`Comprobante de ${inscripcion.participante.nombre}`"
-                  />
-                  <span v-else class="text-xs text-gray-400">Sin comprobante</span>
+                  <div>
+                    <template v-if="inscripcion.participante?.comprobantesUrls && inscripcion.participante.comprobantesUrls.length">
+                      <div class="flex flex-wrap gap-1">
+                        <FileViewer
+                          v-for="(url, i) in inscripcion.participante.comprobantesUrls"
+                          :key="i"
+                          :file-url="url"
+                          :titulo="`Comprobante ${i+1} de ${inscripcion.participante?.nombre}`"
+                        />
+                      </div>
+                    </template>
+                    <template v-else-if="inscripcion.participante?.comprobanteUrl">
+                      <FileViewer
+                        :file-url="inscripcion.participante.comprobanteUrl"
+                        :titulo="`Comprobante de ${inscripcion.participante.nombre}`"
+                      />
+                    </template>
+                    <template v-else>
+                      <span class="text-xs text-gray-400">Sin comprobante</span>
+                    </template>
+                  </div>
                   
-                  <!-- Comprobantes adicionales -->
+                  <!-- Comprobantes adicionales (legacy) -->
                   <div v-if="inscripcion.comprobantesAdicionales?.length" class="mt-2">
                     <p class="text-xs text-gray-500 mb-1">Adicionales ({{ inscripcion.comprobantesAdicionales.length }}):</p>
                     <div class="flex flex-wrap gap-1">
@@ -267,6 +295,7 @@
       :show="mostrarModalEdicion"
       :inscripcion="inscripcionSeleccionada"
       :evento-titulo="obtenerNombreEvento(inscripcionSeleccionada?.eventoId)"
+      :evento-opciones="obtenerOpcionesEvento(inscripcionSeleccionada?.eventoId)"
       @close="cerrarModalEdicion"
       @save="guardarCambios"
     />
@@ -277,9 +306,149 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
-import { auth } from '../firebase'
+import { auth, db } from '../firebase'
+import { doc, getDoc } from 'firebase/firestore'
 import FileViewer from '../components/FileViewer.vue'
 import EditInscripcionModal from '../components/EditInscripcionModal.vue'
+
+// Helpers para CSV
+const escapeCsv = (value) => {
+  if (value === undefined || value === null) return ''
+  const str = String(value)
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"'
+  }
+  return str
+}
+
+const objectToCsvRow = (ins) => {
+  // kept for backward compatibility but not used by the new export logic
+  const p = ins.participante || {}
+  const row = [
+    ins.id || '',
+    ins.eventoId || '',
+    ins.eventoTitulo || obtenerNombreEvento(ins.eventoId) || '',
+    p.nombre || '',
+    p.cedula || '',
+    p.telefono || '',
+    p.iglesia || '',
+    p.ticketType || '',
+    p.ticketQuantity || 1,
+    Number(p.ticketPrice || 0).toFixed(2),
+    Number(p.totalPrice || 0).toFixed(2),
+    formatearFecha(ins.fechaInscripcion) || ''
+  ]
+
+  return row.map(escapeCsv).join(',')
+}
+
+// Construye una fila CSV dinámica según las columnas condicionales
+const buildCsvRow = (ins, conditionalCols) => {
+  const p = ins.participante || {}
+  const base = [
+    ins.eventoTitulo || obtenerNombreEvento(ins.eventoId) || '',
+    p.nombre || '',
+    p.cedula || '',
+    p.telefono || '',
+    p.iglesia || '',
+    p.ticketType || '',
+    Number(p.ticketPrice || 0).toFixed(2),
+    Number(p.totalPrice || 0).toFixed(2),
+    formatearFecha(ins.fechaInscripcion) || ''
+  ]
+
+  const extras = conditionalCols.map(col => {
+    switch (col) {
+      case 'edad':
+        return p.edad || ''
+      case 'correo':
+        return p.correo || ''
+      case 'nota':
+        return p.nota || ''
+      case 'mentor':
+        return p.mentor || ''
+      default:
+        return ''
+    }
+  })
+
+  return [...base, ...extras].map(escapeCsv).join(',')
+}
+
+const exportarCSV = () => {
+  const filas = []
+  // Encabezados base (quitando inscripcionId, eventoId y ticketQuantity)
+  const baseHeaders = [
+    'eventoTitulo',
+    'nombre',
+    'cedula',
+    'telefono',
+    'iglesia',
+    'ticketType',
+    'ticketPrice',
+    'totalPrice',
+    'fechaInscripcion'
+  ]
+
+  // Determinar columnas condicionales (edad, correo, nota, mentor) según opciones de los eventos presentes
+  const eventIds = [...new Set(inscripcionesFiltradas.value.map(i => i.eventoId).filter(Boolean))]
+  const condSet = new Set()
+  for (const id of eventIds) {
+    const ev = eventos.value.find(e => e.id === id)
+    if (!ev || !ev.opciones) continue
+    if (ev.opciones.habilitarEdad) condSet.add('edad')
+    if (ev.opciones.habilitarCorreo) condSet.add('correo')
+    if (ev.opciones.habilitarNota) condSet.add('nota')
+    if (ev.opciones.habilitarMentor) condSet.add('mentor')
+  }
+
+  const conditionalCols = Array.from(condSet)
+  const encabezados = [...baseHeaders, ...conditionalCols]
+  filas.push(encabezados.join(','))
+
+  // Usar las inscripciones filtradas actuales y construir filas dinámicamente
+  inscripcionesFiltradas.value.forEach(ins => {
+    const sinfo = { ...ins }
+    sinfo.eventoTitulo = obtenerNombreEvento(ins.eventoId)
+    filas.push(buildCsvRow(sinfo, conditionalCols))
+  })
+
+  const csvContent = filas.join('\r\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  const fecha = new Date().toISOString().slice(0,19).replace('T','_')
+
+  // Determinar nombre del evento para el archivo
+  let eventoNombre = ''
+  if (filtros.value.eventoId) {
+    eventoNombre = obtenerNombreEvento(filtros.value.eventoId)
+  } else {
+    const ids = [...new Set(inscripcionesFiltradas.value.map(i => i.eventoId).filter(Boolean))]
+    if (ids.length === 1) {
+      eventoNombre = obtenerNombreEvento(ids[0])
+    } else if (ids.length > 1) {
+      eventoNombre = 'varios_eventos'
+    } else {
+      eventoNombre = 'sin_evento'
+    }
+  }
+
+  // Sanitizar nombre (quitar espacios y caracteres inválidos)
+  eventoNombre = String(eventoNombre || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9-_]/g, '')
+
+  a.download = `inscripciones_${eventoNombre || 'evento'}_${fecha}.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -315,7 +484,11 @@ onMounted(async () => {
 })
 
 const cargarDatos = async () => {
-  await eventosStore.cargarEventos()
+  if (typeof eventosStore.cargarEventos === 'function') {
+    await eventosStore.cargarEventos()
+  } else {
+    console.warn('eventosStore.cargarEventos is not available')
+  }
   eventos.value = eventosStore.eventos
   await cargarInscripciones()
 }
@@ -373,9 +546,24 @@ const calcularIngresoTotal = computed(() => {
   return total.toFixed(2)
 })
 
+// Sumar los precios unitarios de los boletos (ticketPrice) para las inscripciones filtradas
+const calcularSumaPreciosBoletos = computed(() => {
+  const total = inscripcionesFiltradas.value.reduce((sum, ins) => {
+    return sum + (Number(ins.participante?.ticketPrice) || 0)
+  }, 0)
+  return total.toFixed(2)
+})
+
 const obtenerNombreEvento = (eventoId) => {
   const evento = eventos.value.find(e => e.id === eventoId)
   return evento ? evento.titulo : 'Evento desconocido'
+}
+
+const obtenerOpcionesEvento = async (eventoId) => {
+    
+   const evento = await eventos.value.find(e => e.id === eventoId)
+   
+  return evento && evento.opciones ? evento.opciones : {}
 }
 
 const formatearFecha = (fechaISO) => {
@@ -389,9 +577,29 @@ const formatearFecha = (fechaISO) => {
   })
 }
 
-const abrirModalEdicion = (inscripcion) => {
+const abrirModalEdicion = async (inscripcion) => {
   console.log('AdminInscripcionesView: abriendo modal con inscripcion:', inscripcion)
-  inscripcionSeleccionada.value = { ...inscripcion } // Crear copia para forzar reactividad
+  // Primero intentar obtener opciones desde los eventos ya cargados
+  let opciones = obtenerOpcionesEvento(inscripcion.eventoId)
+  // Intentar obtener título desde los eventos cargados
+  let titulo = obtenerNombreEvento(inscripcion.eventoId)
+
+  // Si no existen opciones o título, intentar obtener el documento directamente de Firestore
+  if ((!opciones || Object.keys(opciones).length === 0) || !titulo || titulo === 'Evento desconocido') {
+    try {
+      const eventoRef = doc(db, 'eventos', inscripcion.eventoId)
+      const snap = await getDoc(eventoRef)
+      if (snap.exists()) {
+        const data = snap.data()
+        opciones = opciones && Object.keys(opciones).length ? opciones : (data.opciones || {})
+        titulo = titulo && titulo !== 'Evento desconocido' ? titulo : (data.titulo || titulo)
+      }
+    } catch (e) {
+      console.warn('No se pudo cargar opciones/título del evento desde Firestore:', e)
+    }
+  }
+
+  inscripcionSeleccionada.value = { ...inscripcion, eventoOpciones: opciones, eventoTitulo: titulo }
   mostrarModalEdicion.value = true
 }
 

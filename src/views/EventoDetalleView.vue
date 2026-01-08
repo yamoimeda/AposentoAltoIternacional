@@ -65,13 +65,13 @@
                 </div>
               </div>
               
-              <div class="bg-orange-50 p-4 rounded-lg">
+              <!-- <div class="bg-orange-50 p-4 rounded-lg">
                 <div class="flex items-center text-orange-800 mb-2">
                   <i class="fas fa-tag mr-3 text-xl"></i>
                   <span class="font-semibold">Categoría</span>
                 </div>
                 <p class="text-orange-700 capitalize">{{ evento.categoria }}</p>
-              </div>
+              </div> -->
             </div>
 
             <!-- Descripción -->
@@ -81,7 +81,7 @@
             </div>
 
             <!-- Detalles adicionales -->
-            <div class="bg-gray-50 p-6 rounded-lg mb-8">
+            <!-- <div class="bg-gray-50 p-6 rounded-lg mb-8">
               <h3 class="text-xl font-semibold text-gray-800 mb-4">
                 <i class="fas fa-info-circle mr-2 text-blue-600"></i>
                 Información Importante
@@ -108,7 +108,7 @@
                   <span>Los niños deben ser acompañados por un adulto responsable</span>
                 </li>
               </ul>
-            </div>
+            </div> -->
 
             <!-- Botones de acción -->
             <div class="flex flex-col sm:flex-row gap-4">
@@ -156,10 +156,10 @@
               @click="$router.push(`/evento/${eventoRel.id}`)"
             >
               <!-- Imagen del evento o fondo de color si no hay imagen -->
-              <div v-if="evento.bannerUrl || evento.imagen" class="w-full h-32 overflow-hidden">
+              <div v-if="eventoRel.bannerUrl || eventoRel.imagen" class="w-full h-32 overflow-hidden">
                 <img 
-                  :src="evento.bannerUrl || evento.imagen" 
-                  :alt="evento.titulo"
+                  :src="eventoRel.bannerUrl || eventoRel.imagen" 
+                  :alt="eventoRel.titulo"
                   class="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
                 >
               </div>
@@ -203,8 +203,24 @@ const eventosRelacionados = computed(() => {
     .slice(0, 2)
 })
 
+const parseDateLocal = (fecha) => {
+  if (!fecha) return new Date(NaN)
+  if (fecha instanceof Date) return fecha
+  if (typeof fecha === 'string') {
+    if (fecha.includes('T') || fecha.includes(' ')) return new Date(fecha)
+    const parts = fecha.split('-')
+    if (parts.length === 3) {
+      const y = Number(parts[0])
+      const m = Number(parts[1]) - 1
+      const d = Number(parts[2])
+      return new Date(y, m, d)
+    }
+  }
+  return new Date(fecha)
+}
+
 const formatearFecha = (fecha) => {
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return parseDateLocal(fecha).toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -238,7 +254,6 @@ const compartir = async () => {
 
 onMounted(() => { 
   console.log(evento.value);
-
-  eventosStore.cargarEventos()
+  if (typeof eventosStore.cargarEventos === 'function') eventosStore.cargarEventos()
 })
 </script>

@@ -150,9 +150,11 @@ const currentSlide = ref(0)
 
 const proximosEventos = computed(() => {
   const ahora = new Date()
+  const hoyInicio = new Date()
+  hoyInicio.setHours(0,0,0,0)
   return eventosStore.eventos
-    .filter(evento => new Date(evento.fecha) >= ahora)
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+    .filter(evento => parseDateLocal(evento.fecha) >= hoyInicio)
+    .sort((a, b) => parseDateLocal(a.fecha) - parseDateLocal(b.fecha))
 })
 
 // Configuración responsive del carrusel
@@ -216,8 +218,24 @@ const actualizarItemsPorSlide = () => {
   }
 }
 
+const parseDateLocal = (fecha) => {
+  if (!fecha) return new Date(NaN)
+  if (fecha instanceof Date) return fecha
+  if (typeof fecha === 'string') {
+    if (fecha.includes('T') || fecha.includes(' ')) return new Date(fecha)
+    const parts = fecha.split('-')
+    if (parts.length === 3) {
+      const y = Number(parts[0])
+      const m = Number(parts[1]) - 1
+      const d = Number(parts[2])
+      return new Date(y, m, d)
+    }
+  }
+  return new Date(fecha)
+}
+
 const formatearFecha = (fecha) => {
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return parseDateLocal(fecha).toLocaleDateString('es-ES', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
@@ -225,7 +243,7 @@ const formatearFecha = (fecha) => {
 }
 
 const formatearFechaCompleta = (fecha) => {
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return parseDateLocal(fecha).toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -238,7 +256,7 @@ const verEvento = (evento) => {
 }
 
 onMounted(() => {
-  eventosStore.cargarEventos()
+  if (typeof eventosStore.cargarEventos === 'function') eventosStore.cargarEventos()
   actualizarItemsPorSlide()
 //   iniciarAutoPlay()
   

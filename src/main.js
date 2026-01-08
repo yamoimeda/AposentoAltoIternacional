@@ -12,5 +12,9 @@ app.use(pinia)
 app.use(router)
 
 const eventosStore = useEventosStore()
-eventosStore.cargarEventos()
+if (typeof eventosStore.cargarEventos === 'function') {
+	eventosStore.cargarEventos()
+} else {
+	console.warn('eventosStore.cargarEventos is not available')
+}
 app.mount('#app')

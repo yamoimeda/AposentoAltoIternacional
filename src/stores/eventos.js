@@ -47,7 +47,26 @@ export const useEventosStore = defineStore('eventos', () => {
   const inscribirParticipante = async (eventoId, datosParticipante) => {
     // Si el participante adjuntó un archivo 'comprobante', súbelo a Storage
     try {
-      if (datosParticipante && datosParticipante.comprobante && typeof File !== 'undefined' && datosParticipante.comprobante instanceof File) {
+      // soportar uno o varios archivos en datosParticipante.comprobante (array de File)
+      if (datosParticipante && datosParticipante.comprobante && Array.isArray(datosParticipante.comprobante) && typeof File !== 'undefined') {
+        const urls = []
+        for (const file of datosParticipante.comprobante) {
+          if (!(file instanceof File)) continue
+          const path = `inscripciones/${eventoId}/${Date.now()}_${file.name}`
+          const sRef = storageRef(storage, path)
+          try {
+            await uploadBytes(sRef, file)
+            const url = await getDownloadURL(sRef)
+            urls.push(url)
+          } catch (uploadError) {
+            console.error('Error subiendo archivo:', file.name, uploadError)
+          }
+        }
+        if (urls.length) {
+          datosParticipante.comprobantesUrls = urls
+        }
+        delete datosParticipante.comprobante
+      } else if (datosParticipante && datosParticipante.comprobante && typeof File !== 'undefined' && datosParticipante.comprobante instanceof File) {
         const file = datosParticipante.comprobante
         const path = `inscripciones/${eventoId}/${Date.now()}_${file.name}`
         const sRef = storageRef(storage, path)

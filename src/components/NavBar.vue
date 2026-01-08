@@ -12,10 +12,10 @@
             <i class="fas fa-church text-white text-xl"></i>
           </div>
           <div>
-              <p class="text-sm text-white">Ministerio Internacional</p>
             <h1 class="text-xl font-bold text-white group-hover:text-blue-600 transition-colors">
               El Aposento Alto
             </h1>
+              <p class="text-sm text-white">Internacional</p>
           </div>
         </router-link>
 

@@ -109,11 +109,11 @@
                 <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-2xl">
                   <div class="text-center">
                     <div class="text-2xl font-black text-indigo-600">
-                      {{ new Date(evento.fecha).getDate() }}
-                    </div>
-                    <div class="text-xs font-semibold text-gray-600 uppercase">
-                      {{ new Date(evento.fecha).toLocaleDateString('es-ES', { month: 'short' }) }}
-                    </div>
+                        {{ parseDateLocal(evento.fecha).getDate() }}
+                      </div>
+                      <div class="text-xs font-semibold text-gray-600 uppercase">
+                        {{ parseDateLocal(evento.fecha).toLocaleDateString('es-ES', { month: 'short' }) }}
+                      </div>
                   </div>
                 </div>
               </div>
@@ -213,20 +213,39 @@ const filtroActivo = ref('todos')
 
 const eventosFiltrados = computed(() => {
   const eventos = eventosStore.eventos
-  const ahora = new Date()
-  
+  // comparar con el inicio del día local para evitar desplazamientos por zona horaria
+  const hoyInicio = new Date()
+  hoyInicio.setHours(0,0,0,0)
+
   switch (filtroActivo.value) {
     case 'proximos':
-      return eventos.filter(evento => new Date(evento.fecha) >= ahora)
+      return eventos.filter(evento => parseDateLocal(evento.fecha) >= hoyInicio)
     case 'pasados':
-      return eventos.filter(evento => new Date(evento.fecha) < ahora)
+      return eventos.filter(evento => parseDateLocal(evento.fecha) < hoyInicio)
     default:
       return eventos
   }
 })
 
+const parseDateLocal = (fecha) => {
+  if (!fecha) return new Date(NaN)
+  if (fecha instanceof Date) return fecha
+  if (typeof fecha === 'string') {
+    // Si la cadena contiene hora o separador 'T', dejar que Date la maneje
+    if (fecha.includes('T') || fecha.includes(' ')) return new Date(fecha)
+    const parts = fecha.split('-')
+    if (parts.length === 3) {
+      const y = Number(parts[0])
+      const m = Number(parts[1]) - 1
+      const d = Number(parts[2])
+      return new Date(y, m, d)
+    }
+  }
+  return new Date(fecha)
+}
+
 const formatearFecha = (fecha) => {
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return parseDateLocal(fecha).toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -247,6 +266,6 @@ const verificarInscripcion = (evento) => {
 }
 
 onMounted(() => {
-  eventosStore.cargarEventos()
+  if (typeof eventosStore.cargarEventos === 'function') eventosStore.cargarEventos()
 })
 </script>

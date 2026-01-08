@@ -28,7 +28,7 @@ const verEvento = (evento) => {
 }
 
 onMounted(() => {
-  eventosStore.cargarEventos()
+  if (typeof eventosStore.cargarEventos === 'function') eventosStore.cargarEventos()
 })
 </script>
 
@@ -54,9 +54,9 @@ onMounted(() => {
       <div class="relative container mx-auto px-4 text-center">
         <div class="animate-fade-in-up">
           <h1 class="text-6xl md:text-8xl font-black mb-8 leading-tight">
-            Bienvenido a<br>
+            Bienvenido al<br>
             <span class="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 bg-clip-text text-transparent animate-pulse">
-              Aposento Alto Internacional
+              Ministerio El Aposento Alto Internacional
             </span>
           </h1>
           
