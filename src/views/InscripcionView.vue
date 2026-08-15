@@ -424,12 +424,14 @@ const evento = computed(() => {
 
 // Cuando el evento cambie, inicializar la selección de ticket si existen tipos
 watch(evento, (ev) => {
-  // Mantener una copia local de los tipos de ticket para evitar mutaciones directas
-  ticketTypes.value = ev && ev.ticketTypes ? [...ev.ticketTypes] : []
+  // Mantener una copia local de los tipos de ticket activos para evitar inscripciones a boletos archivados
+  const rawTypes = ev && ev.ticketTypes ? [...ev.ticketTypes] : []
+  ticketTypes.value = rawTypes.filter(t => t.activo !== false)
 
   if (ev && ticketTypes.value.length > 0) {
-    // seleccionar el primero por defecto si no hay selección
-    if (selectedTicketIndex.value === null) selectedTicketIndex.value = 0
+    if (selectedTicketIndex.value === null || selectedTicketIndex.value >= ticketTypes.value.length) {
+      selectedTicketIndex.value = 0
+    }
   } else {
     selectedTicketIndex.value = null
     ticketQuantity.value = 1
@@ -456,8 +458,12 @@ const totalPrice = computed(() => {
 })
 
 const pagoValido = computed(() => {
-  if (!datosExtraidos.value.monto) return false
-  return validarMonto(datosExtraidos.value.monto) && validarFecha(datosExtraidos.value.fecha)
+  const montoUsuario = Number(formulario.value.monto)
+  if (!montoUsuario || montoUsuario <= 0) return false
+  const precioEsperado = selectedTicketPrice.value || Number(evento.value?.precio || 0)
+  // Si el precio esperado es 0 (gratis), cualquier monto es válido si se ingresó
+  if (precioEsperado === 0) return true
+  return Math.abs(montoUsuario - precioEsperado) < 0.01
 })
 
 const parseDateLocal = (fecha) => {
@@ -658,9 +664,6 @@ const enviarInscripcion = async () => {
     // Generar token único de registro
     const registrationToken = uuidv4()
 
-    // Simular envío / espera
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
     // Preparar datos de registro (sin incluir el archivo directamente)
     const registrationData = {
       nombre: formulario.value.nombre,
@@ -672,11 +675,12 @@ const enviarInscripcion = async () => {
       comprobante: formulario.value.comprobante && formulario.value.comprobante.length ? [...formulario.value.comprobante] : null, // Se pasará al store para ser subido
       iglesia: formulario.value.iglesia || null,
       mentor: formulario.value.mentor || null,
-      monto: formulario.value.monto,
+      montoPagado: formulario.value.monto, // Lo que el usuario reporta haber pagado
+      ticketTypeId: selectedTicket.value ? (selectedTicket.value.id || null) : null,
       ticketType: selectedTicket.value ? selectedTicket.value.nombre : 'General',
       ticketPrice: selectedTicket.value ? Number(selectedTicket.value.precio) : Number(evento.value.precio) || 0,
       ticketQuantity: qty,
-      totalPrice: formulario.value.monto,
+      totalPrice: numericTotal, // Precio calculado: ticketPrice × cantidad
       fechaInscripcion: new Date().toISOString(),
       registrationToken: registrationToken,
       eventoId: evento.value.id,
@@ -715,7 +719,12 @@ const enviarInscripcion = async () => {
     }
 
     // Agregar inscripción al store
-    await eventosStore.inscribirParticipante(evento.value.id, registrationData)
+    const resultado = await eventosStore.inscribirParticipante(evento.value.id, registrationData)
+
+    // Advertir si el comprobante no se pudo subir
+    if (resultado?.uploadWarning) {
+      alert('⚠️ Tu inscripción fue registrada, pero no se pudo subir el comprobante de pago. Por favor contáctanos para enviar tu comprobante manualmente.')
+    }
 
     // Preparar datos para el modal
     registrationResult.value = {
@@ -766,16 +775,28 @@ onMounted(() => {
   // Cargar configuración de iglesias y mentores desde Firestore
   (async () => {
     try {
-      const configRef = doc(db, 'configuracion', 'igelsias')
-      const snap = await getDoc(configRef)
+      let snap = await getDoc(doc(db, 'configuracion', 'iglesias'))
+      if (!snap.exists()) {
+        snap = await getDoc(doc(db, 'configuracion', 'igelsias'))
+      }
       if (snap.exists()) {
         const data = snap.data()
-        // Esperamos arrays: data.iglesias y data.mentores
-        iglesias.value = Array.isArray(data.nombre) ? data.nombre : []
-        mentores.value = Array.isArray(data.mentores) ? data.mentores : []
+        const listIglesias = data.iglesias || data.nombre
+        const listMentores = data.mentores
+        if (Array.isArray(listIglesias) && listIglesias.length > 0) {
+          iglesias.value = listIglesias
+        }
+        if (Array.isArray(listMentores) && listMentores.length > 0) {
+          mentores.value = listMentores
+        }
       }
     } catch (e) {
       console.warn('No se pudo cargar configuracion de iglesias/mentores:', e)
+    }
+
+    // Si sigue vacío, usar lista por defecto
+    if (!iglesias.value || iglesias.value.length === 0) {
+      iglesias.value = ['Panamá', 'Colón', 'Penonomé', 'Barraza', 'Pedregal', 'Arraiján', 'Chilibre', 'Invitado', 'Sede Cañitas', 'Sede San Miguelito']
     }
   })()
 })

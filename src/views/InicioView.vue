@@ -35,7 +35,7 @@ onMounted(() => {
 <template>
   <div class="min-h-screen">
     <!-- Hero Section moderna -->
-    <section class="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white py-32 overflow-hidden">
+    <section class="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white pt-28 sm:pt-36 md:pt-40 pb-24 sm:pb-32 overflow-hidden">
       <!-- Efectos de fondo -->
       <div class="absolute inset-0">
         <div class="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400 to-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
@@ -53,7 +53,7 @@ onMounted(() => {
 
       <div class="relative container mx-auto px-4 text-center">
         <div class="animate-fade-in-up">
-          <h1 class="text-6xl md:text-8xl font-black mb-8 leading-tight">
+          <h1 class="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-tight">
             Bienvenido al<br>
             <span class="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 bg-clip-text text-transparent animate-pulse">
               Ministerio El Aposento Alto Internacional

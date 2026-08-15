@@ -89,6 +89,7 @@
                   </button>
                   <button 
                     @click="mostrarFormularioPago = true"
+                    v-if="Number(inscripcionEncontrada.ticketPrice) > 0"
                     class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <i class="fas fa-plus-circle mr-2"></i>Hacer Otro Pago
@@ -396,14 +397,14 @@ const buscarInscripcion = async () => {
       // Buscar por cédula y evento específico
       q = query(
         inscripcionesRef,
-        where('participante.cedula', '==', cedula.value.trim()),
+        where('participante.cedula', '==', cedula.value.trim().toUpperCase()),
         where('eventoId', '==', eventoId.value)
       )
     } else {
       // Buscar solo por cédula (todos los eventos)
       q = query(
         inscripcionesRef,
-        where('participante.cedula', '==', cedula.value.trim())
+        where('participante.cedula', '==', cedula.value.trim().toUpperCase())
       )
     }
 
@@ -417,7 +418,9 @@ const buscarInscripcion = async () => {
         id: doc.id,
         ...data.participante,
         eventoId: data.eventoId,
-        fechaInscripcion: data.fechaInscripcion
+        fechaInscripcion: data.fechaInscripcion,
+        // Incluir pagos adicionales del nivel raíz del documento
+        comprobantesAdicionales: data.comprobantesAdicionales || []
       }
 
       // Generar QR si hay token

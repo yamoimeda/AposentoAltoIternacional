@@ -1,292 +1,473 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-    <div class="container mx-auto px-4 pt-[100px]">
-      <!-- Header -->
-      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <i class="fas fa-users-cog text-indigo-600"></i>
-              Gestión de Inscripciones
-            </h1>
-            <p class="text-gray-600 mt-1">Administra todas las inscripciones a eventos</p>
+  <div class="min-h-screen bg-slate-50/80 font-sans text-slate-800 pt-20 md:pt-28 pb-16 px-4 sm:px-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Enterprise Page Header & Actions -->
+      <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1.5">
+            <router-link to="/" class="hover:text-indigo-600 transition-colors">Inicio</router-link>
+            <span>/</span>
+            <router-link to="/admin" class="hover:text-indigo-600 transition-colors">Panel Admin</router-link>
+            <span>/</span>
+            <span class="text-slate-900 font-semibold">Inscripciones</span>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="bg-indigo-100 px-4 py-2 rounded-lg">
-              <span class="text-sm text-indigo-600 font-semibold">
-                Total: {{ inscripcionesFiltradas.length }}
-              </span>
-            </div>
-            <button
-              @click="exportarCSV"
-              :disabled="inscripcionesFiltradas.length === 0"
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 flex items-center gap-2"
-              title="Exportar CSV"
-            >
-              <i class="fas fa-file-csv"></i>
-              Exportar CSV
-            </button>
-            <button
-              @click="cargarInscripciones"
-              :disabled="cargando"
-              class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 flex items-center gap-2"
-            >
-              <i :class="['fas', cargando ? 'fa-spinner fa-spin' : 'fa-sync-alt']"></i>
-              Actualizar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filtros y Búsqueda -->
-      <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Búsqueda -->
-          <div class="md:col-span-3">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <i class="fas fa-search mr-2"></i>
-              Buscar por nombre, cédula o teléfono
-            </label>
-            <input
-              v-model="filtros.busqueda"
-              type="text"
-              placeholder="Ej: Juan Pérez, 8-123-4567..."
-              class="w-full px-4 py-2 border-2 text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-
-          <!-- Filtro por Evento -->
-          <div hidden>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <i class="fas fa-calendar mr-2"></i>
-              Filtrar por Evento
-            </label>
-            <div class="flex gap-2">
-              <select
-              hidden
-                v-model="filtros.eventoId"
-                class="flex-1 px-4 py-2 border-2 text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Todos los eventos</option>
-                <option v-for="evento in eventos" :key="evento.id" :value="evento.id">
-                  {{ evento.titulo }}
-                </option>
-              </select>
-              <!-- <button
-                v-if="filtros.eventoId"
-                @click="limpiarFiltroEvento"
-                class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                title="Limpiar filtro"
-              >
-                <i class="fas fa-times"></i>
-              </button> -->
-            </div>
-          </div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+            <span>Inscripciones</span>
+            <span v-if="eventoActual" class="text-xs font-bold bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1 rounded-lg">
+              {{ eventoActual.titulo }}
+            </span>
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Visualización y gestión de participantes registrados por evento.
+          </p>
         </div>
 
-        <!-- Alerta de filtro activo -->
-        <!-- <div v-if="filtros.eventoId" class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded flex justify-between items-center">
-          <div class="flex items-center gap-2">
-            <i class="fas fa-filter text-blue-600"></i>
-            <p class="text-sm text-blue-800">
-              <strong>Filtrando por evento:</strong> {{ obtenerNombreEvento(filtros.eventoId) }}
-            </p>
-          </div>
+        <div class="flex flex-wrap items-center gap-3">
           <button
-            @click="limpiarFiltroEvento"
-            class="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+            @click="mostrarGestionUsuarios = true"
+            class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
           >
-            Ver todos
+            <i class="fas fa-users-gear text-indigo-600"></i>
+            <span>Usuarios</span>
           </button>
-        </div> -->
 
-        <!-- Estadísticas rápidas -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-            <p class="text-sm text-gray-600">Total Inscripciones</p>
-            <p class="text-2xl font-bold text-blue-600">{{ inscripcionesFiltradas.length }}</p>
+          <button
+            @click="mostrarConfigIglesias = true"
+            class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <i class="fas fa-church text-indigo-600"></i>
+            <span>Iglesias / Mentores</span>
+          </button>
+
+          <router-link
+            to="/admin"
+            class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2"
+          >
+            <i class="fas fa-arrow-left text-slate-400"></i>
+            <span>Volver al Panel Admin</span>
+          </router-link>
+
+          <button
+            @click="exportarCSV"
+            :disabled="inscripcionesFiltradas.length === 0"
+            class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            title="Exportar archivo CSV"
+          >
+            <i class="fas fa-file-csv"></i>
+            <span>Exportar CSV</span>
+          </button>
+
+          <button
+            @click="cargarInscripciones"
+            :disabled="cargando"
+            class="py-2.5 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            title="Actualizar datos"
+          >
+            <i :class="['fas', cargando ? 'fa-spinner fa-spin' : 'fa-rotate']"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls & Filter Toolbar -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          <!-- Event Selector Dropdown / Evento fijo cuando viene de un evento específico -->
+          <div class="md:col-span-6">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <i class="fas fa-calendar-day text-indigo-600 mr-1.5"></i>
+              Evento
+            </label>
+
+            <!-- Modo bloqueado: viene de un evento específico -->
+            <div v-if="eventoFijado" class="flex items-center gap-3 px-3.5 py-2.5 bg-indigo-50 border-2 border-indigo-200 rounded-xl">
+              <i class="fas fa-lock text-indigo-400 text-xs flex-shrink-0"></i>
+              <span class="text-indigo-800 font-semibold text-sm truncate">{{ eventoActual?.titulo || 'Cargando...' }}</span>
+              <router-link
+                to="/admin"
+                class="ml-auto text-xs text-indigo-500 hover:text-indigo-700 whitespace-nowrap flex items-center gap-1 transition-colors"
+                title="Ver todos los eventos"
+              >
+                <i class="fas fa-th-list"></i> Ver todos
+              </router-link>
+            </div>
+
+            <!-- Modo libre: selector general -->
+            <select
+              v-else
+              v-model="filtros.eventoId"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
+            >
+              <option value="">-- Todos los eventos --</option>
+              <option v-for="evento in eventos" :key="evento.id" :value="evento.id">
+                {{ evento.titulo }} ({{ evento.fecha }})
+              </option>
+            </select>
           </div>
-          <!-- <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-            <p class="text-sm text-gray-600">Eventos Activos</p>
-            <p class="text-2xl font-bold text-green-600">{{ eventos.length }}</p>
-          </div> -->
-          <!-- <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
-            <p class="text-sm text-gray-600">Filtradas</p>
-            <p class="text-2xl font-bold text-purple-600">{{ inscripcionesFiltradas.length }}</p>
-          </div> -->
-          <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
-            <p class="text-sm text-gray-600">Ingresos abonado</p>
-            <p class="text-2xl font-bold text-orange-600">${{ calcularIngresoTotal }}</p>
+
+          <!-- Participant Search Input -->
+          <div class="md:col-span-6">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <i class="fas fa-magnifying-glass text-indigo-600 mr-1.5"></i>
+              Buscar Participante
+            </label>
+
+            <div class="relative">
+              <input
+                v-model="filtros.busqueda"
+                type="text"
+                placeholder="Nombre, cédula o teléfono..."
+                class="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
+              />
+              <button
+                v-if="filtros.busqueda"
+                @click="filtros.busqueda = ''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <i class="fas fa-times text-xs"></i>
+              </button>
+            </div>
           </div>
-          <div class="bg-teal-50 border-l-4 border-teal-500 p-4 rounded">
-            <p class="text-sm text-gray-600">Suma precios boletos (unit)</p>
-            <p class="text-2xl font-bold text-teal-600">${{ calcularSumaPreciosBoletos }}</p>
+        </div>
+
+        <!-- KPI Metrics Summary Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-5 border-t border-slate-100">
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Inscritos</span>
+            <span class="text-xl font-bold text-slate-900">{{ inscripcionesFiltradas.length }}</span>
+          </div>
+
+          <div class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100">
+            <span class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider block">Total Recaudado</span>
+            <span class="text-xl font-bold text-indigo-700">${{ calcularIngresoTotal }}</span>
+          </div>
+
+          <div class="bg-amber-50/60 p-3.5 rounded-xl border border-amber-100">
+            <span class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider block">Total Esperado</span>
+            <span class="text-xl font-bold text-amber-700">${{ calcularTotalEsperado }}</span>
+          </div>
+
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div>
+              <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Página</span>
+              <span class="text-sm font-bold text-slate-800">{{ paginaActual }} de {{ totalPaginas || 1 }}</span>
+            </div>
+            <div class="flex gap-1">
+              <button
+                @click="paginaActual--"
+                :disabled="paginaActual === 1"
+                class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button
+                @click="paginaActual++"
+                :disabled="paginaActual >= totalPaginas"
+                class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Tabla de Inscripciones -->
-      <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <!-- Registrations Data Table Container -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         <!-- Loading State -->
-        <div v-if="cargando" class="flex items-center justify-center py-20">
+        <div v-if="cargando" class="flex items-center justify-center py-20 text-slate-400">
           <div class="text-center">
-            <i class="fas fa-spinner fa-spin text-5xl text-indigo-600 mb-4"></i>
-            <p class="text-gray-600">Cargando inscripciones...</p>
+            <i class="fas fa-circle-notch fa-spin text-3xl text-indigo-600 mb-3 block mx-auto"></i>
+            <p class="text-sm font-medium">Cargando inscripciones...</p>
           </div>
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="inscripcionesPaginadas.length === 0" class="text-center py-20">
-          <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
-          <p class="text-gray-600 text-lg mb-2">No se encontraron inscripciones</p>
-          <p class="text-gray-500 text-sm">Ajusta los filtros o verifica que haya inscripciones registradas</p>
-        </div>
-
-        <!-- Tabla -->
-        <div v-else class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Participante</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Iglesia</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Ticket</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Monto</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Comprobante</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-              <tr
-                v-for="inscripcion in inscripcionesPaginadas"
-                :key="inscripcion.id"
-                class="hover:bg-gray-50 transition-colors"
-              >
-                <!-- Participante -->
-                <td class="px-4 py-4">
-                  <div>
-                    <p class="font-semibold text-gray-800">{{ inscripcion.participante?.nombre || 'N/A' }}</p>
-                    <p class="text-sm text-gray-600">
-                      <i class="fas fa-id-card mr-1"></i>{{ inscripcion.participante?.cedula || 'N/A' }}
-                    </p>
-                    <p class="text-sm text-gray-600">
-                      <i class="fas fa-phone mr-1"></i>{{ inscripcion.participante?.telefono || 'N/A' }}
-                    </p>
-                  </div>
-                </td>
-
-                <!-- Iglesia -->
-                <td class="px-4 py-4">
-                  <p class="text-sm text-gray-800">{{ inscripcion.participante?.iglesia || 'N/A' }}</p>
-                </td>
-
-
-                <!-- Ticket -->
-                <td class="px-4 py-4">
-                  <p class="text-sm text-gray-800">{{ inscripcion.participante?.ticketType || 'N/A' }}</p>
-                  <p class="text-xs text-gray-500">Cant: {{ inscripcion.participante?.ticketQuantity || 1 }}</p>
-                </td>
-
-                <!-- Monto -->
-                <td class="px-4 py-4">
-                  <span class="font-bold text-green-600">
-                    ${{ Number(inscripcion.participante?.totalPrice || 0).toFixed(2) }}
-                  </span>
-                </td>
-
-                <!-- Fecha -->
-                <td class="px-4 py-4">
-                  <p class="text-sm text-gray-600">{{ formatearFecha(inscripcion.fechaInscripcion) }}</p>
-                </td>
-
-                <!-- Comprobante -->
-                <td class="px-4 py-4">
-                  <div>
-                    <template v-if="inscripcion.participante?.comprobantesUrls && inscripcion.participante.comprobantesUrls.length">
-                      <div class="flex flex-wrap gap-1">
-                        <FileViewer
-                          v-for="(url, i) in inscripcion.participante.comprobantesUrls"
-                          :key="i"
-                          :file-url="url"
-                          :titulo="`Comprobante ${i+1} de ${inscripcion.participante?.nombre}`"
-                        />
-                      </div>
-                    </template>
-                    <template v-else-if="inscripcion.participante?.comprobanteUrl">
-                      <FileViewer
-                        :file-url="inscripcion.participante.comprobanteUrl"
-                        :titulo="`Comprobante de ${inscripcion.participante.nombre}`"
-                      />
-                    </template>
-                    <template v-else>
-                      <span class="text-xs text-gray-400">Sin comprobante</span>
-                    </template>
-                  </div>
-                  
-                  <!-- Comprobantes adicionales (legacy) -->
-                  <div v-if="inscripcion.comprobantesAdicionales?.length" class="mt-2">
-                    <p class="text-xs text-gray-500 mb-1">Adicionales ({{ inscripcion.comprobantesAdicionales.length }}):</p>
-                    <div class="flex flex-wrap gap-1">
-                      <FileViewer
-                        v-for="(comp, idx) in inscripcion.comprobantesAdicionales"
-                        :key="idx"
-                        :file-url="comp.url"
-                        :titulo="`Comprobante adicional #${idx + 1}`"
-                      />
-                    </div>
-                  </div>
-                </td>
-
-                <!-- Acciones -->
-                <td class="px-4 py-4">
-                  <div class="flex items-center justify-center gap-2">
-                    <button
-                      @click="abrirModalEdicion(inscripcion)"
-                      class="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
-                      title="Editar"
-                    >
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button
-                      @click="confirmarEliminar(inscripcion)"
-                      class="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
-                      title="Eliminar"
-                    >
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Paginación -->
-        <div v-if="!cargando && inscripcionesFiltradas.length > 0" class="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div class="text-sm text-gray-600">
-            Mostrando {{ ((paginaActual - 1) * itemsPorPagina) + 1 }} - {{ Math.min(paginaActual * itemsPorPagina, inscripcionesFiltradas.length) }} 
-            de {{ inscripcionesFiltradas.length }} inscripciones
+        <div v-else-if="inscripcionesPaginadas.length === 0" class="text-center py-16 px-4">
+          <div class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-2xl mx-auto mb-3">
+            <i class="fas fa-users-slash"></i>
           </div>
-          <div class="flex gap-2">
+          <h3 class="text-base font-bold text-slate-900 mb-1">No hay inscripciones registradas</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">
+            {{ filtros.busqueda || filtros.eventoId ? 'No se encontraron resultados para los filtros seleccionados.' : 'Aún no hay participantes inscritos en este evento.' }}
+          </p>
+        </div>
+
+        <!-- ── DATOS: un v-else que contiene ambos layouts ── -->
+        <div v-else>
+
+          <!-- VISTA MÓVIL: tarjetas apiladas (< md) -->
+          <div class="md:hidden divide-y divide-slate-100">
+            <div
+              v-for="inscripcion in inscripcionesPaginadas"
+              :key="inscripcion.id + '-card'"
+              class="p-4 hover:bg-slate-50/70 transition-colors"
+            >
+              <!-- Cabecera de la tarjeta: nombre + monto -->
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <p class="font-bold text-slate-900 text-sm leading-tight">
+                    {{ inscripcion.participante?.nombre || 'N/A' }}
+                  </p>
+                  <p v-if="inscripcion.participante?.cedula" class="text-[11px] text-slate-500 mt-0.5">
+                    <i class="fas fa-id-card mr-1 text-slate-400"></i>{{ inscripcion.participante.cedula }}
+                  </p>
+                </div>
+                <span class="flex-shrink-0 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 text-sm">
+                  ${{ Number(inscripcion.participante?.totalPrice || 0).toFixed(2) }}
+                </span>
+              </div>
+
+              <!-- Grid de datos secundarios -->
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] mb-3">
+                <div v-if="inscripcion.participante?.telefono">
+                  <span class="text-slate-400 font-semibold uppercase tracking-wide">WhatsApp</span>
+                  <p class="text-slate-700"><i class="fas fa-phone mr-1 text-slate-400"></i>{{ inscripcion.participante.telefono }}</p>
+                </div>
+                <div v-if="inscripcion.participante?.correo">
+                  <span class="text-slate-400 font-semibold uppercase tracking-wide">Correo</span>
+                  <p class="text-slate-700 truncate">{{ inscripcion.participante.correo }}</p>
+                </div>
+                <div v-if="!eventoFijado">
+                  <span class="text-slate-400 font-semibold uppercase tracking-wide">Evento</span>
+                  <p class="text-slate-700">{{ obtenerNombreEvento(inscripcion.eventoId) }}</p>
+                </div>
+                <div v-if="inscripcion.participante?.iglesia">
+                  <span class="text-slate-400 font-semibold uppercase tracking-wide">Iglesia</span>
+                  <p class="text-slate-700">{{ inscripcion.participante.iglesia }}</p>
+                </div>
+                <div v-if="inscripcion.participante?.mentor">
+                  <span class="text-slate-400 font-semibold uppercase tracking-wide">Mentor</span>
+                  <p class="text-slate-700">{{ inscripcion.participante.mentor }}</p>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-semibold uppercase tracking-wide">Boleto</span>
+                  <p class="text-slate-700">{{ inscripcion.participante?.ticketType || 'General' }}</p>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-semibold uppercase tracking-wide">Fecha</span>
+                  <p class="text-slate-700">{{ formatearFecha(inscripcion.fechaInscripcion) }}</p>
+                  <div v-if="obtenerEditor(inscripcion)" class="mt-1 text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 inline-flex items-center gap-1 font-medium" :title="'Editado por ' + obtenerEditor(inscripcion)">
+                    <i class="fas fa-user-pen text-[9px]"></i>
+                    <span class="truncate max-w-[130px]">{{ obtenerEditor(inscripcion) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fila de acciones -->
+              <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+                <FileViewer
+                  v-if="obtenerArchivos(inscripcion).length > 0"
+                  :files="obtenerArchivos(inscripcion)"
+                />
+                <span v-else class="text-slate-400 text-[11px] italic flex-1">Sin adjunto</span>
+                <div class="flex items-center gap-1.5 ml-auto">
+                  <button
+                    @click="abrirModalEdicion(inscripcion)"
+                    class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                    title="Editar"
+                  >
+                    <i class="fas fa-pen-to-square text-sm"></i>
+                  </button>
+                  <button
+                    @click="confirmarEliminarInscripcion(inscripcion)"
+                    class="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 transition-colors"
+                    title="Eliminar"
+                  >
+                    <i class="fas fa-trash-can text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VISTA ESCRITORIO: tabla (md+) -->
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-900 text-slate-200 text-[11px] font-semibold uppercase tracking-wider">
+                <tr>
+                  <th class="px-5 py-3.5">Participante</th>
+                  <th class="px-5 py-3.5">Evento</th>
+                  <th class="px-5 py-3.5">Iglesia / Mentor</th>
+                  <th class="px-5 py-3.5">Boleto / Cant.</th>
+                  <th class="px-5 py-3.5">Monto Total</th>
+                  <th class="px-5 py-3.5">Fecha Registro</th>
+                  <th class="px-5 py-3.5">Comprobante</th>
+                  <th class="px-5 py-3.5 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                <tr
+                  v-for="inscripcion in inscripcionesPaginadas"
+                  :key="inscripcion.id"
+                  class="hover:bg-slate-50/80 transition-colors"
+                >
+                  <!-- Participante -->
+                  <td class="px-5 py-4">
+                    <div class="font-bold text-slate-900 text-sm mb-0.5">
+                      {{ inscripcion.participante?.nombre || 'N/A' }}
+                    </div>
+                    <div class="text-slate-500 space-y-0.5 text-[11px]">
+                      <div v-if="inscripcion.participante?.cedula">
+                        <i class="fas fa-id-card text-slate-400 mr-1"></i>{{ inscripcion.participante?.cedula }}
+                      </div>
+                      <div v-if="inscripcion.participante?.telefono">
+                        <i class="fas fa-phone text-slate-400 mr-1"></i>{{ inscripcion.participante?.telefono }}
+                      </div>
+                      <div v-if="inscripcion.participante?.correo">
+                        <i class="fas fa-envelope text-slate-400 mr-1"></i>{{ inscripcion.participante?.correo }}
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Evento -->
+                  <td class="px-5 py-4">
+                    <span class="font-semibold text-slate-800 block">
+                      {{ obtenerNombreEvento(inscripcion.eventoId) }}
+                    </span>
+                  </td>
+
+                  <!-- Iglesia / Mentor -->
+                  <td class="px-5 py-4">
+                    <div class="space-y-0.5">
+                      <div class="font-medium text-slate-800">
+                        {{ inscripcion.participante?.iglesia || 'N/A' }}
+                      </div>
+                      <div v-if="inscripcion.participante?.mentor" class="text-[11px] text-slate-500">
+                        <span class="font-semibold text-slate-400">Mentor:</span> {{ inscripcion.participante?.mentor }}
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Boleto / Cant. -->
+                  <td class="px-5 py-4">
+                    <div class="font-semibold text-slate-800">
+                      {{ inscripcion.participante?.ticketType || 'General' }}
+                    </div>
+                    <div class="text-[11px] text-slate-500">
+                      Cant: {{ inscripcion.participante?.ticketQuantity || 1 }}
+                    </div>
+                  </td>
+
+                  <!-- Monto Total -->
+                  <td class="px-5 py-4">
+                    <span class="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                      ${{ Number(inscripcion.participante?.totalPrice || 0).toFixed(2) }}
+                    </span>
+                  </td>
+
+                  <!-- Fecha Registro & Auditoría -->
+                  <td class="px-5 py-4 text-slate-500">
+                    <div class="text-xs text-slate-700">
+                      {{ formatearFecha(inscripcion.fechaInscripcion) }}
+                    </div>
+                    <div
+                      v-if="obtenerEditor(inscripcion)"
+                      class="mt-1 text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 inline-flex items-center gap-1 font-medium"
+                      :title="'Última edición por ' + obtenerEditor(inscripcion)"
+                    >
+                      <i class="fas fa-user-pen text-[9px]"></i>
+                      <span class="truncate max-w-[120px]">{{ obtenerEditor(inscripcion) }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Comprobante / Adjuntos -->
+                  <td class="px-5 py-4">
+                    <FileViewer
+                      v-if="obtenerArchivos(inscripcion).length > 0"
+                      :files="obtenerArchivos(inscripcion)"
+                    />
+                    <span v-else class="text-slate-400 text-[11px] italic">Sin adjunto</span>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="px-5 py-4 text-center">
+                    <div class="inline-flex items-center gap-1.5">
+                      <button
+                        @click="abrirModalEdicion(inscripcion)"
+                        class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                        title="Editar inscripción"
+                      >
+                        <i class="fas fa-pen-to-square"></i>
+                      </button>
+                      <button
+                        @click="confirmarEliminarInscripcion(inscripcion)"
+                        class="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 transition-colors cursor-pointer"
+                        title="Eliminar inscripción"
+                      >
+                        <i class="fas fa-trash-can"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /v-else -->
+
+        <!-- ── PAGINACIÓN INFERIOR ── -->
+        <div
+          v-if="!cargando && inscripcionesFiltradas.length > 0 && totalPaginas > 1"
+          class="flex items-center justify-between px-5 py-4 border-t border-slate-100 bg-white"
+        >
+          <span class="text-xs text-slate-500">
+            Página <span class="font-bold text-slate-800">{{ paginaActual }}</span> de <span class="font-bold text-slate-800">{{ totalPaginas }}</span>
+            &nbsp;·&nbsp; {{ inscripcionesFiltradas.length }} inscrito{{ inscripcionesFiltradas.length !== 1 ? 's' : '' }}
+          </span>
+
+          <div class="flex items-center gap-1.5">
+            <button
+              @click="paginaActual = 1"
+              :disabled="paginaActual === 1"
+              class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors"
+              title="Primera página"
+            >
+              <i class="fas fa-angles-left"></i>
+            </button>
             <button
               @click="paginaActual--"
               :disabled="paginaActual === 1"
-              class="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors"
+              title="Página anterior"
             >
               <i class="fas fa-chevron-left"></i>
             </button>
-            <span class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold">
-              {{ paginaActual }} / {{ totalPaginas }}
-            </span>
+
+            <!-- Números de página (máx 5 visibles) -->
+            <template v-for="n in totalPaginas" :key="n">
+              <button
+                v-if="n === 1 || n === totalPaginas || Math.abs(n - paginaActual) <= 1"
+                @click="paginaActual = n"
+                class="w-8 h-8 rounded-lg border text-xs font-semibold transition-colors"
+                :class="n === paginaActual
+                  ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"
+              >{{ n }}</button>
+              <span
+                v-else-if="n === paginaActual - 2 || n === paginaActual + 2"
+                class="text-slate-400 text-xs px-0.5"
+              >…</span>
+            </template>
+
             <button
               @click="paginaActual++"
-              :disabled="paginaActual === totalPaginas"
-              class="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="paginaActual >= totalPaginas"
+              class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors"
+              title="Página siguiente"
             >
               <i class="fas fa-chevron-right"></i>
             </button>
+            <button
+              @click="paginaActual = totalPaginas"
+              :disabled="paginaActual >= totalPaginas"
+              class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors"
+              title="Última página"
+            >
+              <i class="fas fa-angles-right"></i>
+            </button>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -299,166 +480,43 @@
       @close="cerrarModalEdicion"
       @save="guardarCambios"
     />
+
+    <!-- Modal de Gestión de Iglesias y Mentores -->
+    <ConfiguracionIglesiasModal
+      :show="mostrarConfigIglesias"
+      @close="mostrarConfigIglesias = false"
+    />
+
+    <!-- Modal de Gestión de Usuarios y Roles -->
+    <GestionUsuariosModal
+      :show="mostrarGestionUsuarios"
+      @close="mostrarGestionUsuarios = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
-import { auth, db } from '../firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { auth } from '../firebase'
 import FileViewer from '../components/FileViewer.vue'
 import EditInscripcionModal from '../components/EditInscripcionModal.vue'
-
-// Helpers para CSV
-const escapeCsv = (value) => {
-  if (value === undefined || value === null) return ''
-  const str = String(value)
-  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-    return '"' + str.replace(/"/g, '""') + '"'
-  }
-  return str
-}
-
-const objectToCsvRow = (ins) => {
-  // kept for backward compatibility but not used by the new export logic
-  const p = ins.participante || {}
-  const row = [
-    ins.id || '',
-    ins.eventoId || '',
-    ins.eventoTitulo || obtenerNombreEvento(ins.eventoId) || '',
-    p.nombre || '',
-    p.cedula || '',
-    p.telefono || '',
-    p.iglesia || '',
-    p.ticketType || '',
-    p.ticketQuantity || 1,
-    Number(p.ticketPrice || 0).toFixed(2),
-    Number(p.totalPrice || 0).toFixed(2),
-    formatearFecha(ins.fechaInscripcion) || ''
-  ]
-
-  return row.map(escapeCsv).join(',')
-}
-
-// Construye una fila CSV dinámica según las columnas condicionales
-const buildCsvRow = (ins, conditionalCols) => {
-  const p = ins.participante || {}
-  const base = [
-    ins.eventoTitulo || obtenerNombreEvento(ins.eventoId) || '',
-    p.nombre || '',
-    p.cedula || '',
-    p.telefono || '',
-    p.iglesia || '',
-    p.ticketType || '',
-    Number(p.ticketPrice || 0).toFixed(2),
-    Number(p.totalPrice || 0).toFixed(2),
-    formatearFecha(ins.fechaInscripcion) || ''
-  ]
-
-  const extras = conditionalCols.map(col => {
-    switch (col) {
-      case 'edad':
-        return p.edad || ''
-      case 'correo':
-        return p.correo || ''
-      case 'nota':
-        return p.nota || ''
-      case 'mentor':
-        return p.mentor || ''
-      default:
-        return ''
-    }
-  })
-
-  return [...base, ...extras].map(escapeCsv).join(',')
-}
-
-const exportarCSV = () => {
-  const filas = []
-  // Encabezados base (quitando inscripcionId, eventoId y ticketQuantity)
-  const baseHeaders = [
-    'eventoTitulo',
-    'nombre',
-    'cedula',
-    'telefono',
-    'iglesia',
-    'ticketType',
-    'ticketPrice',
-    'totalPrice',
-    'fechaInscripcion'
-  ]
-
-  // Determinar columnas condicionales (edad, correo, nota, mentor) según opciones de los eventos presentes
-  const eventIds = [...new Set(inscripcionesFiltradas.value.map(i => i.eventoId).filter(Boolean))]
-  const condSet = new Set()
-  for (const id of eventIds) {
-    const ev = eventos.value.find(e => e.id === id)
-    if (!ev || !ev.opciones) continue
-    if (ev.opciones.habilitarEdad) condSet.add('edad')
-    if (ev.opciones.habilitarCorreo) condSet.add('correo')
-    if (ev.opciones.habilitarNota) condSet.add('nota')
-    if (ev.opciones.habilitarMentor) condSet.add('mentor')
-  }
-
-  const conditionalCols = Array.from(condSet)
-  const encabezados = [...baseHeaders, ...conditionalCols]
-  filas.push(encabezados.join(','))
-
-  // Usar las inscripciones filtradas actuales y construir filas dinámicamente
-  inscripcionesFiltradas.value.forEach(ins => {
-    const sinfo = { ...ins }
-    sinfo.eventoTitulo = obtenerNombreEvento(ins.eventoId)
-    filas.push(buildCsvRow(sinfo, conditionalCols))
-  })
-
-  const csvContent = filas.join('\r\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-
-  const a = document.createElement('a')
-  a.href = url
-  const fecha = new Date().toISOString().slice(0,19).replace('T','_')
-
-  // Determinar nombre del evento para el archivo
-  let eventoNombre = ''
-  if (filtros.value.eventoId) {
-    eventoNombre = obtenerNombreEvento(filtros.value.eventoId)
-  } else {
-    const ids = [...new Set(inscripcionesFiltradas.value.map(i => i.eventoId).filter(Boolean))]
-    if (ids.length === 1) {
-      eventoNombre = obtenerNombreEvento(ids[0])
-    } else if (ids.length > 1) {
-      eventoNombre = 'varios_eventos'
-    } else {
-      eventoNombre = 'sin_evento'
-    }
-  }
-
-  // Sanitizar nombre (quitar espacios y caracteres inválidos)
-  eventoNombre = String(eventoNombre || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9-_]/g, '')
-
-  a.download = `inscripciones_${eventoNombre || 'evento'}_${fecha}.csv`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
+import ConfiguracionIglesiasModal from '../components/ConfiguracionIglesiasModal.vue'
+import GestionUsuariosModal from '../components/GestionUsuariosModal.vue'
 
 const router = useRouter()
 const route = useRoute()
 const eventosStore = useEventosStore()
 
+const mostrarConfigIglesias = ref(false)
+const mostrarGestionUsuarios = ref(false)
+
 const todasInscripciones = ref([])
 const eventos = ref([])
 const cargando = ref(false)
 const paginaActual = ref(1)
-const itemsPorPagina = ref(10)
+const itemsPorPagina = ref(15)
 const mostrarModalEdicion = ref(false)
 const inscripcionSeleccionada = ref(null)
 
@@ -467,17 +525,87 @@ const filtros = ref({
   eventoId: ''
 })
 
-// Verificar autenticación
+// true cuando la página fue abierta desde el botón de un evento específico
+const eventoFijado = computed(() => !!route.query.eventoId)
+
+const eventoActual = computed(() => {
+  if (!filtros.value.eventoId) return null
+  return eventos.value.find(e => e.id === filtros.value.eventoId)
+})
+
+// Sincronizar filtros.eventoId con la URL para sobrevivir al refresh
+watch(
+  () => route.query.eventoId,
+  (nuevoId) => {
+    filtros.value.eventoId = nuevoId || ''
+  },
+  { immediate: true }
+)
+
+const obtenerNombreEvento = (eventoId) => {
+  const ev = eventos.value.find(e => e.id === eventoId)
+  return ev ? ev.titulo : 'Evento'
+}
+
+const obtenerOpcionesEvento = (eventoId) => {
+  const ev = eventos.value.find(e => e.id === eventoId)
+  return ev ? ev.opciones : null
+}
+
+// Recibe la inscripción completa para poder leer tanto participante como comprobantesAdicionales (raíz)
+const obtenerArchivos = (inscripcion) => {
+  if (!inscripcion) return []
+  const urls = []
+
+  // Comprobantes del registro inicial (dentro de participante)
+  const p = inscripcion.participante || inscripcion // retrocompatibilidad
+  if (Array.isArray(p.comprobantesUrls)) {
+    urls.push(...p.comprobantesUrls)
+  } else if (p.comprobanteUrl) {
+    urls.push(p.comprobanteUrl)
+  }
+
+  // Comprobantes adicionales agregados vía "Hacer Otro Pago" (raíz del documento)
+  const adicionales = inscripcion.comprobantesAdicionales || []
+  for (const ca of adicionales) {
+    if (ca.url) urls.push(ca.url)
+  }
+
+  return urls
+}
+
+const formatearFecha = (fecha) => {
+  if (!fecha) return 'N/A'
+  try {
+    const d = new Date(fecha)
+    return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  } catch (e) {
+    return fecha
+  }
+}
+
+const calcularIngresoTotal = computed(() => {
+  return inscripcionesFiltradas.value.reduce((acc, ins) => {
+    const price = Number(ins.participante?.totalPrice || 0)
+    return acc + price
+  }, 0).toFixed(2)
+})
+
+// Suma de ticketPrice × ticketQuantity: lo que DEBERÍA haberse cobrado según el boleto seleccionado
+const calcularTotalEsperado = computed(() => {
+  return inscripcionesFiltradas.value.reduce((acc, ins) => {
+    const precio = Number(ins.participante?.ticketPrice || 0)
+    const cantidad = Number(ins.participante?.ticketQuantity || 1)
+    return acc + precio * cantidad
+  }, 0).toFixed(2)
+})
+
 onMounted(async () => {
   const unsubscribe = auth.onAuthStateChanged(user => {
     unsubscribe()
     if (!user) {
       router.push('/admin-login')
     } else {
-      // Si viene un eventoId en la query, aplicar el filtro
-      if (route.query.eventoId) {
-        filtros.value.eventoId = route.query.eventoId
-      }
       cargarDatos()
     }
   })
@@ -486,8 +614,6 @@ onMounted(async () => {
 const cargarDatos = async () => {
   if (typeof eventosStore.cargarEventos === 'function') {
     await eventosStore.cargarEventos()
-  } else {
-    console.warn('eventosStore.cargarEventos is not available')
   }
   eventos.value = eventosStore.eventos
   await cargarInscripciones()
@@ -504,16 +630,13 @@ const cargarInscripciones = async () => {
   }
 }
 
-// Filtrado inteligente
 const inscripcionesFiltradas = computed(() => {
   let resultado = [...todasInscripciones.value]
 
-  // Filtro por evento
   if (filtros.value.eventoId) {
     resultado = resultado.filter(ins => ins.eventoId === filtros.value.eventoId)
   }
 
-  // Filtro por búsqueda (nombre, cédula, teléfono)
   if (filtros.value.busqueda) {
     const busqueda = filtros.value.busqueda.toLowerCase()
     resultado = resultado.filter(ins => {
@@ -527,79 +650,22 @@ const inscripcionesFiltradas = computed(() => {
   return resultado
 })
 
-// Paginación
 const totalPaginas = computed(() => {
-  return Math.ceil(inscripcionesFiltradas.value.length / itemsPorPagina.value)
+  return Math.ceil(inscripcionesFiltradas.value.length / itemsPorPagina.value) || 1
 })
 
 const inscripcionesPaginadas = computed(() => {
   const inicio = (paginaActual.value - 1) * itemsPorPagina.value
-  const fin = inicio + itemsPorPagina.value
-  return inscripcionesFiltradas.value.slice(inicio, fin)
+  return inscripcionesFiltradas.value.slice(inicio, inicio + itemsPorPagina.value)
 })
 
-// Calcular ingreso total
-const calcularIngresoTotal = computed(() => {
-  const total = inscripcionesFiltradas.value.reduce((sum, ins) => {
-    return sum + (Number(ins.participante?.totalPrice) || 0)
-  }, 0)
-  return total.toFixed(2)
-})
-
-// Sumar los precios unitarios de los boletos (ticketPrice) para las inscripciones filtradas
-const calcularSumaPreciosBoletos = computed(() => {
-  const total = inscripcionesFiltradas.value.reduce((sum, ins) => {
-    return sum + (Number(ins.participante?.ticketPrice) || 0)
-  }, 0)
-  return total.toFixed(2)
-})
-
-const obtenerNombreEvento = (eventoId) => {
-  const evento = eventos.value.find(e => e.id === eventoId)
-  return evento ? evento.titulo : 'Evento desconocido'
+const obtenerEditor = (inscripcion) => {
+  if (!inscripcion) return null
+  return inscripcion.editadoPor || inscripcion.participante?.editadoPor || inscripcion.ultimaModificacion?.por || null
 }
 
-const obtenerOpcionesEvento = async (eventoId) => {
-    
-   const evento = await eventos.value.find(e => e.id === eventoId)
-   
-  return evento && evento.opciones ? evento.opciones : {}
-}
-
-const formatearFecha = (fechaISO) => {
-  if (!fechaISO) return 'N/A'
-  return new Date(fechaISO).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const abrirModalEdicion = async (inscripcion) => {
-  console.log('AdminInscripcionesView: abriendo modal con inscripcion:', inscripcion)
-  // Primero intentar obtener opciones desde los eventos ya cargados
-  let opciones = obtenerOpcionesEvento(inscripcion.eventoId)
-  // Intentar obtener título desde los eventos cargados
-  let titulo = obtenerNombreEvento(inscripcion.eventoId)
-
-  // Si no existen opciones o título, intentar obtener el documento directamente de Firestore
-  if ((!opciones || Object.keys(opciones).length === 0) || !titulo || titulo === 'Evento desconocido') {
-    try {
-      const eventoRef = doc(db, 'eventos', inscripcion.eventoId)
-      const snap = await getDoc(eventoRef)
-      if (snap.exists()) {
-        const data = snap.data()
-        opciones = opciones && Object.keys(opciones).length ? opciones : (data.opciones || {})
-        titulo = titulo && titulo !== 'Evento desconocido' ? titulo : (data.titulo || titulo)
-      }
-    } catch (e) {
-      console.warn('No se pudo cargar opciones/título del evento desde Firestore:', e)
-    }
-  }
-
-  inscripcionSeleccionada.value = { ...inscripcion, eventoOpciones: opciones, eventoTitulo: titulo }
+const abrirModalEdicion = (inscripcion) => {
+  inscripcionSeleccionada.value = { ...inscripcion }
   mostrarModalEdicion.value = true
 }
 
@@ -608,42 +674,116 @@ const cerrarModalEdicion = () => {
   inscripcionSeleccionada.value = null
 }
 
-const guardarCambios = async (datos) => {
+// Resetear a página 1 cuando cambia el filtro de búsqueda o evento
+watch([() => filtros.value.busqueda, () => filtros.value.eventoId], () => {
+  paginaActual.value = 1
+})
+
+const guardarCambios = async (datosActualizados) => {
   try {
-    await eventosStore.actualizarInscripcion(datos.id, {
-      participante: datos.participante
-    })
-    
-    // Actualizar la lista local
-    const index = todasInscripciones.value.findIndex(ins => ins.id === datos.id)
-    if (index !== -1) {
-      todasInscripciones.value[index].participante = datos.participante
+    const id = inscripcionSeleccionada.value.id
+    await eventosStore.actualizarInscripcion(id, datosActualizados)
+
+    // Actualización local optimista para evitar recargar 270+ registros
+    const idx = todasInscripciones.value.findIndex(item => item.id === id)
+    if (idx !== -1) {
+      todasInscripciones.value[idx] = {
+        ...todasInscripciones.value[idx],
+        ...datosActualizados,
+        participante: {
+          ...todasInscripciones.value[idx].participante,
+          ...(datosActualizados.participante || {})
+        }
+      }
     }
-  } catch (error) {
-    console.error('Error guardando cambios:', error)
-    throw error
+    cerrarModalEdicion()
+  } catch (e) {
+    console.error('Error actualizando inscripción:', e)
+    alert('❌ Ocurrió un error al guardar los cambios en la base de datos.')
   }
 }
 
-const limpiarFiltroEvento = () => {
-  filtros.value.eventoId = ''
-  // También limpiar el query param de la URL
-  router.push({ path: '/admin/inscripciones', query: {} })
+const confirmarEliminarInscripcion = async (inscripcion) => {
+  const nombre = inscripcion.participante?.nombre || 'este participante'
+  const confirmed = window.confirm(`¿Estás seguro de que deseas eliminar permanentemente la inscripción de "${nombre}"?\n\nEsta acción no se puede deshacer.`)
+  if (!confirmed) return
+
+  try {
+    await eventosStore.eliminarInscripcion(inscripcion.id)
+    // Eliminación local optimista
+    todasInscripciones.value = todasInscripciones.value.filter(i => i.id !== inscripcion.id)
+  } catch (e) {
+    console.error('Error eliminando inscripción:', e)
+    alert('❌ Ocurrió un error al intentar eliminar la inscripción.')
+  }
 }
 
-const confirmarEliminar = async (inscripcion) => {
-  if (confirm(`¿Estás seguro de eliminar la inscripción de ${inscripcion.participante?.nombre}?`)) {
-    try {
-      await eventosStore.eliminarInscripcion(inscripcion.id)
-      todasInscripciones.value = todasInscripciones.value.filter(ins => ins.id !== inscripcion.id)
-    } catch (error) {
-      console.error('Error eliminando inscripción:', error)
-      alert('Error al eliminar la inscripción')
-    }
+const escapeCsv = (val) => {
+  if (val === undefined || val === null) return ''
+  const str = String(val)
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"'
   }
+  return str
+}
+
+const exportarCSV = () => {
+  if (inscripcionesFiltradas.value.length === 0) return
+  const headers = [
+    'Evento',
+    'ID Registro',
+    'Nombre',
+    'Cédula',
+    'Teléfono',
+    'Correo',
+    'Edad',
+    'Iglesia',
+    'Mentor',
+    'Boleto',
+    'Cantidad',
+    'Precio Unitario ($)',
+    'Monto Total ($)',
+    'Monto Pagado Inicial ($)',
+    'Comprobantes Adjuntos',
+    'Fecha Registro'
+  ]
+  const rows = [headers.join(',')]
+
+  inscripcionesFiltradas.value.forEach(ins => {
+    const p = ins.participante || {}
+    const archs = obtenerArchivos(ins)
+    const r = [
+      obtenerNombreEvento(ins.eventoId),
+      p.registrationToken || ins.id || '',
+      p.nombre || '',
+      p.cedula || '',
+      p.telefono || '',
+      p.correo || '',
+      p.edad !== undefined && p.edad !== null ? p.edad : '',
+      p.iglesia || '',
+      p.mentor || '',
+      p.ticketType || 'General',
+      p.ticketQuantity || 1,
+      Number(p.ticketPrice || 0).toFixed(2),
+      Number(p.totalPrice || 0).toFixed(2),
+      Number(p.montoPagado || p.monto || 0).toFixed(2),
+      archs.length,
+      formatearFecha(ins.fechaInscripcion)
+    ]
+    rows.push(r.map(escapeCsv).join(','))
+  })
+
+  const csvContent = '\uFEFF' + rows.join('\r\n') // BOM UTF-8 para Excel
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+
+  const nombreEvento = eventoActual.value ? eventoActual.value.titulo.toLowerCase().replace(/\s+/g, '_') : 'eventos'
+  a.download = `inscripciones_${nombreEvento}_${new Date().toISOString().slice(0,10)}.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 </script>
-
-<style scoped>
-/* Estilos adicionales si es necesario */
-</style>

@@ -52,11 +52,26 @@
             >
               <i class="fas fa-envelope mr-2"></i>Contacto
             </router-link>
-          </div>
-          <!-- Opción Iniciar/Cerrar sesión -->
+          </div>          <!-- Opción Iniciar/Cerrar sesión -->
           <template v-if="isLoggedIn">
-            <button @click="logout" class="px-2 py-1 rounded-lg text-sm font-medium transition-colors text-white hover:text-red-500 bg-gradient-to-r from-red-500 to-pink-500">
-              <i class="fas fa-sign-out-alt mr-2"></i>Cerrar sesión
+            <div class="flex items-center gap-2 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 text-xs text-white">
+              <i class="fas fa-user-shield text-indigo-300"></i>
+              <span class="font-medium max-w-[140px] truncate">{{ userEmail }}</span>
+            </div>
+            <router-link
+              to="/admin"
+              :class="['px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5',
+                       $route.path.startsWith('/admin') ? 'text-indigo-700 bg-white font-semibold' : 'text-white hover:text-indigo-200']"
+            >
+              <i class="fas fa-grip"></i>
+              <span>Panel Admin</span>
+            </router-link>
+            <button
+              @click="logout"
+              class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-white bg-rose-600/80 hover:bg-rose-600 flex items-center gap-1.5 cursor-pointer"
+            >
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Salir</span>
             </button>
           </template>
           <template v-else>
@@ -82,13 +97,24 @@
       <!-- Menú Mobile -->
       <div 
         v-show="menuMovilAbierto"
-        class="lg:hidden bg-white border-t border-gray-200 py-4"
+        class="lg:hidden bg-white border-t border-gray-200 py-4 px-4 shadow-xl"
       >
         <div class="flex flex-col space-y-2">
+          <!-- Active User Session Header (Mobile Hamburger) -->
+          <div v-if="isLoggedIn" class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl mb-2 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-sm shrink-0">
+              <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="overflow-hidden leading-tight">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Sesión Activa</span>
+              <span class="text-xs font-semibold text-slate-800 truncate block">{{ userEmail }}</span>
+            </div>
+          </div>
+
           <router-link 
             to="/" 
             @click="menuMovilAbierto = false"
-            :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+            :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                      $route.path === '/' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
           >
             <i class="fas fa-home mr-3"></i>Inicio
@@ -96,73 +122,62 @@
           <router-link 
             to="/eventos" 
             @click="menuMovilAbierto = false"
-            :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+            :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                      $route.path.includes('/eventos') || $route.path.includes('/evento') || $route.path.includes('/inscripcion') 
                      ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
           >
             <i class="fas fa-calendar-alt mr-3"></i>Eventos
           </router-link>
-          <div class="flex items-center space-x-2 px-4">
-            <router-link 
-              to="/nosotros" 
-              @click="menuMovilAbierto = false"
-              :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
-                       $route.path === '/nosotros' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
-            >
-              <i class="fas fa-users mr-3"></i>Nosotros
-            </router-link>
-            <span class="text-gray-400">|</span>
-            <router-link 
-              to="/contacto" 
-              @click="menuMovilAbierto = false"
-              :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
-                       $route.path === '/contacto' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
-            >
-              <i class="fas fa-envelope mr-3"></i>Contacto
-            </router-link>
-          </div>
-          <!-- Opción Iniciar/Cerrar sesión -->
+          <router-link 
+            to="/nosotros" 
+            @click="menuMovilAbierto = false"
+            :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/nosotros' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
+          >
+            <i class="fas fa-users mr-3"></i>Nosotros
+          </router-link>
+          <router-link 
+            to="/contacto" 
+            @click="menuMovilAbierto = false"
+            :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/contacto' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
+          >
+            <i class="fas fa-envelope mr-3"></i>Contacto
+          </router-link>
+
+          <!-- Opción Iniciar/Cerrar sesión en Menú Móvil -->
           <template v-if="isLoggedIn">
-            <button @click="logout" class="w-full px-2 py-2 rounded-lg text-sm font-medium transition-colors text-white hover:text-red-500 bg-gradient-to-r from-red-500 to-pink-500">
-              <i class="fas fa-sign-out-alt mr-3"></i>Cerrar sesión
-            </button>
+            <div class="pt-2 border-t border-slate-100 flex flex-col gap-2">
+              <router-link
+                to="/admin"
+                @click="menuMovilAbierto = false"
+                class="px-3 py-2 rounded-lg text-sm font-semibold text-indigo-700 bg-indigo-50 flex items-center gap-2"
+              >
+                <i class="fas fa-grip"></i>
+                <span>Panel de Administración</span>
+              </router-link>
+              <button
+                @click="logout"
+                class="w-full px-3 py-2 rounded-lg text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
           </template>
           <template v-else>
             <router-link 
               to="/admin-login" 
               @click="menuMovilAbierto = false"
-              :class="['px-2 py-2 rounded-lg text-sm font-medium transition-colors',
+              :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                        $route.path === '/admin-login' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-100 hover:text-purple-700']"
             >
               <i class="fas fa-sign-in-alt mr-3"></i>Iniciar sesión
             </router-link>
           </template>
-          <div class="px-4 py-2">
-            <router-link 
-              to="/eventos"
-              @click="menuMovilAbierto = false"
-              class="block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all text-center"
-            >
-              <i class="fas fa-user-plus mr-2"></i>Únete a Nosotros
-            </router-link>
-          </div>
         </div>
       </div>
     </div>
-
-    <!-- Barra de información superior (opcional) -->
-    <!-- <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 text-center text-sm">
-      <div class="container mx-auto px-4">
-        <p>
-          <i class="fas fa-calendar-alt mr-2"></i>
-          Próximo Culto: Domingo 10:00 AM • 
-          <i class="fas fa-map-marker-alt mx-2"></i>
-          Av. Principal 123 • 
-          <i class="fas fa-phone ml-2 mr-1"></i>
-          +1 (555) 123-4567
-        </p>
-      </div>
-    </div> -->
   </nav>
 
   
@@ -178,6 +193,7 @@ const mostrarNav = ref(true)
 let ultimoScroll = window.scrollY
 
 const isLoggedIn = ref(false)
+const userEmail = ref('')
 
 const handleScroll = () => {
   const actualScroll = window.scrollY
@@ -198,6 +214,7 @@ onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   auth.onAuthStateChanged(user => {
     isLoggedIn.value = !!user
+    userEmail.value = user ? user.email : ''
   })
 })
 

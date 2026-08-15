@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { db, storage } from '../firebase'
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 
@@ -28,30 +28,92 @@ export const useEventosStore = defineStore('eventos', () => {
     return value
   }
 
-  // Cargar eventos desde Firestore en tiempo real
+  const mockEventos = [
+    {
+      id: '1',
+      titulo: 'Conferencia Internacional de Fe 2026',
+      subtitulo: 'Desatando el Poder de Dios',
+      descripcion: 'Únete a nosotros en tres días de avivamiento, enseñanza de la Palabra y adoración junto a invitados especiales internacionales.',
+      fecha: '2026-09-20',
+      hora: '19:00',
+      lugar: 'Auditorio Principal - El Aposento Alto',
+      imagen: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80',
+      bannerUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80',
+      precio: 0,
+      esGratis: true,
+      cupos: 500,
+      inscritos: 120
+    },
+    {
+      id: '2',
+      titulo: 'Congreso de Jóvenes: Generación Radical',
+      subtitulo: 'Levantándonos en Verdad y Poder',
+      descripcion: 'Un encuentro transformador para la juventud con música en vivo, talleres interactivos y conferencias impactantes.',
+      fecha: '2026-10-15',
+      hora: '18:30',
+      lugar: 'Centro de Convenciones El Aposento Alto',
+      imagen: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+      bannerUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+      precio: 15,
+      esGratis: false,
+      cupos: 300,
+      inscritos: 85
+    },
+    {
+      id: '3',
+      titulo: 'Noche de Gloriosa Adoración y Milagros',
+      subtitulo: 'Presencia Divina',
+      descripcion: 'Una velada dedicada a la ministración del Espíritu Santo, sanidades y alabanza ininterrumpida.',
+      fecha: '2026-11-05',
+      hora: '20:00',
+      lugar: 'Templo Central',
+      imagen: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80',
+      bannerUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80',
+      precio: 0,
+      esGratis: true,
+      cupos: 400,
+      inscritos: 210
+    }
+  ]
+
+  // Cargar eventos desde Firestore en tiempo real (con fallback a mock data)
   const cargarEventos = () => {
-    const eventosRef = collection(db, 'eventos')
-    const q = query(eventosRef, orderBy('fecha', 'desc'))
-    onSnapshot(q, (snapshot) => {
-      eventos.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    try {
+      const eventosRef = collection(db, 'eventos')
+      const q = query(eventosRef, orderBy('fecha', 'desc'))
+      onSnapshot(q, (snapshot) => {
+        const loaded = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        eventos.value = loaded.length > 0 ? loaded : mockEventos
+        loading.value = false
+      }, (error) => {
+        console.warn('Firestore onSnapshot notice:', error.message)
+        if (eventos.value.length === 0) {
+          eventos.value = mockEventos
+        }
+        loading.value = false
+      })
+    } catch (err) {
+      console.warn('Error connecting to Firestore:', err)
+      if (eventos.value.length === 0) {
+        eventos.value = mockEventos
+      }
       loading.value = false
-      
-    })
+    }
   }
 
   const obtenerEventoPorId = (id) => {
     return eventos.value.find(evento => evento.id === id || evento.id === parseInt(id))
   }
 
-  // Inscribir participante en Firestore (colección inscripciones)
   const inscribirParticipante = async (eventoId, datosParticipante) => {
     // Si el participante adjuntó un archivo 'comprobante', súbelo a Storage
+    let uploadWarning = false
     try {
       // soportar uno o varios archivos en datosParticipante.comprobante (array de File)
       if (datosParticipante && datosParticipante.comprobante && Array.isArray(datosParticipante.comprobante) && typeof File !== 'undefined') {
+        const archivosOriginales = datosParticipante.comprobante.filter(f => f instanceof File)
         const urls = []
-        for (const file of datosParticipante.comprobante) {
-          if (!(file instanceof File)) continue
+        for (const file of archivosOriginales) {
           const path = `inscripciones/${eventoId}/${Date.now()}_${file.name}`
           const sRef = storageRef(storage, path)
           try {
@@ -60,25 +122,34 @@ export const useEventosStore = defineStore('eventos', () => {
             urls.push(url)
           } catch (uploadError) {
             console.error('Error subiendo archivo:', file.name, uploadError)
+            uploadWarning = true // marcar fallo para notificar al usuario
           }
         }
         if (urls.length) {
           datosParticipante.comprobantesUrls = urls
+        }
+        // Si había archivos pero no se subió ninguno, es fallo total
+        if (archivosOriginales.length > 0 && urls.length === 0) {
+          uploadWarning = true
         }
         delete datosParticipante.comprobante
       } else if (datosParticipante && datosParticipante.comprobante && typeof File !== 'undefined' && datosParticipante.comprobante instanceof File) {
         const file = datosParticipante.comprobante
         const path = `inscripciones/${eventoId}/${Date.now()}_${file.name}`
         const sRef = storageRef(storage, path)
-        await uploadBytes(sRef, file)
-        const url = await getDownloadURL(sRef)
-        // Guardar la URL en lugar del objeto File
-        datosParticipante.comprobanteUrl = url
+        try {
+          await uploadBytes(sRef, file)
+          const url = await getDownloadURL(sRef)
+          datosParticipante.comprobanteUrl = url
+        } catch (uploadError) {
+          console.error('Error subiendo comprobante a Storage:', uploadError)
+          uploadWarning = true
+        }
         delete datosParticipante.comprobante
       }
     } catch (uploadError) {
       console.error('Error subiendo comprobante a Storage:', uploadError)
-      // continuar sin la URL si falla la subida
+      uploadWarning = true
     }
 
     // Sanitize participant data to remove undefined fields (Firestore rejects undefined)
@@ -93,7 +164,7 @@ export const useEventosStore = defineStore('eventos', () => {
     console.log('Guardando inscripcion:', inscripcion)
     await addDoc(collection(db, 'inscripciones'), inscripcion)
     inscripciones.value.push(inscripcion)
-    return inscripcion
+    return { ...inscripcion, uploadWarning }
   }
 
   // Agregar evento a Firestore
@@ -120,10 +191,9 @@ export const useEventosStore = defineStore('eventos', () => {
   // Obtener inscripciones por evento desde Firestore
   const obtenerInscripcionesPorEvento = async (eventoId) => {
     const inscripcionesRef = collection(db, 'inscripciones')
-    const snapshot = await getDocs(inscripcionesRef)
-    return snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(insc => insc.eventoId === eventoId)
+    const q = query(inscripcionesRef, where('eventoId', '==', eventoId))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
   }
 
   // Obtener todas las inscripciones (con paginación opcional)
@@ -137,7 +207,8 @@ export const useEventosStore = defineStore('eventos', () => {
   // Actualizar inscripción
   const actualizarInscripcion = async (id, datosActualizados) => {
     const inscripcionRef = doc(db, 'inscripciones', id)
-    await updateDoc(inscripcionRef, datosActualizados)
+    const sanitizado = datosActualizados ? sanitize(datosActualizados) : datosActualizados
+    await updateDoc(inscripcionRef, sanitizado)
   }
 
   // Eliminar inscripción

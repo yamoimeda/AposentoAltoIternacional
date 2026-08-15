@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "firebase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firebase-mcp"
+      ],
+      "env": {
+        "FIREBASE_PROJECT_ID": "el-aposento-alto",
+        "GOOGLE_APPLICATION_CREDENTIALS": "/home/yamoi/.gemini/el-aposento-alto-firebase-adminsdk-fbsvc-5e4ea88061.json"
+      }
+    }
+  }
+}

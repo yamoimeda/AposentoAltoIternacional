@@ -1,93 +1,105 @@
 <template>
-  <div>
-    <!-- Botón para abrir el archivo -->
+  <div class="flex items-center gap-2 flex-wrap">
+    <!-- Badge con cantidad si hay más de 1 -->
     <button
-      @click="abrirVisor"
-      class="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm flex items-center gap-2"
-      :disabled="!fileUrl"
+      @click="abrirEn(0)"
+      class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs font-semibold flex items-center gap-1.5"
     >
-      <i :class="iconoTipoArchivo"></i>
-      <span>{{ textoBoton }}</span>
+      <i class="fas fa-image"></i>
+      <span>Ver comprobante{{ files.length > 1 ? 's' : '' }}</span>
+      <span v-if="files.length > 1" class="bg-blue-700 rounded-full px-1.5 py-0.5 text-[10px]">{{ files.length }}</span>
     </button>
 
-    <!-- Modal Lightbox -->
+    <!-- Lightbox modal -->
     <Teleport to="body">
       <Transition name="fade">
         <div
           v-if="mostrarModal"
-          @click.self="cerrarVisor"
-          class="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4"
+          @click.self="cerrar"
+          class="fixed inset-0 bg-black/85 z-[9999] flex items-center justify-center p-4"
         >
-          <div class="relative max-w-6xl w-full max-h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden">
-            <!-- Header del modal -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 flex justify-between items-center">
-              <h3 class="text-white font-semibold flex items-center gap-2">
-                <i :class="iconoTipoArchivo"></i>
-                {{ tituloModal }}
+          <div class="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 flex items-center justify-between flex-shrink-0">
+              <h3 class="text-white font-semibold text-sm flex items-center gap-2">
+                <i class="fas fa-image"></i>
+                Comprobante {{ files.length > 1 ? `${indiceActual + 1} de ${files.length}` : '' }}
               </h3>
-              <div class="flex gap-2">
-                <!-- Botón descargar -->
+              <div class="flex items-center gap-2">
                 <a
-                  :href="fileUrl"
-                  download
+                  :href="urlActual"
                   target="_blank"
-                  class="px-3 py-1.5 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium flex items-center gap-2"
+                  rel="noopener noreferrer"
+                  class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
                 >
-                  <i class="fas fa-download"></i>
-                  Descargar
+                  <i class="fas fa-external-link-alt"></i> Abrir en pestaña
                 </a>
-                <!-- Botón cerrar -->
                 <button
-                  @click="cerrarVisor"
-                  class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg px-3 py-1.5 transition-colors"
+                  @click="cerrar"
+                  class="text-white hover:bg-white/20 rounded-lg p-1.5 transition-colors"
                 >
-                  <i class="fas fa-times text-xl"></i>
+                  <i class="fas fa-times text-lg"></i>
                 </button>
               </div>
             </div>
 
-            <!-- Contenido del modal -->
-            <div class="p-6 overflow-auto max-h-[calc(90vh-80px)]">
-              <!-- Imagen -->
-              <div v-if="esImagen" class="flex justify-center">
-                <img
-                  :src="fileUrl"
-                  :alt="titulo"
-                  class="max-w-full h-auto rounded-lg shadow-lg"
-                  @load="imagenCargada = true"
-                />
-                <div v-if="!imagenCargada" class="flex items-center justify-center h-64">
-                  <i class="fas fa-spinner fa-spin text-4xl text-gray-400"></i>
-                </div>
+            <!-- Imagen -->
+            <div class="flex-1 overflow-auto flex items-center justify-center bg-gray-100 p-4 min-h-0">
+              <div v-if="cargando" class="flex flex-col items-center gap-3 text-gray-400">
+                <i class="fas fa-spinner fa-spin text-4xl"></i>
+                <span class="text-sm">Cargando imagen...</span>
               </div>
-
-              <!-- PDF -->
-              <div v-else-if="esPDF" class="w-full h-[70vh]">
-                <iframe
-                  :src="fileUrl"
-                  class="w-full h-full border-0 rounded-lg"
-                  @load="pdfCargado = true"
-                />
-                <div v-if="!pdfCargado" class="flex items-center justify-center h-64">
-                  <i class="fas fa-spinner fa-spin text-4xl text-gray-400"></i>
-                </div>
-              </div>
-
-              <!-- Tipo no soportado -->
-              <div v-else class="text-center py-12">
-                <i class="fas fa-file text-6xl text-gray-300 mb-4"></i>
-                <p class="text-gray-600 mb-4">Vista previa no disponible para este tipo de archivo</p>
-                <a
-                  :href="fileUrl"
-                  download
-                  target="_blank"
-                  class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <i class="fas fa-download"></i>
-                  Descargar archivo
+              <img
+                v-show="!cargando && !errorCarga"
+                :src="urlActual"
+                :key="urlActual"
+                alt="Comprobante de pago"
+                class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-md"
+                @load="cargando = false; errorCarga = false"
+                @error="cargando = false; errorCarga = true"
+              />
+              <div v-if="errorCarga && !cargando" class="flex flex-col items-center gap-3 text-gray-500">
+                <i class="fas fa-image-slash text-5xl text-gray-300"></i>
+                <p class="text-sm font-medium">No se pudo cargar la imagen</p>
+                <a :href="urlActual" target="_blank" class="text-blue-600 hover:underline text-xs">
+                  Intentar abrir directamente →
                 </a>
               </div>
             </div>
+
+            <!-- Navegación (solo si hay más de 1) -->
+            <div v-if="files.length > 1" class="flex items-center justify-between px-5 py-3 bg-gray-50 border-t border-gray-200 flex-shrink-0">
+              <button
+                @click="anterior"
+                :disabled="indiceActual === 0"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                :class="indiceActual === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-200'"
+              >
+                <i class="fas fa-chevron-left"></i> Anterior
+              </button>
+
+              <!-- Miniaturas de puntos -->
+              <div class="flex gap-1.5">
+                <button
+                  v-for="(_, i) in files"
+                  :key="i"
+                  @click="abrirEn(i)"
+                  class="w-2.5 h-2.5 rounded-full transition-all"
+                  :class="i === indiceActual ? 'bg-blue-600 scale-125' : 'bg-gray-300 hover:bg-gray-400'"
+                />
+              </div>
+
+              <button
+                @click="siguiente"
+                :disabled="indiceActual === files.length - 1"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                :class="indiceActual === files.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-200'"
+              >
+                Siguiente <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+
           </div>
         </div>
       </Transition>
@@ -96,91 +108,64 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 
 const props = defineProps({
-  fileUrl: {
-    type: String,
-    default: ''
-  },
-  titulo: {
-    type: String,
-    default: 'Archivo'
+  // Acepta un array de URLs (strings)
+  files: {
+    type: Array,
+    default: () => []
   }
 })
 
 const mostrarModal = ref(false)
-const imagenCargada = ref(false)
-const pdfCargado = ref(false)
+const indiceActual = ref(0)
+const cargando     = ref(false)
+const errorCarga   = ref(false)
 
-// Detectar tipo de archivo por extensión o MIME type
-const tipoArchivo = computed(() => {
-  if (!props.fileUrl) return 'unknown'
-  
-  const url = props.fileUrl.toLowerCase()
-  
-  if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i)) return 'image'
-  if (url.match(/\.pdf(\?|$)/i)) return 'pdf'
-  if (url.match(/\.(doc|docx)(\?|$)/i)) return 'word'
-  if (url.match(/\.(xls|xlsx)(\?|$)/i)) return 'excel'
-  
-  return 'unknown'
-})
+const urlActual = computed(() => props.files[indiceActual.value] || '')
 
-const esImagen = computed(() => tipoArchivo.value === 'image')
-const esPDF = computed(() => tipoArchivo.value === 'pdf')
-
-const iconoTipoArchivo = computed(() => {
-  switch (tipoArchivo.value) {
-    case 'image': return 'fas fa-image'
-    case 'pdf': return 'fas fa-file-pdf'
-    case 'word': return 'fas fa-file-word'
-    case 'excel': return 'fas fa-file-excel'
-    default: return 'fas fa-file'
-  }
-})
-
-const textoBoton = computed(() => {
-  switch (tipoArchivo.value) {
-    case 'image': return 'Ver Imagen'
-    case 'pdf': return 'Ver PDF'
-    default: return 'Ver Archivo'
-  }
-})
-
-const tituloModal = computed(() => {
-  return props.titulo || 'Vista de archivo'
-})
-
-const abrirVisor = () => {
+const abrirEn = (idx) => {
+  indiceActual.value = idx
+  cargando.value = true
+  errorCarga.value = false
   mostrarModal.value = true
-  imagenCargada.value = false
-  pdfCargado.value = false
 }
 
-const cerrarVisor = () => {
-  mostrarModal.value = false
-}
+const cerrar = () => { mostrarModal.value = false }
 
-// Cerrar con tecla Escape
-const handleKeydown = (e) => {
-  if (e.key === 'Escape' && mostrarModal.value) {
-    cerrarVisor()
+const anterior = () => {
+  if (indiceActual.value > 0) {
+    cargando.value = true
+    errorCarga.value = false
+    indiceActual.value--
   }
 }
 
-// Agregar listener de teclado
-if (typeof window !== 'undefined') {
-  window.addEventListener('keydown', handleKeydown)
+const siguiente = () => {
+  if (indiceActual.value < props.files.length - 1) {
+    cargando.value = true
+    errorCarga.value = false
+    indiceActual.value++
+  }
 }
+
+const handleKey = (e) => {
+  if (!mostrarModal.value) return
+  if (e.key === 'Escape')      cerrar()
+  if (e.key === 'ArrowRight')  siguiente()
+  if (e.key === 'ArrowLeft')   anterior()
+}
+
+window.addEventListener('keydown', handleKey)
+onUnmounted(() => window.removeEventListener('keydown', handleKey))
 </script>
 
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
