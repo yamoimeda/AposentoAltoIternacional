@@ -651,14 +651,10 @@ const crearUsuario = async () => {
     // Si está activado enviar invitación por correo:
     if (nuevoForm.value.enviarInvitacionCorreo) {
       auth.languageCode = 'es'
-      const actionCodeSettings = {
-        url: window.location.origin + '/admin-login',
-        handleCodeInApp: false
-      }
-      await sendPasswordResetEmail(auth, nuevoForm.value.correo.trim(), actionCodeSettings)
+      await sendPasswordResetEmail(auth, nuevoForm.value.correo.trim())
       mensaje.value = {
         tipo: 'success',
-        texto: `¡Usuario creado! Se envió un correo de bienvenida en español a ${nuevoForm.value.correo} con su enlace único de activación y retorno directo al portal.`
+        texto: `¡Usuario creado! Se envió un correo de bienvenida en español a ${nuevoForm.value.correo} con su enlace único de activación.`
       }
     } else {
       mensaje.value = { tipo: 'success', texto: `¡Usuario ${nuevoForm.value.correo} creado exitosamente en Auth y Firestore!` }
@@ -684,17 +680,17 @@ const crearUsuario = async () => {
 const enviarResetPassword = async (email) => {
   if (!email) return
   try {
-    // Configurar idioma español y URL de retorno a la web
+    // Configurar idioma español
     auth.languageCode = 'es'
-    const actionCodeSettings = {
-      url: window.location.origin + '/admin-login',
-      handleCodeInApp: false
-    }
-    await sendPasswordResetEmail(auth, email, actionCodeSettings)
-    alert(`✉️ Se ha enviado un correo electrónico en español para restablecer la contraseña a:\n\n${email}\n\nEl usuario recibirá un enlace único para cambiar su contraseña y al terminar será redirigido automáticamente a la web.`)
+    await sendPasswordResetEmail(auth, email)
+    alert(`✉️ Se ha enviado un correo electrónico en español para restablecer la contraseña a:\n\n${email}\n\nRevisa la bandeja de entrada o la carpeta de SPAM / No deseados.`)
   } catch (e) {
     console.error('Error enviando reset de clave:', e)
-    alert(`❌ No se pudo enviar el correo de restablecimiento: ${e.message}`)
+    if (e.code === 'auth/too-many-requests') {
+      alert(`⚠️ Has realizado muchos intentos seguidos. Firebase ha pausado temporalmente los envíos a este correo. Espera unos minutos e intenta de nuevo.`)
+    } else {
+      alert(`❌ No se pudo enviar el correo de restablecimiento: ${e.message}`)
+    }
   }
 }
 

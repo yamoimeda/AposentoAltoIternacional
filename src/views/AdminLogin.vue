@@ -261,14 +261,11 @@ const enviarLinkRecuperacion = async () => {
   
   try {
     auth.languageCode = 'es'
-    const actionCodeSettings = {
-      url: window.location.origin + '/admin-login',
-      handleCodeInApp: false
-    }
-    await sendPasswordResetEmail(auth, resetEmail.value.trim(), actionCodeSettings)
+    await sendPasswordResetEmail(auth, resetEmail.value.trim())
+
     resetMensaje.value = {
       tipo: 'success',
-      texto: `¡Enlace enviado a ${resetEmail.value}! Revisa tu bandeja de entrada o spam. Al cambiar tu clave serás redirigido de vuelta aquí.`
+      texto: `¡Enlace enviado a ${resetEmail.value}! Revisa tu bandeja de entrada o la carpeta de SPAM / No deseados.`
     }
   } catch (e) {
     console.error('Error enviando reset:', e)
@@ -276,6 +273,8 @@ const enviarLinkRecuperacion = async () => {
       resetMensaje.value = { tipo: 'error', texto: 'No existe ninguna cuenta registrada con este correo.' }
     } else if (e.code === 'auth/invalid-email') {
       resetMensaje.value = { tipo: 'error', texto: 'Por favor ingresa un correo electrónico válido.' }
+    } else if (e.code === 'auth/too-many-requests') {
+      resetMensaje.value = { tipo: 'error', texto: 'Se han realizado demasiadas solicitudes seguidas. Firebase ha pausado temporalmente los envíos a este correo. Espera unos minutos.' }
     } else {
       resetMensaje.value = { tipo: 'error', texto: 'No se pudo enviar el correo. Intenta de nuevo en unos minutos.' }
     }
