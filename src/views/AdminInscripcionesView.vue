@@ -69,10 +69,11 @@
       </div>
 
       <!-- Controls & Filter Toolbar -->
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs mb-8">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs mb-8 space-y-4">
+        <!-- Fila 1: Evento, Búsqueda, Iglesia -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
           <!-- Event Selector Dropdown / Evento fijo cuando viene de un evento específico -->
-          <div class="md:col-span-6">
+          <div class="md:col-span-4">
             <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               <i class="fas fa-calendar-day text-indigo-600 mr-1.5"></i>
               Evento
@@ -105,7 +106,7 @@
           </div>
 
           <!-- Participant Search Input -->
-          <div class="md:col-span-6">
+          <div class="md:col-span-4">
             <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               <i class="fas fa-magnifying-glass text-indigo-600 mr-1.5"></i>
               Buscar Participante
@@ -115,7 +116,7 @@
               <input
                 v-model="filtros.busqueda"
                 type="text"
-                placeholder="Nombre, cédula o teléfono..."
+                placeholder="Nombre, cédula, teléfono..."
                 class="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
               />
               <button
@@ -126,6 +127,92 @@
                 <i class="fas fa-times text-xs"></i>
               </button>
             </div>
+          </div>
+
+          <!-- Filtro por Iglesia -->
+          <div class="md:col-span-4">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <i class="fas fa-church text-indigo-600 mr-1.5"></i>
+              Filtrar por Iglesia
+            </label>
+            <select
+              v-model="filtros.iglesia"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
+            >
+              <option value="">-- Todas las iglesias --</option>
+              <option v-for="ig in iglesiasDisponibles" :key="ig" :value="ig">
+                {{ ig }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fila 2: Ordenar por, Estado de Pago, Tipo de Boleto, Botón Limpiar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 items-center pt-3 border-t border-slate-100">
+          <!-- Ordenar por -->
+          <div class="md:col-span-4">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <i class="fas fa-arrow-down-wide-short text-indigo-600 mr-1.5"></i>
+              Ordenar por
+            </label>
+            <select
+              v-model="filtros.orden"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
+            >
+              <option value="fechaInscripcion_desc">Fecha de Registro (Más reciente)</option>
+              <option value="fechaInscripcion_asc">Fecha de Registro (Más antigua)</option>
+              <option value="nombre_asc">Nombre (A - Z)</option>
+              <option value="nombre_desc">Nombre (Z - A)</option>
+              <option value="monto_desc">Monto Total (Mayor a Menor)</option>
+              <option value="monto_asc">Monto Total (Menor a Mayor)</option>
+              <option value="iglesia_asc">Iglesia (A - Z)</option>
+              <option value="cedula_asc">Cédula</option>
+            </select>
+          </div>
+
+          <!-- Estado de Pago -->
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <i class="fas fa-money-bill-wave text-indigo-600 mr-1.5"></i>
+              Estado de Pago
+            </label>
+            <select
+              v-model="filtros.estadoPago"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
+            >
+              <option value="">-- Todos los estados --</option>
+              <option value="pagado">✓ Totalmente Pagado</option>
+              <option value="pendiente">⏳ Pendiente / Saldo</option>
+            </select>
+          </div>
+
+          <!-- Tipo de Boleto -->
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <i class="fas fa-ticket text-indigo-600 mr-1.5"></i>
+              Tipo de Boleto
+            </label>
+            <select
+              v-model="filtros.ticketType"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
+            >
+              <option value="">-- Todos los boletos --</option>
+              <option v-for="bt in boletosDisponibles" :key="bt" :value="bt">
+                {{ bt }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Botón Limpiar Filtros -->
+          <div class="md:col-span-2 flex items-end">
+            <button
+              v-if="hayFiltrosActivos"
+              @click="limpiarFiltros"
+              class="w-full py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              title="Restablecer todos los filtros"
+            >
+              <i class="fas fa-filter-circle-xmark"></i> Limpiar Filtros
+            </button>
           </div>
         </div>
 
@@ -213,7 +300,7 @@
                   </p>
                 </div>
                 <span class="flex-shrink-0 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 text-sm">
-                  ${{ Number(inscripcion.participante?.totalPrice || 0).toFixed(2) }}
+                  ${{ obtenerMontoTotal(inscripcion).toFixed(2) }}
                 </span>
               </div>
 
@@ -283,14 +370,34 @@
           <!-- VISTA ESCRITORIO: tabla (md+) -->
           <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
-              <thead class="bg-slate-900 text-slate-200 text-[11px] font-semibold uppercase tracking-wider">
+              <thead class="bg-slate-900 text-slate-200 text-[11px] font-semibold uppercase tracking-wider select-none">
                 <tr>
-                  <th class="px-5 py-3.5">Participante</th>
+                  <th @click="cambiarOrdenColumna('nombre')" class="px-5 py-3.5 cursor-pointer hover:bg-slate-800 transition-colors group" title="Ordenar por nombre">
+                    <div class="flex items-center gap-1.5">
+                      <span>Participante</span>
+                      <i :class="iconoOrden('nombre')"></i>
+                    </div>
+                  </th>
                   <th class="px-5 py-3.5">Evento</th>
-                  <th class="px-5 py-3.5">Iglesia / Mentor</th>
-                  <th class="px-5 py-3.5">Boleto / Cant.</th>
-                  <th class="px-5 py-3.5">Monto Total</th>
-                  <th class="px-5 py-3.5">Fecha Registro</th>
+                  <th @click="cambiarOrdenColumna('iglesia')" class="px-5 py-3.5 cursor-pointer hover:bg-slate-800 transition-colors group" title="Ordenar por iglesia">
+                    <div class="flex items-center gap-1.5">
+                      <span>Iglesia / Mentor</span>
+                      <i :class="iconoOrden('iglesia')"></i>
+                    </div>
+                  </th>
+                  <th class="px-5 py-3.5">Boleto</th>
+                  <th @click="cambiarOrdenColumna('monto')" class="px-5 py-3.5 cursor-pointer hover:bg-slate-800 transition-colors group" title="Ordenar por monto total">
+                    <div class="flex items-center gap-1.5">
+                      <span>Monto Total</span>
+                      <i :class="iconoOrden('monto')"></i>
+                    </div>
+                  </th>
+                  <th @click="cambiarOrdenColumna('fechaInscripcion')" class="px-5 py-3.5 cursor-pointer hover:bg-slate-800 transition-colors group" title="Ordenar por fecha de registro">
+                    <div class="flex items-center gap-1.5">
+                      <span>Fecha Registro</span>
+                      <i :class="iconoOrden('fechaInscripcion')"></i>
+                    </div>
+                  </th>
                   <th class="px-5 py-3.5">Comprobante</th>
                   <th class="px-5 py-3.5 text-center">Acciones</th>
                 </tr>
@@ -338,20 +445,20 @@
                     </div>
                   </td>
 
-                  <!-- Boleto / Cant. -->
+                  <!-- Boleto -->
                   <td class="px-5 py-4">
                     <div class="font-semibold text-slate-800">
                       {{ inscripcion.participante?.ticketType || 'General' }}
                     </div>
-                    <div class="text-[11px] text-slate-500">
-                      Cant: {{ inscripcion.participante?.ticketQuantity || 1 }}
+                    <div v-if="Number(inscripcion.participante?.ticketQuantity) > 1" class="text-[11px] text-slate-500">
+                      Cant: {{ inscripcion.participante.ticketQuantity }}
                     </div>
                   </td>
 
                   <!-- Monto Total -->
                   <td class="px-5 py-4">
                     <span class="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                      ${{ Number(inscripcion.participante?.totalPrice || 0).toFixed(2) }}
+                      ${{ obtenerMontoTotal(inscripcion).toFixed(2) }}
                     </span>
                   </td>
 
@@ -522,8 +629,70 @@ const inscripcionSeleccionada = ref(null)
 
 const filtros = ref({
   busqueda: '',
-  eventoId: ''
+  eventoId: '',
+  iglesia: '',
+  estadoPago: '',
+  ticketType: '',
+  orden: 'fechaInscripcion_desc'
 })
+
+// Lista dinámica de iglesias disponibles en las inscripciones
+const iglesiasDisponibles = computed(() => {
+  const set = new Set()
+  todasInscripciones.value.forEach(ins => {
+    const ig = ins.participante?.iglesia?.trim()
+    if (ig) set.add(ig)
+  })
+  return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'))
+})
+
+// Lista dinámica de tipos de boleto disponibles
+const boletosDisponibles = computed(() => {
+  const set = new Set()
+  todasInscripciones.value.forEach(ins => {
+    const t = ins.participante?.ticketType?.trim()
+    if (t) set.add(t)
+  })
+  return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'))
+})
+
+// Verificar si hay filtros activos distintos de los valores por defecto
+const hayFiltrosActivos = computed(() => {
+  return !!(
+    filtros.value.busqueda ||
+    (!eventoFijado.value && filtros.value.eventoId) ||
+    filtros.value.iglesia ||
+    filtros.value.estadoPago ||
+    filtros.value.ticketType ||
+    filtros.value.orden !== 'fechaInscripcion_desc'
+  )
+})
+
+const limpiarFiltros = () => {
+  filtros.value.busqueda = ''
+  if (!eventoFijado.value) filtros.value.eventoId = ''
+  filtros.value.iglesia = ''
+  filtros.value.estadoPago = ''
+  filtros.value.ticketType = ''
+  filtros.value.orden = 'fechaInscripcion_desc'
+  paginaActual.value = 1
+}
+
+const cambiarOrdenColumna = (columna) => {
+  const [colActual, dirActual] = filtros.value.orden.split('_')
+  if (colActual === columna) {
+    filtros.value.orden = `${columna}_${dirActual === 'asc' ? 'desc' : 'asc'}`
+  } else {
+    const defaultDir = (columna === 'monto' || columna === 'fechaInscripcion') ? 'desc' : 'asc'
+    filtros.value.orden = `${columna}_${defaultDir}`
+  }
+}
+
+const iconoOrden = (columna) => {
+  const [colActual, dirActual] = filtros.value.orden.split('_')
+  if (colActual !== columna) return 'fas fa-sort text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity'
+  return dirActual === 'asc' ? 'fas fa-sort-up text-indigo-400' : 'fas fa-sort-down text-indigo-400'
+}
 
 // true cuando la página fue abierta desde el botón de un evento específico
 const eventoFijado = computed(() => !!route.query.eventoId)
@@ -584,10 +753,21 @@ const formatearFecha = (fecha) => {
   }
 }
 
+const obtenerMontoTotal = (inscripcion) => {
+  if (!inscripcion) return 0
+  const p = inscripcion.participante || inscripcion || {}
+  const val = p.totalPrice ?? p.montoPagado ?? p.monto ?? 0
+  const num = Number(val)
+  if (!isNaN(num) && num > 0) return num
+  const tPrice = Number(p.ticketPrice || 0)
+  const tQty = Number(p.ticketQuantity || 1)
+  if (tPrice > 0) return tPrice * tQty
+  return 0
+}
+
 const calcularIngresoTotal = computed(() => {
   return inscripcionesFiltradas.value.reduce((acc, ins) => {
-    const price = Number(ins.participante?.totalPrice || 0)
-    return acc + price
+    return acc + obtenerMontoTotal(ins)
   }, 0).toFixed(2)
 })
 
@@ -633,19 +813,112 @@ const cargarInscripciones = async () => {
 const inscripcionesFiltradas = computed(() => {
   let resultado = [...todasInscripciones.value]
 
+  // 1. Filtro por Evento
   if (filtros.value.eventoId) {
     resultado = resultado.filter(ins => ins.eventoId === filtros.value.eventoId)
   }
 
-  if (filtros.value.busqueda) {
-    const busqueda = filtros.value.busqueda.toLowerCase()
+  // 2. Filtro por Iglesia
+  if (filtros.value.iglesia) {
+    resultado = resultado.filter(ins => ins.participante?.iglesia === filtros.value.iglesia)
+  }
+
+  // 3. Filtro por Tipo de Boleto
+  if (filtros.value.ticketType) {
+    resultado = resultado.filter(ins => (ins.participante?.ticketType || 'General') === filtros.value.ticketType)
+  }
+
+  // 4. Filtro por Estado de Pago
+  if (filtros.value.estadoPago) {
     resultado = resultado.filter(ins => {
-      const nombre = ins.participante?.nombre?.toLowerCase() || ''
-      const cedula = ins.participante?.cedula?.toLowerCase() || ''
-      const telefono = ins.participante?.telefono?.toLowerCase() || ''
-      return nombre.includes(busqueda) || cedula.includes(busqueda) || telefono.includes(busqueda)
+      const p = ins.participante || {}
+      const montoTotal = obtenerMontoTotal(ins)
+      const ev = eventos.value.find(e => e.id === ins.eventoId)
+      let precioEsperado = Number(p.ticketPrice || 0)
+      if (precioEsperado === 0 && ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
+        const t = ev.tickets.find(tick => tick.nombre === p.ticketType || tick.id === p.ticketTypeId)
+        if (t && Number(t.precio) > 0) precioEsperado = Number(t.precio)
+      }
+      if (precioEsperado === 0 && ev) {
+        precioEsperado = Number(ev.precio || 0)
+      }
+
+      const pagadoCompleto = precioEsperado === 0 ? true : (montoTotal >= (precioEsperado - 0.01))
+
+      if (filtros.value.estadoPago === 'pagado') {
+        return pagadoCompleto
+      } else if (filtros.value.estadoPago === 'pendiente') {
+        return !pagadoCompleto
+      }
+      return true
     })
   }
+
+  // 5. Búsqueda por texto (nombre, cédula, teléfono, correo, mentor, iglesia)
+  if (filtros.value.busqueda) {
+    const busqueda = filtros.value.busqueda.toLowerCase().trim()
+    resultado = resultado.filter(ins => {
+      const p = ins.participante || {}
+      const nombre = (p.nombre || '').toLowerCase()
+      const cedula = (p.cedula || '').toLowerCase()
+      const telefono = (p.telefono || '').toLowerCase()
+      const correo = (p.correo || '').toLowerCase()
+      const mentor = (p.mentor || '').toLowerCase()
+      const iglesia = (p.iglesia || '').toLowerCase()
+      return (
+        nombre.includes(busqueda) ||
+        cedula.includes(busqueda) ||
+        telefono.includes(busqueda) ||
+        correo.includes(busqueda) ||
+        mentor.includes(busqueda) ||
+        iglesia.includes(busqueda)
+      )
+    })
+  }
+
+  // 6. Ordenamiento
+  const [campo, direccion] = (filtros.value.orden || 'fechaInscripcion_desc').split('_')
+  resultado.sort((a, b) => {
+    const pa = a.participante || {}
+    const pb = b.participante || {}
+    let comp = 0
+
+    switch (campo) {
+      case 'nombre': {
+        const na = (pa.nombre || '').toLowerCase()
+        const nb = (pb.nombre || '').toLowerCase()
+        comp = na.localeCompare(nb, 'es')
+        break
+      }
+      case 'cedula': {
+        const ca = (pa.cedula || '').toLowerCase()
+        const cb = (pb.cedula || '').toLowerCase()
+        comp = ca.localeCompare(cb, 'es')
+        break
+      }
+      case 'iglesia': {
+        const ia = (pa.iglesia || '').toLowerCase()
+        const ib = (pb.iglesia || '').toLowerCase()
+        comp = ia.localeCompare(ib, 'es')
+        break
+      }
+      case 'monto': {
+        const ma = obtenerMontoTotal(a)
+        const mb = obtenerMontoTotal(b)
+        comp = ma - mb
+        break
+      }
+      case 'fechaInscripcion':
+      default: {
+        const fa = new Date(a.fechaInscripcion || 0).getTime()
+        const fb = new Date(b.fechaInscripcion || 0).getTime()
+        comp = fa - fb
+        break
+      }
+    }
+
+    return direccion === 'desc' ? -comp : comp
+  })
 
   return resultado
 })
@@ -674,8 +947,15 @@ const cerrarModalEdicion = () => {
   inscripcionSeleccionada.value = null
 }
 
-// Resetear a página 1 cuando cambia el filtro de búsqueda o evento
-watch([() => filtros.value.busqueda, () => filtros.value.eventoId], () => {
+// Resetear a página 1 cuando cambia cualquier filtro
+watch([
+  () => filtros.value.busqueda,
+  () => filtros.value.eventoId,
+  () => filtros.value.iglesia,
+  () => filtros.value.estadoPago,
+  () => filtros.value.ticketType,
+  () => filtros.value.orden
+], () => {
   paginaActual.value = 1
 })
 
@@ -765,8 +1045,8 @@ const exportarCSV = () => {
       p.ticketType || 'General',
       p.ticketQuantity || 1,
       Number(p.ticketPrice || 0).toFixed(2),
-      Number(p.totalPrice || 0).toFixed(2),
-      Number(p.montoPagado || p.monto || 0).toFixed(2),
+      obtenerMontoTotal(ins).toFixed(2),
+      obtenerMontoTotal(ins).toFixed(2),
       archs.length,
       formatearFecha(ins.fechaInscripcion)
     ]

@@ -80,21 +80,50 @@
                     <canvas ref="qrCanvas" class="max-w-full"></canvas>
                   </template>
                 </div>
-                <div class="flex gap-3 mt-4">
+                <!-- Estado de Pago: Totalmente Pagado vs Pendiente -->
+                <div v-if="estaPagadoCompleto" class="w-full mt-4 py-2.5 px-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2">
+                  <i class="fas fa-check-circle text-emerald-600 text-lg"></i>
+                  <span>Boleto Totalmente Pagado</span>
+                </div>
+                <div v-else class="w-full mt-4 py-2.5 px-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl font-semibold text-sm text-center flex items-center justify-center gap-2">
+                  <i class="fas fa-clock text-amber-600 text-lg"></i>
+                  <span>Abonado: ${{ totalPagado.toFixed(2) }} | Saldo Pendiente: ${{ saldoPendiente.toFixed(2) }}</span>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-3 mt-4">
                   <button 
                     @click="downloadQR"
-                    class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
                   >
-                    <i class="fas fa-download mr-2"></i>Descargar QR
+                    <i class="fas fa-download"></i>Descargar QR
                   </button>
                   <button 
-                    @click="mostrarFormularioPago = true"
-                    v-if="Number(inscripcionEncontrada.ticketPrice) > 0"
-                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    v-if="!estaPagadoCompleto"
+                    @click="abrirFormularioPago"
+                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm font-semibold"
                   >
-                    <i class="fas fa-plus-circle mr-2"></i>Hacer Otro Pago
+                    <i class="fas fa-plus-circle"></i>Completar Pago (${{ saldoPendiente.toFixed(2) }})
                   </button>
                 </div>
+              </div>
+
+              <!-- Botón si no tiene registrationToken -->
+              <div v-else class="flex flex-col items-center gap-3">
+                <div v-if="estaPagadoCompleto" class="w-full py-2.5 px-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2">
+                  <i class="fas fa-check-circle text-emerald-600 text-lg"></i>
+                  <span>Boleto Totalmente Pagado</span>
+                </div>
+                <div v-else class="w-full py-2.5 px-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl font-semibold text-sm text-center flex items-center justify-center gap-2">
+                  <i class="fas fa-clock text-amber-600 text-lg"></i>
+                  <span>Abonado: ${{ totalPagado.toFixed(2) }} | Saldo Pendiente: ${{ saldoPendiente.toFixed(2) }}</span>
+                </div>
+                <button 
+                  v-if="!estaPagadoCompleto"
+                  @click="abrirFormularioPago"
+                  class="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center gap-2 shadow-md"
+                >
+                  <i class="fas fa-plus-circle"></i>Completar Pago (${{ saldoPendiente.toFixed(2) }})
+                </button>
               </div>
 
               <!-- Formulario para otro pago -->
@@ -233,13 +262,22 @@
                     <span class="text-gray-600 font-medium">Tipo de Boleto:</span>
                     <span class="font-bold text-gray-800">{{ inscripcionEncontrada.ticketType }}</span>
                   </div>
-                  <div v-if="inscripcionEncontrada.ticketPrice" class="flex justify-between border-b border-indigo-100 pb-2">
-                    <span class="text-gray-600 font-medium">Precio Unitario:</span>
-                    <span class="font-bold text-gray-600">${{ inscripcionEncontrada.ticketPrice }}</span>
+                  <div v-if="precioBoletoEsperado > 0" class="flex justify-between border-b border-indigo-100 pb-2">
+                    <span class="text-gray-600 font-medium">Costo del Boleto:</span>
+                    <span class="font-bold text-gray-800">${{ precioBoletoEsperado.toFixed(2) }}</span>
                   </div>
-                  <div v-if="inscripcionEncontrada.totalPrice" class="flex justify-between border-b border-indigo-100 pb-2">
+                  <div class="flex justify-between border-b border-indigo-100 pb-2">
                     <span class="text-gray-600 font-medium">Total Pagado:</span>
-                    <span class="font-bold text-green-600">${{ Number(inscripcionEncontrada.totalPrice).toFixed(2) }}</span>
+                    <span class="font-bold text-green-600">${{ totalPagado.toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between border-b border-indigo-100 pb-2">
+                    <span class="text-gray-600 font-medium">Estado de Pago:</span>
+                    <span v-if="estaPagadoCompleto" class="font-bold text-emerald-600 inline-flex items-center gap-1">
+                      <i class="fas fa-check-circle text-xs"></i> Totalmente Pagado
+                    </span>
+                    <span v-else class="font-bold text-amber-600 inline-flex items-center gap-1">
+                      <i class="fas fa-clock text-xs"></i> Pendiente (${{ saldoPendiente.toFixed(2) }})
+                    </span>
                   </div>
                   <div v-if="inscripcionEncontrada.fechaInscripcion" class="flex justify-between">
                     <span class="text-gray-600 font-medium">Fecha de Registro:</span>
@@ -330,10 +368,75 @@ const montoNuevoPago = ref(0)
 
 // Computed para calcular el total acumulado
 const calcularTotalAcumulado = computed(() => {
-  const montoActual = inscripcionEncontrada.value?.totalPrice || 0
+  const montoActual = totalPagado.value || 0
   const nuevoMonto = montoNuevoPago.value || 0
   return (Number(montoActual) + Number(nuevoMonto)).toFixed(2)
 })
+
+// Obtener el precio esperado del boleto o evento
+const precioBoletoEsperado = computed(() => {
+  if (!inscripcionEncontrada.value) return 0
+  const evId = inscripcionEncontrada.value.eventoId || eventoId.value
+  const ev = evId ? eventosStore.obtenerEventoPorId(evId) : null
+
+  // 1. Buscar en tickets configurados en el evento
+  if (ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
+    const t = ev.tickets.find(tick => 
+      (inscripcionEncontrada.value.ticketTypeId && tick.id === inscripcionEncontrada.value.ticketTypeId) ||
+      (inscripcionEncontrada.value.ticketType && tick.nombre?.toLowerCase() === inscripcionEncontrada.value.ticketType?.toLowerCase())
+    )
+    if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
+      return Number(t.precio)
+    }
+  }
+
+  // 2. Usar ticketPrice guardado en la inscripción si existe
+  const savedPrice = Number(inscripcionEncontrada.value.ticketPrice)
+  if (!isNaN(savedPrice) && savedPrice > 0) {
+    return savedPrice
+  }
+
+  // 3. Usar precio base del evento
+  if (ev && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
+    return Number(ev.precio)
+  }
+
+  // 4. Si no hay precio configurado, tomar el monto ya pagado
+  const pagado = Number(inscripcionEncontrada.value.totalPrice ?? inscripcionEncontrada.value.montoPagado ?? inscripcionEncontrada.value.monto ?? 0)
+  return pagado > 0 ? pagado : 0
+})
+
+// Monto total que ya ha sido pagado
+const totalPagado = computed(() => {
+  if (!inscripcionEncontrada.value) return 0
+  const p = inscripcionEncontrada.value
+  const val = p.totalPrice ?? p.montoPagado ?? p.monto ?? 0
+  return Number(val) || 0
+})
+
+// Saldo pendiente por pagar
+const saldoPendiente = computed(() => {
+  const esperado = precioBoletoEsperado.value
+  const pagado = totalPagado.value
+  return Math.max(0, esperado - pagado)
+})
+
+// ¿El boleto está pagado totalmente?
+const estaPagadoCompleto = computed(() => {
+  const esperado = precioBoletoEsperado.value
+  const pagado = totalPagado.value
+  if (esperado === 0) return true // Evento gratuito
+  return pagado >= (esperado - 0.01) // Margen de centavos
+})
+
+const abrirFormularioPago = () => {
+  if (saldoPendiente.value > 0) {
+    montoNuevoPago.value = Number(saldoPendiente.value.toFixed(2))
+  } else {
+    montoNuevoPago.value = 0
+  }
+  mostrarFormularioPago.value = true
+}
 
 onMounted(async () => {
   // Cargar eventos primero (si la función está disponible)
@@ -411,12 +514,16 @@ const buscarInscripcion = async () => {
     const querySnapshot = await getDocs(q)
     
     if (!querySnapshot.empty) {
-      // Tomar la primera inscripción encontrada
       const doc = querySnapshot.docs[0]
       const data = doc.data()
+      const p = data.participante || {}
+      const montoTotal = Number(p.totalPrice ?? p.montoPagado ?? p.monto ?? ((Number(p.ticketPrice || 0) * Number(p.ticketQuantity || 1)) || 0)) || 0
       inscripcionEncontrada.value = {
         id: doc.id,
-        ...data.participante,
+        ...p,
+        totalPrice: montoTotal,
+        montoPagado: montoTotal,
+        monto: montoTotal,
         eventoId: data.eventoId,
         fechaInscripcion: data.fechaInscripcion,
         // Incluir pagos adicionales del nivel raíz del documento
@@ -541,8 +648,8 @@ const subirNuevoComprobante = async () => {
   try {
     // Subir imagen a Storage
     const timestamp = Date.now()
-    const fileName = `${timestamp}_${nuevoComprobante.value.name}`
-    const fileRef = storageRef(storage, `inscripciones/${inscripcionEncontrada.value.eventoId}/${fileName}`)
+    const eventFolder = inscripcionEncontrada.value.eventoId || 'general'
+    const fileRef = storageRef(storage, `inscripciones/${eventFolder}/${fileName}`)
     
     await uploadBytes(fileRef, nuevoComprobante.value)
     const url = await getDownloadURL(fileRef)
@@ -561,12 +668,16 @@ const subirNuevoComprobante = async () => {
         monto: Number(montoNuevoPago.value),
         fecha: new Date().toISOString()
       }),
-      // Actualizar el total sumando el nuevo monto
-      'participante.totalPrice': nuevoTotal
+      // Actualizar el total sumando el nuevo monto de forma unificada
+      'participante.totalPrice': nuevoTotal,
+      'participante.montoPagado': nuevoTotal,
+      'participante.monto': nuevoTotal
     })
 
     // Actualizar la información local para reflejar el cambio
     inscripcionEncontrada.value.totalPrice = nuevoTotal
+    inscripcionEncontrada.value.montoPagado = nuevoTotal
+    inscripcionEncontrada.value.monto = nuevoTotal
 
     mensajeComprobante.value = {
       tipo: 'success',

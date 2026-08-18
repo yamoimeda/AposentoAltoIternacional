@@ -571,6 +571,7 @@ const confirmarActualizacionPasadas = async (actualizarRegistradas) => {
           'participante.ticketType': nuevoNombre,
           'participante.ticketPrice': Number(nuevoPrecio),
           'participante.totalPrice': nuevoTotal,
+          'participante.montoPagado': nuevoTotal,
           'participante.monto': nuevoTotal,
           'editadoPor': usuarioActualEmail,
           'fechaEdicion': ahora,

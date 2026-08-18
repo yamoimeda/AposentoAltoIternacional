@@ -658,8 +658,10 @@ const enviarInscripcion = async () => {
       formData.append('totalPrice', String(totalPrice.value))
     }
 
-    // Calcular total numérico para guardar
-    const numericTotal = parseFloat(totalPrice.value) || (selectedTicketPrice.value * qty)
+    // Calcular total numérico y unificar con monto ingresado
+    const montoIngresado = parseFloat(formulario.value.monto) || 0
+    const totalCalculado = parseFloat(totalPrice.value) || (selectedTicketPrice.value * qty) || 0
+    const finalAmount = montoIngresado > 0 ? montoIngresado : totalCalculado
 
     // Generar token único de registro
     const registrationToken = uuidv4()
@@ -675,12 +677,13 @@ const enviarInscripcion = async () => {
       comprobante: formulario.value.comprobante && formulario.value.comprobante.length ? [...formulario.value.comprobante] : null, // Se pasará al store para ser subido
       iglesia: formulario.value.iglesia || null,
       mentor: formulario.value.mentor || null,
-      montoPagado: formulario.value.monto, // Lo que el usuario reporta haber pagado
+      montoPagado: finalAmount, // Unificado: lo que el usuario paga
+      monto: finalAmount,       // Unificado
       ticketTypeId: selectedTicket.value ? (selectedTicket.value.id || null) : null,
       ticketType: selectedTicket.value ? selectedTicket.value.nombre : 'General',
       ticketPrice: selectedTicket.value ? Number(selectedTicket.value.precio) : Number(evento.value.precio) || 0,
       ticketQuantity: qty,
-      totalPrice: numericTotal, // Precio calculado: ticketPrice × cantidad
+      totalPrice: finalAmount, // Unificado para que coincida en admin y reportes
       fechaInscripcion: new Date().toISOString(),
       registrationToken: registrationToken,
       eventoId: evento.value.id,

@@ -60,9 +60,9 @@
                 <span class="text-gray-600">Precio:</span>
                 <span class="font-semibold text-green-600">${{ registrationData.ticketPrice }}</span>
               </div>
-              <div v-if="registrationData.ticketPrice" class="flex justify-between">
-                <span class="text-gray-600">abonado:</span>
-                <span class="font-semibold text-green-600">${{ registrationData.monto }}</span>
+              <div v-if="registrationData.ticketPrice || registrationData.monto" class="flex justify-between">
+                <span class="text-gray-600">Monto Abonado:</span>
+                <span class="font-semibold text-green-600">${{ Number(registrationData.monto || registrationData.totalPrice || registrationData.montoPagado || 0).toFixed(2) }}</span>
               </div>
             </div>
           </div>

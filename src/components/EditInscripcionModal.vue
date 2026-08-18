@@ -173,7 +173,7 @@
                   <i class="fas fa-ticket-alt text-indigo-600"></i> Boleto y Pago
                 </h3>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Boleto</label>
                     <input
@@ -184,45 +184,13 @@
                   </div>
 
                   <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Precio Unitario ($)</label>
-                    <input
-                      v-model.number="formulario.ticketPrice"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Cantidad Boletos</label>
-                    <input
-                      v-model.number="formulario.ticketQuantity"
-                      type="number"
-                      min="1"
-                      class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Total Registrado ($)</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Monto / Precio ($)</label>
                     <input
                       v-model.number="formulario.totalPrice"
                       type="number"
                       step="0.01"
                       min="0"
                       class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm font-bold text-emerald-700 bg-emerald-50/50"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Monto Pagado Inicial ($)</label>
-                    <input
-                      v-model.number="formulario.montoPagado"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm"
                     />
                   </div>
                 </div>
@@ -371,6 +339,8 @@ const archivosAdjuntos = computed(() => {
 watch(() => props.inscripcion, (nuevaInscripcion) => {
   if (nuevaInscripcion) {
     const p = nuevaInscripcion.participante || {}
+    const montoVal = p.totalPrice ?? p.montoPagado ?? p.monto ?? ((Number(p.ticketPrice || 0) * Number(p.ticketQuantity || 1)) || 0)
+    const montoNum = Number(montoVal) || 0
     formulario.value = {
       nombre: p.nombre || '',
       cedula: p.cedula || '',
@@ -383,8 +353,8 @@ watch(() => props.inscripcion, (nuevaInscripcion) => {
       ticketType: p.ticketType || 'General',
       ticketPrice: p.ticketPrice ?? 0,
       ticketQuantity: p.ticketQuantity ?? 1,
-      totalPrice: p.totalPrice ?? 0,
-      montoPagado: p.montoPagado ?? p.monto ?? 0,
+      totalPrice: montoNum,
+      montoPagado: montoNum,
       registrationToken: p.registrationToken || ''
     }
   }
@@ -420,6 +390,7 @@ const guardar = async () => {
 
     // Preservar la estructura completa de `participante` para no borrar campos existentes
     const participanteExistente = props.inscripcion?.participante || {}
+    const montoFinal = Number(formulario.value.totalPrice ?? formulario.value.montoPagado ?? 0) || 0
 
     const participanteActualizado = {
       ...participanteExistente,
@@ -432,10 +403,11 @@ const guardar = async () => {
       iglesia: formulario.value.iglesia.trim() || null,
       mentor: formulario.value.mentor.trim() || null,
       ticketType: formulario.value.ticketType.trim() || 'General',
-      ticketPrice: Number(formulario.value.ticketPrice) || 0,
+      ticketPrice: montoFinal,
       ticketQuantity: Math.max(1, Number(formulario.value.ticketQuantity) || 1),
-      totalPrice: Number(formulario.value.totalPrice) || 0,
-      montoPagado: Number(formulario.value.montoPagado) || 0,
+      totalPrice: montoFinal,
+      montoPagado: montoFinal,
+      monto: montoFinal,
       registrationToken: formulario.value.registrationToken || participanteExistente.registrationToken,
       editadoPor: editor,
       fechaEdicion: ahora
