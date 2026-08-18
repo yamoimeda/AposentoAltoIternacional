@@ -207,17 +207,16 @@
               </div> -->
             </div>
             <!-- Selector de tipo de boleto -->
-           <div class="border-t pt-6">
-            
+            <div v-if="listaBoletosEvento.length > 0" class="border-t pt-6">
               <h3 class="text-md font-semibold text-gray-800 mb-4">
                 Selecciona tipo de boleto * 
               </h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <label v-for="(t, idx) in evento.ticketTypes" :key="t.nombre + '-' + idx" class="flex items-center p-3 border rounded cursor-pointer text-gray-700" :class="selectedTicketIndex === idx ? 'border-blue-500 bg-blue-50' : ''">
-                  <input type="radio" :value="idx" v-model="selectedTicketIndex" class="mr-3" />
+                <label v-for="(t, idx) in listaBoletosEvento" :key="t.nombre + '-' + idx" class="flex items-center p-3 border rounded-xl cursor-pointer text-gray-700 transition-all" :class="selectedTicketIndex === idx ? 'border-blue-500 bg-blue-50/80 shadow-xs' : 'border-gray-200 hover:bg-gray-50'">
+                  <input type="radio" :value="idx" v-model="selectedTicketIndex" class="mr-3 text-blue-600" />
                   <div>
-                    <div class="font-semibold">{{ t.nombre }}</div>
-                    <div class="text-sm text-gray-600">${{ t.precio }}</div>
+                    <div class="font-bold text-gray-900">{{ t.nombre }}</div>
+                    <div class="text-sm font-semibold text-blue-600">${{ Number(t.precio).toFixed(2) }}</div>
                   </div>
                 </label>
               </div>
@@ -422,34 +421,37 @@ const evento = computed(() => {
   return eventosStore.obtenerEventoPorId(route.params.id)
 })
 
-// Cuando el evento cambie, inicializar la selección de ticket si existen tipos
-watch(evento, (ev) => {
-  // Mantener una copia local de los tipos de ticket activos para evitar inscripciones a boletos archivados
-  const rawTypes = ev && ev.ticketTypes ? [...ev.ticketTypes] : []
-  ticketTypes.value = rawTypes.filter(t => t.activo !== false)
+const listaBoletosEvento = computed(() => {
+  const ev = evento.value
+  if (!ev) return []
+  const list = ev.ticketTypes || ev.tickets || []
+  return list.filter(t => t.activo !== false)
+})
 
-  if (ev && ticketTypes.value.length > 0) {
-    if (selectedTicketIndex.value === null || selectedTicketIndex.value >= ticketTypes.value.length) {
+// Cuando el evento o la lista de boletos cambie, inicializar la selección de ticket
+watch(listaBoletosEvento, (list) => {
+  if (list && list.length > 0) {
+    if (selectedTicketIndex.value === null || selectedTicketIndex.value >= list.length) {
       selectedTicketIndex.value = 0
     }
   } else {
     selectedTicketIndex.value = null
-    ticketQuantity.value = 1
   }
-})
+}, { immediate: true })
 
 const selectedTicket = computed(() => {
-  if (!evento.value) return null
-  const types = ticketTypes.value || []
-  if (types.length === 0 || selectedTicketIndex.value === null) return null
-  return types[selectedTicketIndex.value]
+  const list = listaBoletosEvento.value
+  if (list.length === 0 || selectedTicketIndex.value === null) return null
+  return list[selectedTicketIndex.value] || null
 })
 
 const selectedTicketPrice = computed(() => {
-  const priceFromTicket = selectedTicket.value ? selectedTicket.value.precio : null
-  const p = priceFromTicket ?? evento.value?.precio ?? 0
-  const parsed = parseFloat(p)
-  return isNaN(parsed) ? 0 : parsed
+  if (selectedTicket.value && selectedTicket.value.precio !== undefined) {
+    const p = parseFloat(selectedTicket.value.precio)
+    if (!isNaN(p)) return p
+  }
+  const baseP = parseFloat(evento.value?.precio || 0)
+  return isNaN(baseP) ? 0 : baseP
 })
 
 const totalPrice = computed(() => {
@@ -616,7 +618,7 @@ const enviarInscripcion = async () => {
 
   try {
     // Si hay tipos de boletos, asegurar que se haya seleccionado uno
-    if (ticketTypes.value && ticketTypes.value.length && selectedTicketIndex.value === null) {
+    if (listaBoletosEvento.value && listaBoletosEvento.value.length && selectedTicketIndex.value === null) {
       alert('Por favor selecciona un tipo de boleto antes de continuar.')
       procesando.value = false
       return
@@ -651,6 +653,11 @@ const enviarInscripcion = async () => {
       formData.append('ticketPrice', selectedTicket.value.precio)
       formData.append('ticketQuantity', String(ticketQuantity.value))
       formData.append('totalPrice', String(totalPrice.value))
+    } else if (listaBoletosEvento.value.length > 0) {
+      formData.append('ticketType', listaBoletosEvento.value[0].nombre)
+      formData.append('ticketPrice', listaBoletosEvento.value[0].precio)
+      formData.append('ticketQuantity', String(ticketQuantity.value))
+      formData.append('totalPrice', String(totalPrice.value))
     } else {
       formData.append('ticketType', 'General')
       formData.append('ticketPrice', evento.value.precio || '')
@@ -666,6 +673,10 @@ const enviarInscripcion = async () => {
     // Generar token único de registro
     const registrationToken = uuidv4()
 
+    const ticketFinal = selectedTicket.value || (listaBoletosEvento.value.length > 0 ? listaBoletosEvento.value[0] : null)
+    const ticketNombreFinal = ticketFinal ? ticketFinal.nombre : 'General'
+    const ticketPrecioFinal = ticketFinal ? Number(ticketFinal.precio) : (Number(evento.value?.precio) || 0)
+
     // Preparar datos de registro (sin incluir el archivo directamente)
     const registrationData = {
       nombre: formulario.value.nombre,
@@ -679,9 +690,9 @@ const enviarInscripcion = async () => {
       mentor: formulario.value.mentor || null,
       montoPagado: finalAmount, // Unificado: lo que el usuario paga
       monto: finalAmount,       // Unificado
-      ticketTypeId: selectedTicket.value ? (selectedTicket.value.id || null) : null,
-      ticketType: selectedTicket.value ? selectedTicket.value.nombre : 'General',
-      ticketPrice: selectedTicket.value ? Number(selectedTicket.value.precio) : Number(evento.value.precio) || 0,
+      ticketTypeId: ticketFinal ? (ticketFinal.id || null) : null,
+      ticketType: ticketNombreFinal,
+      ticketPrice: ticketPrecioFinal,
       ticketQuantity: qty,
       totalPrice: finalAmount, // Unificado para que coincida en admin y reportes
       fechaInscripcion: new Date().toISOString(),
