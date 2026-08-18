@@ -83,11 +83,12 @@
                 <!-- Estado de Pago: Totalmente Pagado vs Pendiente -->
                 <div v-if="estaPagadoCompleto" class="w-full mt-4 py-2.5 px-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2">
                   <i class="fas fa-check-circle text-emerald-600 text-lg"></i>
-                  <span>Boleto Totalmente Pagado</span>
+                  <span>Boleto Totalmente Pagado (${{ totalPagado.toFixed(2) }})</span>
                 </div>
                 <div v-else class="w-full mt-4 py-2.5 px-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl font-semibold text-sm text-center flex items-center justify-center gap-2">
                   <i class="fas fa-clock text-amber-600 text-lg"></i>
-                  <span>Abonado: ${{ totalPagado.toFixed(2) }} | Saldo Pendiente: ${{ saldoPendiente.toFixed(2) }}</span>
+                  <span v-if="saldoPendiente > 0">Abonado: ${{ totalPagado.toFixed(2) }} | Saldo Pendiente: ${{ saldoPendiente.toFixed(2) }}</span>
+                  <span v-else>Pago Pendiente (Total Pagado: $0.00)</span>
                 </div>
 
                 <div class="flex flex-wrap justify-center gap-3 mt-4">
@@ -102,7 +103,7 @@
                     @click="abrirFormularioPago"
                     class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm font-semibold"
                   >
-                    <i class="fas fa-plus-circle"></i>Completar Pago (${{ saldoPendiente.toFixed(2) }})
+                    <i class="fas fa-plus-circle"></i>{{ saldoPendiente > 0 ? `Completar Pago ($${saldoPendiente.toFixed(2)})` : 'Adjuntar Comprobante de Pago' }}
                   </button>
                 </div>
               </div>
@@ -111,18 +112,19 @@
               <div v-else class="flex flex-col items-center gap-3">
                 <div v-if="estaPagadoCompleto" class="w-full py-2.5 px-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2">
                   <i class="fas fa-check-circle text-emerald-600 text-lg"></i>
-                  <span>Boleto Totalmente Pagado</span>
+                  <span>Boleto Totalmente Pagado (${{ totalPagado.toFixed(2) }})</span>
                 </div>
                 <div v-else class="w-full py-2.5 px-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl font-semibold text-sm text-center flex items-center justify-center gap-2">
                   <i class="fas fa-clock text-amber-600 text-lg"></i>
-                  <span>Abonado: ${{ totalPagado.toFixed(2) }} | Saldo Pendiente: ${{ saldoPendiente.toFixed(2) }}</span>
+                  <span v-if="saldoPendiente > 0">Abonado: ${{ totalPagado.toFixed(2) }} | Saldo Pendiente: ${{ saldoPendiente.toFixed(2) }}</span>
+                  <span v-else>Pago Pendiente (Total Pagado: $0.00)</span>
                 </div>
                 <button 
                   v-if="!estaPagadoCompleto"
                   @click="abrirFormularioPago"
                   class="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center gap-2 shadow-md"
                 >
-                  <i class="fas fa-plus-circle"></i>Completar Pago (${{ saldoPendiente.toFixed(2) }})
+                  <i class="fas fa-plus-circle"></i>{{ saldoPendiente > 0 ? `Completar Pago ($${saldoPendiente.toFixed(2)})` : 'Adjuntar Comprobante de Pago' }}
                 </button>
               </div>
 
@@ -382,15 +384,20 @@ const precioBoletoEsperado = computed(() => {
   // 1. Buscar en tickets configurados en el evento
   if (ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
     const t = ev.tickets.find(tick => 
-      (inscripcionEncontrada.value.ticketTypeId && tick.id === inscripcionEncontrada.value.ticketTypeId) ||
-      (inscripcionEncontrada.value.ticketType && tick.nombre?.toLowerCase() === inscripcionEncontrada.value.ticketType?.toLowerCase())
+      (inscripcionEncontrada.value.ticketTypeId && String(tick.id) === String(inscripcionEncontrada.value.ticketTypeId)) ||
+      (inscripcionEncontrada.value.ticketType && tick.nombre?.trim().toLowerCase() === inscripcionEncontrada.value.ticketType?.trim().toLowerCase())
     )
     if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
       return Number(t.precio)
     }
+    // Si hay un solo ticket o primer ticket con precio > 0
+    const primerTicketConPrecio = ev.tickets.find(tick => Number(tick.precio) > 0)
+    if (primerTicketConPrecio) {
+      return Number(primerTicketConPrecio.precio)
+    }
   }
 
-  // 2. Usar ticketPrice guardado en la inscripción si existe
+  // 2. Usar ticketPrice guardado en la inscripción si existe y es > 0
   const savedPrice = Number(inscripcionEncontrada.value.ticketPrice)
   if (!isNaN(savedPrice) && savedPrice > 0) {
     return savedPrice
@@ -401,9 +408,7 @@ const precioBoletoEsperado = computed(() => {
     return Number(ev.precio)
   }
 
-  // 4. Si no hay precio configurado, tomar el monto ya pagado
-  const pagado = Number(inscripcionEncontrada.value.totalPrice ?? inscripcionEncontrada.value.montoPagado ?? inscripcionEncontrada.value.monto ?? 0)
-  return pagado > 0 ? pagado : 0
+  return 0
 })
 
 // Monto total que ya ha sido pagado
@@ -414,19 +419,43 @@ const totalPagado = computed(() => {
   return Number(val) || 0
 })
 
+// ¿Es un evento confirmado como estrictamente gratuito?
+const esEventoGratuito = computed(() => {
+  const evId = inscripcionEncontrada.value?.eventoId || eventoId.value
+  const ev = evId ? eventosStore.obtenerEventoPorId(evId) : null
+  if (!ev) return false
+  const precioEv = Number(ev.precio || 0)
+  const ticketsConPrecio = Array.isArray(ev.tickets) ? ev.tickets.some(t => Number(t.precio || 0) > 0) : false
+  return precioEv === 0 && !ticketsConPrecio && !ev.opciones?.adjuntoRequerido
+})
+
 // Saldo pendiente por pagar
 const saldoPendiente = computed(() => {
   const esperado = precioBoletoEsperado.value
   const pagado = totalPagado.value
-  return Math.max(0, esperado - pagado)
+  if (esperado > 0) {
+    return Math.max(0, esperado - pagado)
+  }
+  return 0
 })
 
 // ¿El boleto está pagado totalmente?
 const estaPagadoCompleto = computed(() => {
   const esperado = precioBoletoEsperado.value
   const pagado = totalPagado.value
-  if (esperado === 0) return true // Evento gratuito
-  return pagado >= (esperado - 0.01) // Margen de centavos
+
+  // Si el evento o boleto tiene un precio mayor a $0:
+  if (esperado > 0) {
+    return pagado >= (esperado - 0.01) && pagado > 0
+  }
+
+  // Si no se definió precio esperado (ej. $0):
+  // Solo es "Totalmente Pagado" si es un evento gratuito confirmado O si el usuario ya pagó algo (> $0)
+  if (esEventoGratuito.value) return true
+  if (pagado > 0) return true
+
+  // Si pagó $0 y el evento no es gratuito: ¡ESTÁ PENDIENTE!
+  return false
 })
 
 const abrirFormularioPago = () => {
@@ -492,6 +521,13 @@ const buscarInscripcion = async () => {
   inscripcionEncontrada.value = null
 
   try {
+    // Asegurar que los eventos estén cargados para conocer los precios
+    if (!eventosStore.eventos || eventosStore.eventos.length === 0) {
+      if (typeof eventosStore.cargarEventos === 'function') {
+        await eventosStore.cargarEventos()
+      }
+    }
+
     // Buscar en Firestore
     const inscripcionesRef = collection(db, 'inscripciones')
     let q
