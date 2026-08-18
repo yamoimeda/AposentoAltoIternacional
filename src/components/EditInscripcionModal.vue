@@ -174,26 +174,43 @@
                 </h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <!-- Selector de Tipo de Boleto -->
                   <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Boleto</label>
+                    <select
+                      v-if="ticketsDisponibles.length > 0"
+                      :value="formulario.ticketType"
+                      @change="onCambioTipoBoleto($event.target.value)"
+                      class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm bg-white"
+                    >
+                      <option v-for="t in ticketsDisponibles" :key="t.id || t.nombre" :value="t.nombre">
+                        {{ t.nombre }} (${{ Number(t.precio || 0).toFixed(2) }})
+                      </option>
+                    </select>
                     <input
+                      v-else
                       v-model="formulario.ticketType"
                       type="text"
                       class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm"
                     />
                   </div>
 
+                  <!-- Precio del Boleto (Solo lectura / Bloqueado) -->
                   <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Precio del Boleto ($)</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">
+                      Precio del Boleto ($)
+                      <span class="text-[10px] text-slate-400 font-normal ml-1">(Fijo)</span>
+                    </label>
                     <input
-                      v-model.number="formulario.ticketPrice"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm"
+                      :value="Number(formulario.ticketPrice || 0).toFixed(2)"
+                      type="text"
+                      disabled
+                      readonly
+                      class="w-full px-3.5 py-2 border border-slate-200 bg-slate-100/80 rounded-xl text-slate-600 text-sm font-bold cursor-not-allowed select-none"
                     />
                   </div>
 
+                  <!-- Total Pagado (Editable) -->
                   <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Total Pagado ($)</label>
                     <input
@@ -251,6 +268,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { auth } from '../firebase'
+import { useEventosStore } from '../stores/eventos'
 import FileViewer from './FileViewer.vue'
 
 const props = defineProps({
@@ -274,12 +292,33 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save'])
 
+const eventosStore = useEventosStore()
 const guardando = ref(false)
 const mensaje = ref(null)
 
 const usuarioActual = computed(() => {
   return auth.currentUser?.email || auth.currentUser?.displayName || 'Administrador'
 })
+
+const ticketsDisponibles = computed(() => {
+  if (!props.inscripcion?.eventoId) return []
+  const ev = eventosStore.obtenerEventoPorId(props.inscripcion.eventoId)
+  if (ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
+    return ev.tickets
+  }
+  if (ev && Number(ev.precio) > 0) {
+    return [{ id: 'general', nombre: 'General', precio: Number(ev.precio) }]
+  }
+  return []
+})
+
+const onCambioTipoBoleto = (ticketNombre) => {
+  formulario.value.ticketType = ticketNombre
+  const t = ticketsDisponibles.value.find(tick => tick.nombre === ticketNombre || tick.id === ticketNombre)
+  if (t && !isNaN(Number(t.precio))) {
+    formulario.value.ticketPrice = Number(t.precio)
+  }
+}
 
 const auditoriaEdicion = computed(() => {
   if (!props.inscripcion) return { tieneEdicionPrevia: false, editor: null, fecha: null }
@@ -367,13 +406,29 @@ watch(() => props.inscripcion, (nuevaInscripcion) => {
         }
       }
     }
-    if (montoNum === 0) {
-      const tPrice = Number(p.ticketPrice || 0)
-      const tQty = Number(p.ticketQuantity || 1)
-      if (tPrice > 0) montoNum = tPrice * tQty
+
+    let ticketCost = Number(p.ticketPrice || 0)
+    const ev = nuevaInscripcion.eventoId ? eventosStore.obtenerEventoPorId(nuevaInscripcion.eventoId) : null
+    
+    // Si ticketCost guardado es 0, buscar el precio real del ticket en el evento
+    if (ticketCost === 0 && ev) {
+      if (Array.isArray(ev.tickets) && ev.tickets.length > 0) {
+        const t = ev.tickets.find(tick => 
+          (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
+          (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
+        )
+        if (t && Number(t.precio) > 0) {
+          ticketCost = Number(t.precio)
+        } else if (ev.tickets.length === 1 && Number(ev.tickets[0].precio) > 0) {
+          ticketCost = Number(ev.tickets[0].precio)
+        }
+      }
+      if (ticketCost === 0 && Number(ev.precio) > 0) {
+        ticketCost = Number(ev.precio)
+      }
     }
 
-    const ticketCost = Number(p.ticketPrice || 0)
+    const tipoBoletoActual = p.ticketType || (ticketsDisponibles.value[0]?.nombre || 'General')
 
     formulario.value = {
       nombre: p.nombre || '',
@@ -384,7 +439,7 @@ watch(() => props.inscripcion, (nuevaInscripcion) => {
       nota: p.nota || '',
       iglesia: p.iglesia || '',
       mentor: p.mentor || '',
-      ticketType: p.ticketType || 'General',
+      ticketType: tipoBoletoActual,
       ticketPrice: ticketCost,
       ticketQuantity: p.ticketQuantity ?? 1,
       totalPrice: montoNum,
