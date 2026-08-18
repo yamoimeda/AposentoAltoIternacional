@@ -756,12 +756,30 @@ const formatearFecha = (fecha) => {
 const obtenerMontoTotal = (inscripcion) => {
   if (!inscripcion) return 0
   const p = inscripcion.participante || inscripcion || {}
-  const val = p.totalPrice ?? p.montoPagado ?? p.monto ?? 0
-  const num = Number(val)
-  if (!isNaN(num) && num > 0) return num
+  
+  // Buscar en todos los campos donde pudo guardarse el monto real
+  const candidatos = [
+    p.montoPagado,
+    p.monto,
+    p.totalPrice,
+    inscripcion.montoPagado,
+    inscripcion.monto,
+    inscripcion.totalPrice
+  ]
+
+  for (const c of candidatos) {
+    if (c !== undefined && c !== null && c !== '') {
+      const num = Number(c)
+      if (!isNaN(num) && num > 0) {
+        return num
+      }
+    }
+  }
+
   const tPrice = Number(p.ticketPrice || 0)
   const tQty = Number(p.ticketQuantity || 1)
   if (tPrice > 0) return tPrice * tQty
+
   return 0
 }
 

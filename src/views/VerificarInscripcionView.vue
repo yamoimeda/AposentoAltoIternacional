@@ -415,8 +415,18 @@ const precioBoletoEsperado = computed(() => {
 const totalPagado = computed(() => {
   if (!inscripcionEncontrada.value) return 0
   const p = inscripcionEncontrada.value
-  const val = p.totalPrice ?? p.montoPagado ?? p.monto ?? 0
-  return Number(val) || 0
+  const candidatos = [
+    p.totalPrice,
+    p.montoPagado,
+    p.monto
+  ]
+  for (const c of candidatos) {
+    if (c !== undefined && c !== null && c !== '') {
+      const num = Number(c)
+      if (!isNaN(num) && num > 0) return num
+    }
+  }
+  return 0
 })
 
 // ¿Es un evento confirmado como estrictamente gratuito?
@@ -553,7 +563,30 @@ const buscarInscripcion = async () => {
       const doc = querySnapshot.docs[0]
       const data = doc.data()
       const p = data.participante || {}
-      const montoTotal = Number(p.totalPrice ?? p.montoPagado ?? p.monto ?? ((Number(p.ticketPrice || 0) * Number(p.ticketQuantity || 1)) || 0)) || 0
+      const candidatos = [
+        p.montoPagado,
+        p.monto,
+        p.totalPrice,
+        data.montoPagado,
+        data.monto,
+        data.totalPrice
+      ]
+      let montoTotal = 0
+      for (const c of candidatos) {
+        if (c !== undefined && c !== null && c !== '') {
+          const num = Number(c)
+          if (!isNaN(num) && num > 0) {
+            montoTotal = num
+            break
+          }
+        }
+      }
+      if (montoTotal === 0) {
+        const tPrice = Number(p.ticketPrice || 0)
+        const tQty = Number(p.ticketQuantity || 1)
+        if (tPrice > 0) montoTotal = tPrice * tQty
+      }
+
       inscripcionEncontrada.value = {
         id: doc.id,
         ...p,

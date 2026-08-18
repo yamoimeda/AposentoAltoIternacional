@@ -335,12 +335,33 @@ const archivosAdjuntos = computed(() => {
   return urls
 })
 
-// Cargar datos cuando cambia la inscripción
 watch(() => props.inscripcion, (nuevaInscripcion) => {
   if (nuevaInscripcion) {
     const p = nuevaInscripcion.participante || {}
-    const montoVal = p.totalPrice ?? p.montoPagado ?? p.monto ?? ((Number(p.ticketPrice || 0) * Number(p.ticketQuantity || 1)) || 0)
-    const montoNum = Number(montoVal) || 0
+    const candidatos = [
+      p.montoPagado,
+      p.monto,
+      p.totalPrice,
+      nuevaInscripcion.montoPagado,
+      nuevaInscripcion.monto,
+      nuevaInscripcion.totalPrice
+    ]
+    let montoNum = 0
+    for (const c of candidatos) {
+      if (c !== undefined && c !== null && c !== '') {
+        const num = Number(c)
+        if (!isNaN(num) && num > 0) {
+          montoNum = num
+          break
+        }
+      }
+    }
+    if (montoNum === 0) {
+      const tPrice = Number(p.ticketPrice || 0)
+      const tQty = Number(p.ticketQuantity || 1)
+      if (tPrice > 0) montoNum = tPrice * tQty
+    }
+
     formulario.value = {
       nombre: p.nombre || '',
       cedula: p.cedula || '',
@@ -351,7 +372,7 @@ watch(() => props.inscripcion, (nuevaInscripcion) => {
       iglesia: p.iglesia || '',
       mentor: p.mentor || '',
       ticketType: p.ticketType || 'General',
-      ticketPrice: p.ticketPrice ?? 0,
+      ticketPrice: montoNum,
       ticketQuantity: p.ticketQuantity ?? 1,
       totalPrice: montoNum,
       montoPagado: montoNum,
