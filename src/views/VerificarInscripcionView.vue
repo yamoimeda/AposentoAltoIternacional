@@ -376,6 +376,18 @@ const calcularTotalAcumulado = computed(() => {
   return (Number(montoActual) + Number(nuevoMonto)).toFixed(2)
 })
 
+const obtenerListaTicketsEvento = (ev) => {
+  if (!ev) return []
+  const list = ev.ticketTypes || ev.tickets || []
+  if (Array.isArray(list) && list.length > 0) {
+    return list
+  }
+  if (ev.precio !== undefined && ev.precio !== null && ev.precio !== '' && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
+    return [{ id: 'general', nombre: 'General', precio: Number(ev.precio) }]
+  }
+  return []
+}
+
 // Obtener el precio esperado del boleto o evento
 const precioBoletoEsperado = computed(() => {
   if (!inscripcionEncontrada.value) return 0
@@ -383,23 +395,22 @@ const precioBoletoEsperado = computed(() => {
   const evId = p.eventoId || eventoId.value
   const ev = eventoCargado.value || (evId ? eventosStore.obtenerEventoPorId(evId) : null) || (evId ? eventosStore.eventos.find(e => e.id === evId || String(e.id) === String(evId)) : null)
 
-  // 1. Usar ticketPrice guardado en la inscripción si existe y es > 0
-  const savedPrice = Number(p.ticketPrice)
-  if (!isNaN(savedPrice) && savedPrice > 0) {
-    return savedPrice
-  }
+  const tickets = obtenerListaTicketsEvento(ev)
 
-  // 2. Buscar en tickets configurados en el evento
-  if (ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
-    const t = ev.tickets.find(tick => 
+  // 1. Buscar coincidencia en los tickets del evento por ID o por Nombre
+  if (tickets.length > 0) {
+    const t = tickets.find(tick => 
       (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
       (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
     )
     if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
       return Number(t.precio)
     }
-    // Si no encontró por nombre exacto, buscar cualquier ticket con precio
-    const primerTicketConPrecio = ev.tickets.find(tick => Number(tick.precio) > 0)
+  }
+
+  // 2. Si el evento tiene tickets configurados pero no coincidió por nombre, tomar el primer ticket con precio
+  if (tickets.length > 0) {
+    const primerTicketConPrecio = tickets.find(tick => !isNaN(Number(tick.precio)) && Number(tick.precio) > 0)
     if (primerTicketConPrecio) {
       return Number(primerTicketConPrecio.precio)
     }
@@ -408,6 +419,12 @@ const precioBoletoEsperado = computed(() => {
   // 3. Usar precio base del evento
   if (ev && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
     return Number(ev.precio)
+  }
+
+  // 4. Usar ticketPrice guardado en la inscripción únicamente si no hay tickets en el evento
+  const savedPrice = Number(p.ticketPrice)
+  if (!isNaN(savedPrice) && savedPrice > 0) {
+    return savedPrice
   }
 
   return 0
@@ -436,8 +453,9 @@ const esEventoGratuito = computed(() => {
   const evId = inscripcionEncontrada.value?.eventoId || eventoId.value
   const ev = eventoCargado.value || (evId ? eventosStore.obtenerEventoPorId(evId) : null)
   if (!ev) return false
+  const tickets = obtenerListaTicketsEvento(ev)
+  const ticketsConPrecio = tickets.some(t => Number(t.precio || 0) > 0)
   const precioEv = Number(ev.precio || 0)
-  const ticketsConPrecio = Array.isArray(ev.tickets) ? ev.tickets.some(t => Number(t.precio || 0) > 0) : false
   return precioEv === 0 && !ticketsConPrecio && !ev.opciones?.adjuntoRequerido
 })
 

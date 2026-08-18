@@ -396,15 +396,21 @@ const obtenerEvento = () => {
   )
 }
 
-const ticketsDisponibles = computed(() => {
-  const ev = obtenerEvento()
-  if (ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
-    return ev.tickets
+const obtenerListaTickets = (ev) => {
+  if (!ev) return []
+  const list = ev.ticketTypes || ev.tickets || []
+  if (Array.isArray(list) && list.length > 0) {
+    return list.filter(t => t.activo !== false)
   }
-  if (ev && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
+  if (ev.precio !== undefined && ev.precio !== null && ev.precio !== '' && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
     return [{ id: 'general', nombre: 'General', precio: Number(ev.precio) }]
   }
   return []
+}
+
+const ticketsDisponibles = computed(() => {
+  const ev = obtenerEvento()
+  return obtenerListaTickets(ev)
 })
 
 const onCambioTipoBoleto = (ticketNombre) => {
@@ -505,22 +511,22 @@ const cargarFormulario = () => {
 
   let ticketCost = Number(p.ticketPrice || 0)
   const ev = obtenerEvento()
+  const tickets = obtenerListaTickets(ev)
   
-  if (ev) {
-    if (Array.isArray(ev.tickets) && ev.tickets.length > 0) {
-      const t = ev.tickets.find(tick => 
-        (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
-        (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
-      )
-      if (t && Number(t.precio) > 0) {
-        ticketCost = Number(t.precio)
-      } else if (ticketCost === 0 && ev.tickets.length > 0 && Number(ev.tickets[0].precio) > 0) {
-        ticketCost = Number(ev.tickets[0].precio)
-      }
+  if (tickets.length > 0) {
+    const t = tickets.find(tick => 
+      (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
+      (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
+    )
+    if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
+      ticketCost = Number(t.precio)
+    } else if (ticketCost === 0 && Number(tickets[0].precio) > 0) {
+      ticketCost = Number(tickets[0].precio)
     }
-    if (ticketCost === 0 && Number(ev.precio) > 0) {
-      ticketCost = Number(ev.precio)
-    }
+  }
+
+  if (ticketCost === 0 && ev && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
+    ticketCost = Number(ev.precio)
   }
 
   if (ticketCost === 0 && montoNum > 0) {

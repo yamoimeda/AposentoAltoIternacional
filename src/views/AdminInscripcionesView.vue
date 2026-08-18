@@ -796,10 +796,30 @@ const calcularIngresoTotal = computed(() => {
   }, 0).toFixed(2)
 })
 
+const obtenerPrecioBoletoEsperado = (ins) => {
+  if (!ins) return 0
+  const p = ins.participante || {}
+  const ev = eventos.value.find(e => e.id === ins.eventoId || String(e.id) === String(ins.eventoId))
+  if (ev) {
+    const list = ev.ticketTypes || ev.tickets || []
+    if (list.length > 0) {
+      const t = list.find(tick => 
+        (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
+        (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
+      )
+      if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) return Number(t.precio)
+      const primerConPrecio = list.find(tick => Number(tick.precio) > 0)
+      if (primerConPrecio) return Number(primerConPrecio.precio)
+    }
+    if (ev.precio && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) return Number(ev.precio)
+  }
+  return Number(p.ticketPrice) || 0
+}
+
 // Suma de ticketPrice × ticketQuantity: lo que DEBERÍA haberse cobrado según el boleto seleccionado
 const calcularTotalEsperado = computed(() => {
   return inscripcionesFiltradas.value.reduce((acc, ins) => {
-    const precio = Number(ins.participante?.ticketPrice || 0)
+    const precio = obtenerPrecioBoletoEsperado(ins)
     const cantidad = Number(ins.participante?.ticketQuantity || 1)
     return acc + precio * cantidad
   }, 0).toFixed(2)
@@ -856,18 +876,8 @@ const inscripcionesFiltradas = computed(() => {
   // 4. Filtro por Estado de Pago
   if (filtros.value.estadoPago) {
     resultado = resultado.filter(ins => {
-      const p = ins.participante || {}
       const montoTotal = obtenerMontoTotal(ins)
-      const ev = eventos.value.find(e => e.id === ins.eventoId)
-      let precioEsperado = Number(p.ticketPrice || 0)
-      if (precioEsperado === 0 && ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
-        const t = ev.tickets.find(tick => tick.nombre === p.ticketType || tick.id === p.ticketTypeId)
-        if (t && Number(t.precio) > 0) precioEsperado = Number(t.precio)
-      }
-      if (precioEsperado === 0 && ev) {
-        precioEsperado = Number(ev.precio || 0)
-      }
-
+      const precioEsperado = obtenerPrecioBoletoEsperado(ins)
       const pagadoCompleto = precioEsperado === 0 ? true : (montoTotal >= (precioEsperado - 0.01))
 
       if (filtros.value.estadoPago === 'pagado') {
