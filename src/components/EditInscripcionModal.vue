@@ -64,11 +64,74 @@
             </div>
 
             <!-- Adjuntos de la inscripción -->
-            <div v-if="archivosAdjuntos.length > 0" class="bg-indigo-50/70 border border-indigo-100 p-4 rounded-xl">
-              <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2">
-                <i class="fas fa-paperclip mr-1 text-indigo-600"></i> Comprobante(s) de Pago Adjuntos
-              </label>
-              <FileViewer :files="archivosAdjuntos" />
+            <div class="bg-indigo-50/70 border border-indigo-100 p-4 rounded-xl space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                  <i class="fas fa-paperclip mr-1 text-indigo-600"></i> Comprobante(s) de Pago
+                </label>
+                <span v-if="archivosAdjuntos.length > 0" class="text-[11px] font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md">
+                  {{ archivosAdjuntos.length }} comprobante(s) registrado(s)
+                </span>
+              </div>
+
+              <!-- Comprobantes ya guardados -->
+              <div v-if="archivosAdjuntos.length > 0">
+                <FileViewer :files="archivosAdjuntos" />
+              </div>
+              <div v-else class="text-xs text-slate-500 italic">
+                No hay comprobantes guardados previamente.
+              </div>
+
+              <!-- Subida de nuevos comprobantes -->
+              <div class="pt-3 border-t border-indigo-200/60">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+                  <span>
+                    <i class="fas fa-cloud-arrow-up text-indigo-600 mr-1"></i>
+                    Adjuntar Nuevo(s) Comprobante(s)
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-normal">PNG, JPG, PDF</span>
+                </label>
+
+                <div class="flex items-center gap-2">
+                  <label class="cursor-pointer px-4 py-2 bg-white border-2 border-dashed border-indigo-300 hover:border-indigo-500 rounded-xl text-xs font-semibold text-indigo-700 hover:bg-indigo-50/50 transition-all flex items-center gap-2 shadow-2xs">
+                    <i class="fas fa-plus-circle text-indigo-600"></i>
+                    <span>Seleccionar Archivos</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*,application/pdf"
+                      class="hidden"
+                      @change="handleArchivosNuevos"
+                    />
+                  </label>
+                  <span v-if="archivosNuevos.length" class="text-xs text-indigo-700 font-bold">
+                    {{ archivosNuevos.length }} archivo(s) por subir
+                  </span>
+                </div>
+
+                <!-- Lista de archivos nuevos seleccionados -->
+                <div v-if="archivosNuevos.length > 0" class="mt-2.5 space-y-1.5">
+                  <div
+                    v-for="(file, idx) in archivosNuevos"
+                    :key="idx"
+                    class="flex items-center justify-between bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-xs shadow-2xs"
+                  >
+                    <div class="flex items-center gap-2 min-w-0">
+                      <i :class="['text-indigo-600', file.type.includes('pdf') ? 'fas fa-file-pdf' : 'fas fa-file-image']"></i>
+                      <span class="truncate font-medium text-slate-800">{{ file.name }}</span>
+                      <span class="text-[10px] text-slate-400 font-mono">({{ (file.size / 1024).toFixed(0) }} KB)</span>
+                    </div>
+                    <button
+                      type="button"
+                      @click="eliminarArchivoNuevo(idx)"
+                      class="text-rose-500 hover:text-rose-700 p-1 hover:bg-rose-50 rounded transition-colors ml-2 cursor-pointer"
+                      title="Quitar archivo"
+                    >
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <form id="editForm" @submit.prevent="guardar" class="space-y-6">
@@ -267,7 +330,8 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { auth } from '../firebase'
+import { auth, storage } from '../firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useEventosStore } from '../stores/eventos'
 import FileViewer from './FileViewer.vue'
 
@@ -299,10 +363,27 @@ const emit = defineEmits(['close', 'save'])
 const eventosStore = useEventosStore()
 const guardando = ref(false)
 const mensaje = ref(null)
+const archivosNuevos = ref([])
 
 const usuarioActual = computed(() => {
   return auth.currentUser?.email || auth.currentUser?.displayName || 'Administrador'
 })
+
+const handleArchivosNuevos = (event) => {
+  const files = Array.from(event.target.files || [])
+  for (const f of files) {
+    if (f.size > 5 * 1024 * 1024) {
+      mensaje.value = { tipo: 'error', texto: `El archivo "${f.name}" supera el límite de 5MB.` }
+      continue
+    }
+    archivosNuevos.value.push(f)
+  }
+  event.target.value = ''
+}
+
+const eliminarArchivoNuevo = (index) => {
+  archivosNuevos.value.splice(index, 1)
+}
 
 const obtenerEvento = () => {
   if (props.evento) return props.evento
@@ -464,6 +545,7 @@ const cargarFormulario = () => {
     montoPagado: montoNum,
     registrationToken: p.registrationToken || ''
   }
+  archivosNuevos.value = []
 }
 
 watch([() => props.inscripcion, () => props.show, () => props.evento], () => {
@@ -473,6 +555,7 @@ watch([() => props.inscripcion, () => props.show, () => props.evento], () => {
 const cerrar = () => {
   if (!guardando.value) {
     mensaje.value = null
+    archivosNuevos.value = []
     emit('close')
   }
 }
@@ -498,7 +581,25 @@ const guardar = async () => {
     const ahora = new Date().toISOString()
     const editor = usuarioActual.value
 
-    // Preservar la estructura completa de `participante` para no borrar campos existentes
+    // 1. Subir archivos nuevos a Storage si existen
+    const nuevasUrls = []
+    if (archivosNuevos.value.length > 0) {
+      mensaje.value = { tipo: 'info', texto: `Subiendo ${archivosNuevos.value.length} comprobante(s)...` }
+      const evId = props.inscripcion?.eventoId || 'general'
+      for (const file of archivosNuevos.value) {
+        const path = `inscripciones/${evId}/${Date.now()}_${file.name}`
+        const sRef = storageRef(storage, path)
+        await uploadBytes(sRef, file)
+        const url = await getDownloadURL(sRef)
+        nuevasUrls.push(url)
+      }
+    }
+
+    // 2. Combinar comprobantes existentes con los recién subidos
+    const urlsPrevias = [...archivosAdjuntos.value]
+    const todasLasUrls = [...urlsPrevias, ...nuevasUrls]
+
+    // 3. Preservar la estructura completa de `participante` para no borrar campos existentes
     const participanteExistente = props.inscripcion?.participante || {}
     const montoFinal = Number(formulario.value.totalPrice ?? formulario.value.montoPagado ?? 0) || 0
 
@@ -518,6 +619,8 @@ const guardar = async () => {
       totalPrice: montoFinal,
       montoPagado: montoFinal,
       monto: montoFinal,
+      comprobanteUrl: todasLasUrls[0] || null,
+      comprobantesUrls: todasLasUrls,
       registrationToken: formulario.value.registrationToken || participanteExistente.registrationToken,
       editadoPor: editor,
       fechaEdicion: ahora
@@ -534,9 +637,11 @@ const guardar = async () => {
       }
     })
 
+    archivosNuevos.value = []
+
     mensaje.value = {
       tipo: 'success',
-      texto: `Cambios guardados por ${editor}`
+      texto: `Cambios guardados exitosamente por ${editor}`
     }
 
     setTimeout(() => {
@@ -546,7 +651,7 @@ const guardar = async () => {
     console.error('Error guardando cambios:', error)
     mensaje.value = {
       tipo: 'error',
-      texto: 'Error al guardar los cambios. Intenta de nuevo.'
+      texto: 'Error al guardar los cambios o subir comprobantes. Intenta de nuevo.'
     }
   } finally {
     guardando.value = false
