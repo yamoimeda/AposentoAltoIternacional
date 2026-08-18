@@ -1,102 +1,78 @@
 <template>
   <Transition name="modal-fade">
-    <div v-if="show" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 py-12 px-4" @click.self="$emit('close')">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[95vh] overflow-y-auto no-scrollbar transform transition-all duration-300 animate-scale-in">
-        <!-- Header con animación de éxito -->
-        <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-t-2xl text-center relative overflow-hidden">
-          <!-- Confeti animado de fondo -->
-          <div class="absolute inset-0 opacity-20">
-            <div class="absolute top-0 left-1/4 w-2 h-2 bg-white rounded-full animate-confetti"></div>
-            <div class="absolute top-0 left-1/2 w-2 h-2 bg-white rounded-full animate-confetti" style="animation-delay: 0.2s;"></div>
-            <div class="absolute top-0 left-3/4 w-2 h-2 bg-white rounded-full animate-confetti" style="animation-delay: 0.4s;"></div>
+    <div v-if="show" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 py-4 px-3" @click.self="$emit('close')">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[96vh] overflow-y-auto no-scrollbar transform transition-all duration-300 animate-scale-in">
+        <!-- Header compacto con icono al lado -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 rounded-t-2xl flex items-center justify-center gap-2.5 shadow-xs">
+          <div class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-white shrink-0">
+            <i class="fas fa-check text-white text-sm"></i>
           </div>
-          
-          <div class="relative z-10">
-            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-in">
-              <i class="fas fa-check text-green-500 text-4xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-white mb-2">¡Inscripción Exitosa!</h2>
-            <p class="text-green-50">Tu registro ha sido confirmado</p>
-          </div>
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">¡Inscripción Exitosa!</h2>
         </div>
 
         <!-- Contenido principal -->
-        <div class="p-6 space-y-6">
+        <div class="p-4 sm:p-5 space-y-3.5">
           <!-- Código QR -->
-          <div class="flex flex-col items-center bg-gray-50 p-6 rounded-xl">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Tu Boleto Digital</h3>
-              <div class="bg-white p-4 rounded-lg shadow-md flex justify-center">
-              <canvas ref="qrCanvas" class="w-48 h-48 max-w-full max-h-[40vh]" ></canvas>
+          <div class="flex flex-col items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <div class="bg-white p-2.5 rounded-lg shadow-xs flex justify-center border border-slate-100">
+              <canvas ref="qrCanvas" class="w-36 h-36 sm:w-44 sm:h-44 max-w-full max-h-[30vh]"></canvas>
             </div>
-            <p class="text-sm text-gray-600 mt-4 text-center">
-              Guarda este código QR para presentarlo el día del evento
+            <p class="text-xs text-slate-500 mt-2 text-center font-medium">
+              Presenta este código QR el día del evento
             </p>
           </div>
 
-          <!-- Información del cliente -->
-          <div class="space-y-3">
-            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-              <i class="fas fa-user mr-2 text-blue-600"></i>
-              Información del Registro
-            </h3>
-            <div class="bg-blue-50 rounded-lg p-4 space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span class="text-gray-600">Nombre:</span>
-                <span class="font-semibold text-gray-800">{{ registrationData.nombre }}</span>
+          <!-- Información del registro -->
+          <div class="space-y-1.5">
+            <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-3 space-y-1.5 text-xs sm:text-sm">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Nombre:</span>
+                <span class="font-bold text-slate-900 text-right truncate ml-2">{{ registrationData.nombre }}</span>
               </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Cédula:</span>
-                <span class="font-semibold text-gray-800">{{ registrationData.cedula }}</span>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Cédula:</span>
+                <span class="font-semibold text-slate-800 font-mono">{{ registrationData.cedula }}</span>
               </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">WhatsApp:</span>
-                <span class="font-semibold text-gray-800">{{ registrationData.telefono }}</span>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">WhatsApp:</span>
+                <span class="font-semibold text-slate-800">{{ registrationData.telefono }}</span>
               </div>
-              <div v-if="registrationData.ticketType" class="flex justify-between border-t border-blue-200 pt-2 mt-2">
-                <span class="text-gray-600">Tipo de Boleto:</span>
-                <span class="font-semibold text-gray-800">{{ registrationData.ticketType }}</span>
+              <div v-if="registrationData.ticketType" class="flex justify-between items-center border-t border-blue-200/70 pt-1.5 mt-1.5">
+                <span class="text-slate-600 font-medium">Tipo de Boleto:</span>
+                <span class="font-bold text-blue-900">{{ registrationData.ticketType }}</span>
               </div>
-              <div v-if="registrationData.ticketPrice" class="flex justify-between">
-                <span class="text-gray-600">Precio:</span>
-                <span class="font-semibold text-green-600">${{ registrationData.ticketPrice }}</span>
+              <div v-if="registrationData.ticketPrice" class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Precio del Boleto:</span>
+                <span class="font-bold text-emerald-700">${{ Number(registrationData.ticketPrice).toFixed(2) }}</span>
               </div>
-              <div v-if="registrationData.ticketPrice || registrationData.monto" class="flex justify-between">
-                <span class="text-gray-600">Monto Abonado:</span>
-                <span class="font-semibold text-green-600">${{ Number(registrationData.monto || registrationData.totalPrice || registrationData.montoPagado || 0).toFixed(2) }}</span>
+              <div v-if="registrationData.ticketPrice || registrationData.monto" class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Monto Abonado:</span>
+                <span class="font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded">${{ Number(registrationData.monto || registrationData.totalPrice || registrationData.montoPagado || 0).toFixed(2) }}</span>
               </div>
             </div>
           </div>
 
-          <!-- ID de registro -->
-          <!-- <div class="bg-gray-100 rounded-lg p-3">
-            <p class="text-xs text-gray-600 text-center">ID de Registro</p>
-            <p class="text-sm font-mono text-gray-800 text-center break-all">{{ registrationData.registrationToken }}</p>
-          </div> -->
-
           <!-- Botones de acción -->
-          <div class="flex gap-3">
+          <div class="flex gap-2.5 pt-1">
             <button 
               @click="downloadQR"
-              class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              class="flex-1 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <i class="fas fa-download"></i>
               Descargar QR
             </button>
             <button 
               @click="$emit('close')"
-              class="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              class="flex-1 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer"
             >
               Cerrar
             </button>
           </div>
 
           <!-- Mensaje adicional -->
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
-            <i class="fas fa-info-circle text-yellow-600 mt-1"></i>
-            <div class="text-sm text-yellow-800">
-              <p class="font-semibold mb-1">Importante:</p>
-              <p>Conserva este código QR. Lo necesitarás para verificar tu entrada el día del evento.</p>
-            </div>
+          <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 flex items-center gap-2 text-xs text-amber-800">
+            <i class="fas fa-info-circle text-amber-600 shrink-0"></i>
+            <p>Guarda tu código QR. Lo necesitarás para verificar tu entrada.</p>
           </div>
         </div>
       </div>
