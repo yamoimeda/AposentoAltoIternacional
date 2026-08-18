@@ -582,6 +582,7 @@
     <EditInscripcionModal
       :show="mostrarModalEdicion"
       :inscripcion="inscripcionSeleccionada"
+      :evento="eventoSeleccionado"
       :evento-titulo="obtenerNombreEvento(inscripcionSeleccionada?.eventoId)"
       :evento-opciones="obtenerOpcionesEvento(inscripcionSeleccionada?.eventoId)"
       @close="cerrarModalEdicion"
@@ -700,6 +701,12 @@ const eventoFijado = computed(() => !!route.query.eventoId)
 const eventoActual = computed(() => {
   if (!filtros.value.eventoId) return null
   return eventos.value.find(e => e.id === filtros.value.eventoId)
+})
+
+const eventoSeleccionado = computed(() => {
+  if (!inscripcionSeleccionada.value?.eventoId) return null
+  const id = inscripcionSeleccionada.value.eventoId
+  return eventos.value.find(e => e.id === id || String(e.id) === String(id)) || null
 })
 
 // Sincronizar filtros.eventoId con la URL para sobrevivir al refresh

@@ -280,6 +280,10 @@ const props = defineProps({
     type: Object,
     default: null
   },
+  evento: {
+    type: Object,
+    default: null
+  },
   eventoTitulo: {
     type: String,
     default: ''
@@ -300,13 +304,23 @@ const usuarioActual = computed(() => {
   return auth.currentUser?.email || auth.currentUser?.displayName || 'Administrador'
 })
 
+const obtenerEvento = () => {
+  if (props.evento) return props.evento
+  const evId = props.inscripcion?.eventoId
+  if (!evId) return null
+  return (
+    eventosStore.obtenerEventoPorId(evId) ||
+    eventosStore.eventos.find(e => e.id === evId || String(e.id) === String(evId)) ||
+    null
+  )
+}
+
 const ticketsDisponibles = computed(() => {
-  if (!props.inscripcion?.eventoId) return []
-  const ev = eventosStore.obtenerEventoPorId(props.inscripcion.eventoId)
+  const ev = obtenerEvento()
   if (ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
     return ev.tickets
   }
-  if (ev && Number(ev.precio) > 0) {
+  if (ev && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
     return [{ id: 'general', nombre: 'General', precio: Number(ev.precio) }]
   }
   return []
@@ -385,68 +399,75 @@ const archivosAdjuntos = computed(() => {
   return urls
 })
 
-watch(() => props.inscripcion, (nuevaInscripcion) => {
-  if (nuevaInscripcion) {
-    const p = nuevaInscripcion.participante || {}
-    const candidatos = [
-      p.montoPagado,
-      p.monto,
-      p.totalPrice,
-      nuevaInscripcion.montoPagado,
-      nuevaInscripcion.monto,
-      nuevaInscripcion.totalPrice
-    ]
-    let montoNum = 0
-    for (const c of candidatos) {
-      if (c !== undefined && c !== null && c !== '') {
-        const num = Number(c)
-        if (!isNaN(num) && num > 0) {
-          montoNum = num
-          break
-        }
+const cargarFormulario = () => {
+  if (!props.inscripcion) return
+  const p = props.inscripcion.participante || {}
+  const i = props.inscripcion
+  const candidatos = [
+    p.montoPagado,
+    p.monto,
+    p.totalPrice,
+    i.montoPagado,
+    i.monto,
+    i.totalPrice
+  ]
+  let montoNum = 0
+  for (const c of candidatos) {
+    if (c !== undefined && c !== null && c !== '') {
+      const num = Number(c)
+      if (!isNaN(num) && num > 0) {
+        montoNum = num
+        break
       }
-    }
-
-    let ticketCost = Number(p.ticketPrice || 0)
-    const ev = nuevaInscripcion.eventoId ? eventosStore.obtenerEventoPorId(nuevaInscripcion.eventoId) : null
-    
-    // Si ticketCost guardado es 0, buscar el precio real del ticket en el evento
-    if (ticketCost === 0 && ev) {
-      if (Array.isArray(ev.tickets) && ev.tickets.length > 0) {
-        const t = ev.tickets.find(tick => 
-          (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
-          (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
-        )
-        if (t && Number(t.precio) > 0) {
-          ticketCost = Number(t.precio)
-        } else if (ev.tickets.length === 1 && Number(ev.tickets[0].precio) > 0) {
-          ticketCost = Number(ev.tickets[0].precio)
-        }
-      }
-      if (ticketCost === 0 && Number(ev.precio) > 0) {
-        ticketCost = Number(ev.precio)
-      }
-    }
-
-    const tipoBoletoActual = p.ticketType || (ticketsDisponibles.value[0]?.nombre || 'General')
-
-    formulario.value = {
-      nombre: p.nombre || '',
-      cedula: p.cedula || '',
-      telefono: p.telefono || '',
-      edad: p.edad ?? '',
-      correo: p.correo || '',
-      nota: p.nota || '',
-      iglesia: p.iglesia || '',
-      mentor: p.mentor || '',
-      ticketType: tipoBoletoActual,
-      ticketPrice: ticketCost,
-      ticketQuantity: p.ticketQuantity ?? 1,
-      totalPrice: montoNum,
-      montoPagado: montoNum,
-      registrationToken: p.registrationToken || ''
     }
   }
+
+  let ticketCost = Number(p.ticketPrice || 0)
+  const ev = obtenerEvento()
+  
+  if (ev) {
+    if (Array.isArray(ev.tickets) && ev.tickets.length > 0) {
+      const t = ev.tickets.find(tick => 
+        (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
+        (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
+      )
+      if (t && Number(t.precio) > 0) {
+        ticketCost = Number(t.precio)
+      } else if (ticketCost === 0 && ev.tickets.length > 0 && Number(ev.tickets[0].precio) > 0) {
+        ticketCost = Number(ev.tickets[0].precio)
+      }
+    }
+    if (ticketCost === 0 && Number(ev.precio) > 0) {
+      ticketCost = Number(ev.precio)
+    }
+  }
+
+  if (ticketCost === 0 && montoNum > 0) {
+    ticketCost = montoNum
+  }
+
+  const tipoBoletoActual = p.ticketType || (ticketsDisponibles.value[0]?.nombre || 'General')
+
+  formulario.value = {
+    nombre: p.nombre || '',
+    cedula: p.cedula || '',
+    telefono: p.telefono || '',
+    edad: p.edad ?? '',
+    correo: p.correo || '',
+    nota: p.nota || '',
+    iglesia: p.iglesia || '',
+    mentor: p.mentor || '',
+    ticketType: tipoBoletoActual,
+    ticketPrice: ticketCost,
+    ticketQuantity: p.ticketQuantity ?? 1,
+    totalPrice: montoNum,
+    montoPagado: montoNum,
+    registrationToken: p.registrationToken || ''
+  }
+}
+
+watch([() => props.inscripcion, () => props.show, () => props.evento], () => {
+  cargarFormulario()
 }, { immediate: true, deep: true })
 
 const cerrar = () => {
