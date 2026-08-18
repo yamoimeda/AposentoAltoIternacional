@@ -383,7 +383,7 @@ const obtenerListaTicketsEvento = (ev) => {
     return list
   }
   if (ev.precio !== undefined && ev.precio !== null && ev.precio !== '' && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
-    return [{ id: 'general', nombre: 'General', precio: Number(ev.precio) }]
+    return [{ id: 'adulto_full', nombre: 'Adulto full', precio: Number(ev.precio) }]
   }
   return []
 }

@@ -328,7 +328,7 @@
                 </div>
                 <div>
                   <span class="text-slate-400 font-semibold uppercase tracking-wide">Boleto</span>
-                  <p class="text-slate-700">{{ inscripcion.participante?.ticketType || 'General' }}</p>
+                  <p class="text-slate-700">{{ inscripcion.participante?.ticketType || 'Adulto full' }}</p>
                 </div>
                 <div>
                   <span class="text-slate-400 font-semibold uppercase tracking-wide">Fecha</span>
@@ -448,7 +448,7 @@
                   <!-- Boleto -->
                   <td class="px-5 py-4">
                     <div class="font-semibold text-slate-800">
-                      {{ inscripcion.participante?.ticketType || 'General' }}
+                      {{ inscripcion.participante?.ticketType || 'Adulto full' }}
                     </div>
                     <div v-if="Number(inscripcion.participante?.ticketQuantity) > 1" class="text-[11px] text-slate-500">
                       Cant: {{ inscripcion.participante.ticketQuantity }}
@@ -870,7 +870,7 @@ const inscripcionesFiltradas = computed(() => {
 
   // 3. Filtro por Tipo de Boleto
   if (filtros.value.ticketType) {
-    resultado = resultado.filter(ins => (ins.participante?.ticketType || 'General') === filtros.value.ticketType)
+    resultado = resultado.filter(ins => (ins.participante?.ticketType || 'Adulto full') === filtros.value.ticketType)
   }
 
   // 4. Filtro por Estado de Pago
@@ -1077,7 +1077,7 @@ const exportarCSV = () => {
       p.edad !== undefined && p.edad !== null ? p.edad : '',
       p.iglesia || '',
       p.mentor || '',
-      p.ticketType || 'General',
+      p.ticketType || 'Adulto full',
       p.ticketQuantity || 1,
       Number(p.ticketPrice || 0).toFixed(2),
       obtenerMontoTotal(ins).toFixed(2),

@@ -403,7 +403,7 @@ const obtenerListaTickets = (ev) => {
     return list.filter(t => t.activo !== false)
   }
   if (ev.precio !== undefined && ev.precio !== null && ev.precio !== '' && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
-    return [{ id: 'general', nombre: 'General', precio: Number(ev.precio) }]
+    return [{ id: 'adulto_full', nombre: 'Adulto full', precio: Number(ev.precio) }]
   }
   return []
 }
@@ -462,7 +462,7 @@ const formulario = ref({
   nota: '',
   iglesia: '',
   mentor: '',
-  ticketType: '',
+  ticketType: 'Adulto full',
   ticketPrice: 0,
   ticketQuantity: 1,
   totalPrice: 0,
@@ -472,16 +472,31 @@ const formulario = ref({
 
 const archivosAdjuntos = computed(() => {
   if (!props.inscripcion) return []
-  const urls = []
   const p = props.inscripcion.participante || {}
+  const i = props.inscripcion
+
+  const urls = []
   if (Array.isArray(p.comprobantesUrls)) {
-    urls.push(...p.comprobantesUrls)
-  } else if (p.comprobanteUrl) {
+    urls.push(...p.comprobantesUrls.filter(Boolean))
+  }
+  if (p.comprobanteUrl && !urls.includes(p.comprobanteUrl)) {
     urls.push(p.comprobanteUrl)
   }
-  const adicionales = props.inscripcion.comprobantesAdicionales || []
-  for (const ca of adicionales) {
-    if (ca.url) urls.push(ca.url)
+  if (Array.isArray(i.comprobantesUrls)) {
+    i.comprobantesUrls.forEach(u => {
+      if (u && !urls.includes(u)) urls.push(u)
+    })
+  }
+  if (i.comprobanteUrl && !urls.includes(i.comprobanteUrl)) {
+    urls.push(i.comprobanteUrl)
+  }
+  if (Array.isArray(i.comprobantesAdicionales)) {
+    i.comprobantesAdicionales.forEach(item => {
+      const u = item?.url || item
+      if (typeof u === 'string' && u && !urls.includes(u)) {
+        urls.push(u)
+      }
+    })
   }
   return urls
 })
@@ -520,7 +535,7 @@ const cargarFormulario = () => {
       (tipoBoletoActual && tick.nombre?.trim().toLowerCase() === tipoBoletoActual.trim().toLowerCase())
     )
 
-    // Si el tipo guardado en la inscripción no existe en los tickets del evento (ej. "General"),
+    // Si el tipo guardado en la inscripción no existe en los tickets del evento (ej. "Adulto full"),
     // tomamos el primer ticket oficial del evento
     if (!t) {
       t = tickets[0]
@@ -549,7 +564,7 @@ const cargarFormulario = () => {
     nota: p.nota || '',
     iglesia: p.iglesia || '',
     mentor: p.mentor || '',
-    ticketType: tipoBoletoActual || 'General',
+    ticketType: tipoBoletoActual || 'Adulto full',
     ticketPrice: ticketCost,
     ticketQuantity: p.ticketQuantity ?? 1,
     totalPrice: montoNum,
@@ -624,7 +639,7 @@ const guardar = async () => {
       nota: formulario.value.nota.trim() || null,
       iglesia: formulario.value.iglesia.trim() || null,
       mentor: formulario.value.mentor.trim() || null,
-      ticketType: formulario.value.ticketType.trim() || 'General',
+      ticketType: formulario.value.ticketType.trim() || 'Adulto full',
       ticketPrice: Number(formulario.value.ticketPrice) || 0,
       ticketQuantity: Math.max(1, Number(formulario.value.ticketQuantity) || 1),
       totalPrice: montoFinal,

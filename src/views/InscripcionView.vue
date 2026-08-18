@@ -659,7 +659,7 @@ const enviarInscripcion = async () => {
       formData.append('ticketQuantity', String(ticketQuantity.value))
       formData.append('totalPrice', String(totalPrice.value))
     } else {
-      formData.append('ticketType', 'General')
+      formData.append('ticketType', 'Adulto full')
       formData.append('ticketPrice', evento.value.precio || '')
       formData.append('ticketQuantity', String(ticketQuantity.value))
       formData.append('totalPrice', String(totalPrice.value))
@@ -674,7 +674,7 @@ const enviarInscripcion = async () => {
     const registrationToken = uuidv4()
 
     const ticketFinal = selectedTicket.value || (listaBoletosEvento.value.length > 0 ? listaBoletosEvento.value[0] : null)
-    const ticketNombreFinal = ticketFinal ? ticketFinal.nombre : 'General'
+    const ticketNombreFinal = ticketFinal ? ticketFinal.nombre : 'Adulto full'
     const ticketPrecioFinal = ticketFinal ? Number(ticketFinal.precio) : (Number(evento.value?.precio) || 0)
 
     // Preparar datos de registro (sin incluir el archivo directamente)
