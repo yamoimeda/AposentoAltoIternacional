@@ -345,7 +345,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
-import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, increment } from 'firebase/firestore'
+import { collection, query, where, getDocs, getDoc, doc, updateDoc, arrayUnion, increment } from 'firebase/firestore'
 import { db, storage } from '../firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import QRCode from 'qrcode'
@@ -356,6 +356,7 @@ const eventosStore = useEventosStore()
 const cedula = ref('')
 const eventoId = ref(null)
 const eventoTitulo = ref('')
+const eventoCargado = ref(null)
 const buscando = ref(false)
 const mostrarResultado = ref(false)
 const inscripcionEncontrada = ref(null)
@@ -378,29 +379,30 @@ const calcularTotalAcumulado = computed(() => {
 // Obtener el precio esperado del boleto o evento
 const precioBoletoEsperado = computed(() => {
   if (!inscripcionEncontrada.value) return 0
-  const evId = inscripcionEncontrada.value.eventoId || eventoId.value
-  const ev = evId ? eventosStore.obtenerEventoPorId(evId) : null
+  const p = inscripcionEncontrada.value
+  const evId = p.eventoId || eventoId.value
+  const ev = eventoCargado.value || (evId ? eventosStore.obtenerEventoPorId(evId) : null) || (evId ? eventosStore.eventos.find(e => e.id === evId || String(e.id) === String(evId)) : null)
 
-  // 1. Buscar en tickets configurados en el evento
+  // 1. Usar ticketPrice guardado en la inscripción si existe y es > 0
+  const savedPrice = Number(p.ticketPrice)
+  if (!isNaN(savedPrice) && savedPrice > 0) {
+    return savedPrice
+  }
+
+  // 2. Buscar en tickets configurados en el evento
   if (ev && Array.isArray(ev.tickets) && ev.tickets.length > 0) {
     const t = ev.tickets.find(tick => 
-      (inscripcionEncontrada.value.ticketTypeId && String(tick.id) === String(inscripcionEncontrada.value.ticketTypeId)) ||
-      (inscripcionEncontrada.value.ticketType && tick.nombre?.trim().toLowerCase() === inscripcionEncontrada.value.ticketType?.trim().toLowerCase())
+      (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
+      (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
     )
     if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
       return Number(t.precio)
     }
-    // Si hay un solo ticket o primer ticket con precio > 0
+    // Si no encontró por nombre exacto, buscar cualquier ticket con precio
     const primerTicketConPrecio = ev.tickets.find(tick => Number(tick.precio) > 0)
     if (primerTicketConPrecio) {
       return Number(primerTicketConPrecio.precio)
     }
-  }
-
-  // 2. Usar ticketPrice guardado en la inscripción si existe y es > 0
-  const savedPrice = Number(inscripcionEncontrada.value.ticketPrice)
-  if (!isNaN(savedPrice) && savedPrice > 0) {
-    return savedPrice
   }
 
   // 3. Usar precio base del evento
@@ -432,7 +434,7 @@ const totalPagado = computed(() => {
 // ¿Es un evento confirmado como estrictamente gratuito?
 const esEventoGratuito = computed(() => {
   const evId = inscripcionEncontrada.value?.eventoId || eventoId.value
-  const ev = evId ? eventosStore.obtenerEventoPorId(evId) : null
+  const ev = eventoCargado.value || (evId ? eventosStore.obtenerEventoPorId(evId) : null)
   if (!ev) return false
   const precioEv = Number(ev.precio || 0)
   const ticketsConPrecio = Array.isArray(ev.tickets) ? ev.tickets.some(t => Number(t.precio || 0) > 0) : false
@@ -454,17 +456,16 @@ const estaPagadoCompleto = computed(() => {
   const esperado = precioBoletoEsperado.value
   const pagado = totalPagado.value
 
-  // Si el evento o boleto tiene un precio mayor a $0:
+  // Si el evento o boleto tiene un costo mayor a $0 (ej. $80.00):
   if (esperado > 0) {
-    return pagado >= (esperado - 0.01) && pagado > 0
+    return pagado >= (esperado - 0.01)
   }
 
-  // Si no se definió precio esperado (ej. $0):
-  // Solo es "Totalmente Pagado" si es un evento gratuito confirmado O si el usuario ya pagó algo (> $0)
+  // Si el costo esperado es 0:
+  // Solo es "Totalmente Pagado" si el evento está confirmado como gratuito
   if (esEventoGratuito.value) return true
-  if (pagado > 0) return true
 
-  // Si pagó $0 y el evento no es gratuito: ¡ESTÁ PENDIENTE!
+  // Si no conocemos el costo y no es gratuito: NO está pagado
   return false
 })
 
@@ -560,9 +561,25 @@ const buscarInscripcion = async () => {
     const querySnapshot = await getDocs(q)
     
     if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0]
-      const data = doc.data()
+      const docSnap = querySnapshot.docs[0]
+      const data = docSnap.data()
       const p = data.participante || {}
+
+      // Cargar evento directamente de Firestore para obtener la lista oficial de boletos y precios
+      if (data.eventoId) {
+        try {
+          const evDoc = await getDoc(doc(db, 'eventos', data.eventoId))
+          if (evDoc.exists()) {
+            eventoCargado.value = { id: evDoc.id, ...evDoc.data() }
+            if (!eventoTitulo.value) {
+              eventoTitulo.value = eventoCargado.value.titulo
+            }
+          }
+        } catch (e) {
+          console.warn('No se pudo cargar documento de evento:', e)
+        }
+      }
+
       const candidatos = [
         p.montoPagado,
         p.monto,
@@ -581,14 +598,9 @@ const buscarInscripcion = async () => {
           }
         }
       }
-      if (montoTotal === 0) {
-        const tPrice = Number(p.ticketPrice || 0)
-        const tQty = Number(p.ticketQuantity || 1)
-        if (tPrice > 0) montoTotal = tPrice * tQty
-      }
 
       inscripcionEncontrada.value = {
-        id: doc.id,
+        id: docSnap.id,
         ...p,
         totalPrice: montoTotal,
         montoPagado: montoTotal,
