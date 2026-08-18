@@ -509,19 +509,26 @@ const cargarFormulario = () => {
     }
   }
 
-  let ticketCost = Number(p.ticketPrice || 0)
   const ev = obtenerEvento()
   const tickets = obtenerListaTickets(ev)
-  
+  let tipoBoletoActual = p.ticketType || ''
+  let ticketCost = 0
+
   if (tickets.length > 0) {
-    const t = tickets.find(tick => 
+    let t = tickets.find(tick => 
       (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
-      (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
+      (tipoBoletoActual && tick.nombre?.trim().toLowerCase() === tipoBoletoActual.trim().toLowerCase())
     )
-    if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
-      ticketCost = Number(t.precio)
-    } else if (ticketCost === 0 && Number(tickets[0].precio) > 0) {
-      ticketCost = Number(tickets[0].precio)
+
+    // Si el tipo guardado en la inscripción no existe en los tickets del evento (ej. "General"),
+    // tomamos el primer ticket oficial del evento
+    if (!t) {
+      t = tickets[0]
+    }
+
+    if (t) {
+      tipoBoletoActual = t.nombre
+      ticketCost = Number(t.precio) || 0
     }
   }
 
@@ -529,11 +536,9 @@ const cargarFormulario = () => {
     ticketCost = Number(ev.precio)
   }
 
-  if (ticketCost === 0 && montoNum > 0) {
-    ticketCost = montoNum
+  if (ticketCost === 0) {
+    ticketCost = Number(p.ticketPrice || 0)
   }
-
-  const tipoBoletoActual = p.ticketType || (ticketsDisponibles.value[0]?.nombre || 'General')
 
   formulario.value = {
     nombre: p.nombre || '',
@@ -544,7 +549,7 @@ const cargarFormulario = () => {
     nota: p.nota || '',
     iglesia: p.iglesia || '',
     mentor: p.mentor || '',
-    ticketType: tipoBoletoActual,
+    ticketType: tipoBoletoActual || 'General',
     ticketPrice: ticketCost,
     ticketQuantity: p.ticketQuantity ?? 1,
     totalPrice: montoNum,
