@@ -163,8 +163,8 @@
               <option value="fechaInscripcion_asc">Fecha de Registro (Más antigua)</option>
               <option value="nombre_asc">Nombre (A - Z)</option>
               <option value="nombre_desc">Nombre (Z - A)</option>
-              <option value="monto_desc">Monto Total (Mayor a Menor)</option>
-              <option value="monto_asc">Monto Total (Menor a Mayor)</option>
+              <option value="monto_desc">Total Pagado (Mayor a Menor)</option>
+              <option value="monto_asc">Total Pagado (Menor a Mayor)</option>
               <option value="iglesia_asc">Iglesia (A - Z)</option>
               <option value="cedula_asc">Cédula</option>
             </select>
@@ -386,9 +386,9 @@
                     </div>
                   </th>
                   <th class="px-5 py-3.5">Boleto</th>
-                  <th @click="cambiarOrdenColumna('monto')" class="px-5 py-3.5 cursor-pointer hover:bg-slate-800 transition-colors group" title="Ordenar por monto total">
+                  <th @click="cambiarOrdenColumna('monto')" class="px-5 py-3.5 cursor-pointer hover:bg-slate-800 transition-colors group" title="Ordenar por total pagado">
                     <div class="flex items-center gap-1.5">
-                      <span>Monto Total</span>
+                      <span>Total Pagado</span>
                       <i :class="iconoOrden('monto')"></i>
                     </div>
                   </th>

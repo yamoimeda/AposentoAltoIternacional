@@ -173,7 +173,7 @@
                   <i class="fas fa-ticket-alt text-indigo-600"></i> Boleto y Pago
                 </h3>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Boleto</label>
                     <input
@@ -184,7 +184,18 @@
                   </div>
 
                   <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Monto / Precio ($)</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Precio del Boleto ($)</label>
+                    <input
+                      v-model.number="formulario.ticketPrice"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Total Pagado ($)</label>
                     <input
                       v-model.number="formulario.totalPrice"
                       type="number"
@@ -362,6 +373,8 @@ watch(() => props.inscripcion, (nuevaInscripcion) => {
       if (tPrice > 0) montoNum = tPrice * tQty
     }
 
+    const ticketCost = Number(p.ticketPrice || 0)
+
     formulario.value = {
       nombre: p.nombre || '',
       cedula: p.cedula || '',
@@ -372,7 +385,7 @@ watch(() => props.inscripcion, (nuevaInscripcion) => {
       iglesia: p.iglesia || '',
       mentor: p.mentor || '',
       ticketType: p.ticketType || 'General',
-      ticketPrice: montoNum,
+      ticketPrice: ticketCost,
       ticketQuantity: p.ticketQuantity ?? 1,
       totalPrice: montoNum,
       montoPagado: montoNum,
@@ -424,7 +437,7 @@ const guardar = async () => {
       iglesia: formulario.value.iglesia.trim() || null,
       mentor: formulario.value.mentor.trim() || null,
       ticketType: formulario.value.ticketType.trim() || 'General',
-      ticketPrice: montoFinal,
+      ticketPrice: Number(formulario.value.ticketPrice) || 0,
       ticketQuantity: Math.max(1, Number(formulario.value.ticketQuantity) || 1),
       totalPrice: montoFinal,
       montoPagado: montoFinal,
