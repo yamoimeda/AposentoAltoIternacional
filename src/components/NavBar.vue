@@ -54,18 +54,23 @@
             </router-link>
           </div>
 
+          <!-- Enlaces para roles autenticados -->
           <router-link
+            v-if="isLoggedIn && userRoles.includes('admin')"
             to="/conteo"
             :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
                      $route.path.startsWith('/conteo') ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
+            title="Conteo de eventos (Solo Administradores)"
           >
             <i class="fas fa-chart-pie mr-2"></i>Conteo
           </router-link>
 
           <router-link
+            v-if="isLoggedIn && (userRoles.includes('qr') || userRoles.includes('admin'))"
             to="/escanear-qr"
             :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
                      $route.path === '/escanear-qr' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
+            title="Escáner QR de boletos"
           >
             <i class="fas fa-qrcode mr-2"></i>Escanear QR
           </router-link>
@@ -162,15 +167,20 @@
           >
             <i class="fas fa-envelope mr-3"></i>Contacto
           </router-link>
+
+          <!-- Opciones para roles específicos en móvil -->
           <router-link 
+            v-if="isLoggedIn && userRoles.includes('admin')"
             to="/conteo" 
             @click="menuMovilAbierto = false"
             :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                      $route.path.startsWith('/conteo') ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
           >
-            <i class="fas fa-chart-pie mr-3"></i>Conteo
+            <i class="fas fa-chart-pie mr-3"></i>Conteo (Admin)
           </router-link>
+
           <router-link 
+            v-if="isLoggedIn && (userRoles.includes('qr') || userRoles.includes('admin'))"
             to="/escanear-qr" 
             @click="menuMovilAbierto = false"
             :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -221,6 +231,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { auth } from '../firebase'
 import { signOut } from 'firebase/auth'
+import { obtenerRolesUsuario } from '../utils/authRoles'
 
 const menuMovilAbierto = ref(false)
 const mostrarNav = ref(true)
@@ -228,6 +239,7 @@ let ultimoScroll = window.scrollY
 
 const isLoggedIn = ref(false)
 const userEmail = ref('')
+const userRoles = ref([])
 
 const handleScroll = () => {
   const actualScroll = window.scrollY
@@ -246,9 +258,14 @@ const logout = async () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  auth.onAuthStateChanged(user => {
+  auth.onAuthStateChanged(async (user) => {
     isLoggedIn.value = !!user
     userEmail.value = user ? user.email : ''
+    if (user) {
+      userRoles.value = await obtenerRolesUsuario(user)
+    } else {
+      userRoles.value = []
+    }
   })
 })
 

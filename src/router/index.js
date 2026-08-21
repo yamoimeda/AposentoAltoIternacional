@@ -42,12 +42,14 @@ const routes = [
     {
         path: '/conteo/:eventoId?',
         name: 'Conteo',
-        component: ConteoView
+        component: ConteoView,
+        meta: { requiresAuth: true, requiredRole: 'admin' }
     },
     {
         path: '/escanear-qr',
         name: 'EscanearQR',
-        component: EscanearQRView
+        component: EscanearQRView,
+        meta: { requiresAuth: true, requiredRoles: ['qr', 'admin'] }
     },
     {
         path: '/admin/escanear-qr',
@@ -100,16 +102,38 @@ const router = createRouter({
     }
 })
 
-// Protección de ruta admin
+import { obtenerRolesUsuario } from '../utils/authRoles'
+
+// Protección de rutas por autenticación y roles
 router.beforeEach((to, from, next) => {
     if (to.meta.requiresAuth) {
-        const unsubscribe = auth.onAuthStateChanged(user => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             unsubscribe()
-            if (user) {
-                next()
-            } else {
-                next('/admin-login')
+            if (!user) {
+                return next({
+                    path: '/admin-login',
+                    query: { redirect: to.fullPath }
+                })
             }
+
+            // Validación granular por roles
+            if (to.meta.requiredRole || to.meta.requiredRoles) {
+                const roles = await obtenerRolesUsuario(user)
+
+                // Si requiere rol admin estricto
+                if (to.meta.requiredRole === 'admin' && !roles.includes('admin')) {
+                    alert('⛔ Acceso restringido: Esta sección de conteo está reservada únicamente para Administradores.')
+                    return next('/admin')
+                }
+
+                // Si requiere uno de los roles autorizados (ej. qr o admin)
+                if (to.meta.requiredRoles && !to.meta.requiredRoles.some(r => roles.includes(r))) {
+                    alert('⛔ Acceso restringido: Tu cuenta no tiene permisos para escanear boletos QR.')
+                    return next('/admin')
+                }
+            }
+
+            next()
         })
     } else {
         next()

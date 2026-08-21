@@ -36,38 +36,57 @@
         </div>
       </div>
 
-      <!-- Barra de Resumen en Vivo -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">
-            <i class="fas fa-users"></i>
-          </div>
-          <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Inscritos</span>
-            <span class="text-xl font-extrabold text-white">{{ metricas.total }}</span>
-          </div>
+      <!-- Estado si no tiene permisos -->
+      <div v-if="!cargando && !tieneAccesoQR" class="bg-slate-800 p-12 rounded-2xl border border-slate-700 text-center max-w-lg mx-auto space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-3xl mx-auto">
+          <i class="fas fa-lock"></i>
         </div>
-
-        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
-            <i class="fas fa-circle-check"></i>
-          </div>
-          <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">Ingresados</span>
-            <span class="text-xl font-extrabold text-emerald-400">{{ metricas.ingresados }}</span>
-          </div>
-        </div>
-
-        <div class="col-span-2 sm:col-span-1 bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">Faltan por Ingresar</span>
-            <span class="text-xl font-extrabold text-amber-400">{{ Math.max(0, metricas.total - metricas.ingresados) }}</span>
-          </div>
-        </div>
+        <h2 class="text-xl font-bold text-white">Acceso Restringido</h2>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Esta función de escaneo y control de puerta requiere rol de <strong>Escáner QR</strong> o <strong>Administrador</strong>.
+        </p>
+        <router-link
+          to="/admin"
+          class="inline-flex items-center gap-2 py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-colors"
+        >
+          <i class="fas fa-arrow-left"></i>
+          <span>Volver al Panel Principal</span>
+        </router-link>
       </div>
+
+      <template v-else-if="!cargando">
+        <!-- Barra de Resumen en Vivo -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">
+              <i class="fas fa-users"></i>
+            </div>
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Inscritos</span>
+              <span class="text-xl font-extrabold text-white">{{ metricas.total }}</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+              <i class="fas fa-circle-check"></i>
+            </div>
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">Ingresados</span>
+              <span class="text-xl font-extrabold text-emerald-400">{{ metricas.ingresados }}</span>
+            </div>
+          </div>
+
+          <div class="col-span-2 sm:col-span-1 bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">Faltan por Ingresar</span>
+              <span class="text-xl font-extrabold text-amber-400">{{ Math.max(0, metricas.total - metricas.ingresados) }}</span>
+            </div>
+          </div>
+        </div>
 
       <!-- Zona del Escáner y Cámara -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -275,6 +294,7 @@
         </div>
 
       </div>
+      </template>
 
     </div>
   </div>
@@ -282,13 +302,18 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Html5Qrcode } from 'html5-qrcode'
 import { db, auth } from '../firebase'
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore'
 import { useEventosStore } from '../stores/eventos'
+import { obtenerRolesUsuario } from '../utils/authRoles'
 
+const router = useRouter()
 const eventosStore = useEventosStore()
 
+const cargando = ref(true)
+const tieneAccesoQR = ref(false)
 let html5QrCode = null
 const camaraActiva = ref(false)
 const buscando = ref(false)
@@ -495,7 +520,21 @@ const formatearFecha = (str) => {
 }
 
 onMounted(async () => {
-  await cargarMetricas()
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      router.push('/admin-login')
+      return
+    }
+    const roles = await obtenerRolesUsuario(user)
+    if (!roles.includes('qr') && !roles.includes('admin')) {
+      tieneAccesoQR.value = false
+      cargando.value = false
+    } else {
+      tieneAccesoQR.value = true
+      await cargarMetricas()
+      cargando.value = false
+    }
+  })
 })
 
 onUnmounted(() => {

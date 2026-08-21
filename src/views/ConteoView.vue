@@ -69,6 +69,24 @@
         <p class="text-sm font-medium text-slate-400">Sincronizando contadores en vivo...</p>
       </div>
 
+      <!-- Acceso Denegado si no es Admin -->
+      <div v-else-if="!tieneAccesoAdmin" class="bg-slate-800 p-12 rounded-2xl border border-slate-700 text-center max-w-lg mx-auto space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-3xl mx-auto">
+          <i class="fas fa-lock"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Acceso Restringido</h2>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Esta sección de conteo y finanzas está disponible únicamente para usuarios con rol de <strong>Administrador</strong>.
+        </p>
+        <router-link
+          to="/admin"
+          class="inline-flex items-center gap-2 py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-colors"
+        >
+          <i class="fas fa-arrow-left"></i>
+          <span>Volver al Panel Principal</span>
+        </router-link>
+      </div>
+
       <div v-else class="space-y-8">
         
         <!-- Tarjetas Principales de Conteo (KPIs) -->
@@ -264,13 +282,17 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
+import { auth } from '../firebase'
+import { obtenerRolesUsuario } from '../utils/authRoles'
 
 const route = useRoute()
+const router = useRouter()
 const eventosStore = useEventosStore()
 
 const cargando = ref(true)
+const tieneAccesoAdmin = ref(false)
 const copiado = ref(false)
 const eventos = ref([])
 const inscripciones = ref([])
@@ -430,9 +452,22 @@ watch(
 )
 
 onMounted(async () => {
-  await cargarDatos()
-  if (route.params.eventoId || route.query.eventoId) {
-    eventoSeleccionadoId.value = route.params.eventoId || route.query.eventoId
-  }
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      router.push('/admin-login')
+      return
+    }
+    const roles = await obtenerRolesUsuario(user)
+    if (!roles.includes('admin')) {
+      tieneAccesoAdmin.value = false
+      cargando.value = false
+    } else {
+      tieneAccesoAdmin.value = true
+      await cargarDatos()
+      if (route.params.eventoId || route.query.eventoId) {
+        eventoSeleccionadoId.value = route.params.eventoId || route.query.eventoId
+      }
+    }
+  })
 })
 </script>
