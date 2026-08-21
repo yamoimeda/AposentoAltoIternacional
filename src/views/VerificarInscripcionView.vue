@@ -748,6 +748,7 @@ const subirNuevoComprobante = async () => {
     // Subir imagen a Storage
     const timestamp = Date.now()
     const eventFolder = inscripcionEncontrada.value.eventoId || 'general'
+    const fileName = `${timestamp}_${nuevoComprobante.value.name}`
     const fileRef = storageRef(storage, `inscripciones/${eventFolder}/${fileName}`)
     
     await uploadBytes(fileRef, nuevoComprobante.value)

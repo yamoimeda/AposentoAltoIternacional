@@ -9,6 +9,8 @@ import ContactoView from '../views/ContactoView.vue'
 import AdminLogin from '../views/AdminLogin.vue'
 import AdminPanel from '../views/AdminPanel.vue'
 import AdminInscripcionesView from '../views/AdminInscripcionesView.vue'
+import ConteoView from '../views/ConteoView.vue'
+import EscanearQRView from '../views/EscanearQRView.vue'
 import { auth } from '../firebase'
 
 const routes = [
@@ -36,6 +38,20 @@ const routes = [
         path: '/verificar-inscripcion/:eventoId?',
         name: 'VerificarInscripcion',
         component: VerificarInscripcionView
+    },
+    {
+        path: '/conteo/:eventoId?',
+        name: 'Conteo',
+        component: ConteoView
+    },
+    {
+        path: '/escanear-qr',
+        name: 'EscanearQR',
+        component: EscanearQRView
+    },
+    {
+        path: '/admin/escanear-qr',
+        redirect: '/escanear-qr'
     },
     {
         path: '/nosotros',

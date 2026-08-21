@@ -52,7 +52,25 @@
             >
               <i class="fas fa-envelope mr-2"></i>Contacto
             </router-link>
-          </div>          <!-- Opción Iniciar/Cerrar sesión -->
+          </div>
+
+          <router-link
+            to="/conteo"
+            :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
+                     $route.path.startsWith('/conteo') ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
+          >
+            <i class="fas fa-chart-pie mr-2"></i>Conteo
+          </router-link>
+
+          <router-link
+            to="/escanear-qr"
+            :class="['px-2 py-1 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/escanear-qr' ? 'text-purple-700 bg-purple-50' : 'text-white', 'hover:text-purple-500']"
+          >
+            <i class="fas fa-qrcode mr-2"></i>Escanear QR
+          </router-link>
+
+          <!-- Opción Iniciar/Cerrar sesión -->
           <template v-if="isLoggedIn">
             <div class="flex items-center gap-2 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 text-xs text-white">
               <i class="fas fa-user-shield text-indigo-300"></i>
@@ -143,6 +161,22 @@
                      $route.path === '/contacto' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
           >
             <i class="fas fa-envelope mr-3"></i>Contacto
+          </router-link>
+          <router-link 
+            to="/conteo" 
+            @click="menuMovilAbierto = false"
+            :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                     $route.path.startsWith('/conteo') ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
+          >
+            <i class="fas fa-chart-pie mr-3"></i>Conteo
+          </router-link>
+          <router-link 
+            to="/escanear-qr" 
+            @click="menuMovilAbierto = false"
+            :class="['px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                     $route.path === '/escanear-qr' ? 'text-purple-700 bg-purple-50' : 'text-gray-700', 'hover:bg-purple-50 hover:text-purple-500']"
+          >
+            <i class="fas fa-qrcode mr-3"></i>Escanear QR
           </router-link>
 
           <!-- Opción Iniciar/Cerrar sesión en Menú Móvil -->

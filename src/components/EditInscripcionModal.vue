@@ -69,14 +69,39 @@
                 <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">
                   <i class="fas fa-paperclip mr-1 text-indigo-600"></i> Comprobante(s) de Pago
                 </label>
-                <span v-if="archivosAdjuntos.length > 0" class="text-[11px] font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md">
-                  {{ archivosAdjuntos.length }} comprobante(s) registrado(s)
+                <span v-if="archivosExistentes.length > 0" class="text-[11px] font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md">
+                  {{ archivosExistentes.length }} comprobante(s) guardado(s)
                 </span>
               </div>
 
-              <!-- Comprobantes ya guardados -->
-              <div v-if="archivosAdjuntos.length > 0">
-                <FileViewer :files="archivosAdjuntos" />
+              <!-- Comprobantes ya guardados con visor y opción de eliminar -->
+              <div v-if="archivosExistentes.length > 0" class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <FileViewer
+                    :files="archivosExistentes"
+                    @delete="eliminarArchivoExistente($event.index)"
+                  />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                  <div
+                    v-for="(url, idx) in archivosExistentes"
+                    :key="url + '-' + idx"
+                    class="flex items-center justify-between bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-xs shadow-2xs"
+                  >
+                    <div class="flex items-center gap-2 min-w-0">
+                      <i class="fas fa-file-image text-indigo-600"></i>
+                      <span class="truncate font-medium text-slate-800">Comprobante #{{ idx + 1 }}</span>
+                    </div>
+                    <button
+                      type="button"
+                      @click="eliminarArchivoExistente(idx)"
+                      class="text-rose-500 hover:text-rose-700 p-1 hover:bg-rose-50 rounded transition-colors ml-2 cursor-pointer"
+                      title="Eliminar este comprobante"
+                    >
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
               <div v-else class="text-xs text-slate-500 italic">
                 No hay comprobantes guardados previamente.
@@ -364,6 +389,7 @@ const eventosStore = useEventosStore()
 const guardando = ref(false)
 const mensaje = ref(null)
 const archivosNuevos = ref([])
+const archivosExistentes = ref([])
 
 const usuarioActual = computed(() => {
   return auth.currentUser?.email || auth.currentUser?.displayName || 'Administrador'
@@ -383,6 +409,10 @@ const handleArchivosNuevos = (event) => {
 
 const eliminarArchivoNuevo = (index) => {
   archivosNuevos.value.splice(index, 1)
+}
+
+const eliminarArchivoExistente = (index) => {
+  archivosExistentes.value.splice(index, 1)
 }
 
 const obtenerEvento = () => {
@@ -470,41 +500,35 @@ const formulario = ref({
   registrationToken: ''
 })
 
-const archivosAdjuntos = computed(() => {
-  if (!props.inscripcion) return []
-  const p = props.inscripcion.participante || {}
-  const i = props.inscripcion
-
-  const urls = []
-  if (Array.isArray(p.comprobantesUrls)) {
-    urls.push(...p.comprobantesUrls.filter(Boolean))
-  }
-  if (p.comprobanteUrl && !urls.includes(p.comprobanteUrl)) {
-    urls.push(p.comprobanteUrl)
-  }
-  if (Array.isArray(i.comprobantesUrls)) {
-    i.comprobantesUrls.forEach(u => {
-      if (u && !urls.includes(u)) urls.push(u)
-    })
-  }
-  if (i.comprobanteUrl && !urls.includes(i.comprobanteUrl)) {
-    urls.push(i.comprobanteUrl)
-  }
-  if (Array.isArray(i.comprobantesAdicionales)) {
-    i.comprobantesAdicionales.forEach(item => {
-      const u = item?.url || item
-      if (typeof u === 'string' && u && !urls.includes(u)) {
-        urls.push(u)
-      }
-    })
-  }
-  return urls
-})
-
 const cargarFormulario = () => {
   if (!props.inscripcion) return
   const p = props.inscripcion.participante || {}
   const i = props.inscripcion
+
+  // Extraer todos los comprobantes únicos sin duplicados
+  const urls = []
+  const agregarUrl = (u) => {
+    if (typeof u === 'string' && u.trim() && !urls.includes(u.trim())) {
+      urls.push(u.trim())
+    }
+  }
+
+  if (Array.isArray(p.comprobantesUrls)) {
+    p.comprobantesUrls.forEach(agregarUrl)
+  }
+  if (p.comprobanteUrl) agregarUrl(p.comprobanteUrl)
+  if (Array.isArray(i.comprobantesUrls)) {
+    i.comprobantesUrls.forEach(agregarUrl)
+  }
+  if (i.comprobanteUrl) agregarUrl(i.comprobanteUrl)
+  if (Array.isArray(i.comprobantesAdicionales)) {
+    i.comprobantesAdicionales.forEach(item => {
+      const u = item?.url || item
+      agregarUrl(u)
+    })
+  }
+  archivosExistentes.value = urls
+
   const candidatos = [
     p.montoPagado,
     p.monto,
@@ -621,9 +645,15 @@ const guardar = async () => {
       }
     }
 
-    // 2. Combinar comprobantes existentes con los recién subidos
-    const urlsPrevias = [...archivosAdjuntos.value]
-    const todasLasUrls = [...urlsPrevias, ...nuevasUrls]
+    // 2. Combinar comprobantes existentes con los recién subidos garantizando que sean únicos
+    const setUrls = new Set()
+    archivosExistentes.value.forEach(u => {
+      if (typeof u === 'string' && u.trim()) setUrls.add(u.trim())
+    })
+    nuevasUrls.forEach(u => {
+      if (typeof u === 'string' && u.trim()) setUrls.add(u.trim())
+    })
+    const todasLasUrls = Array.from(setUrls)
 
     // 3. Preservar la estructura completa de `participante` para no borrar campos existentes
     const participanteExistente = props.inscripcion?.participante || {}
@@ -655,6 +685,9 @@ const guardar = async () => {
     await emit('save', {
       id: props.inscripcion.id,
       participante: participanteActualizado,
+      comprobantesAdicionales: [], // Unificado en comprobantesUrls para evitar duplicaciones
+      comprobanteUrl: todasLasUrls[0] || null,
+      comprobantesUrls: todasLasUrls,
       editadoPor: editor,
       fechaEdicion: ahora,
       ultimaModificacion: {

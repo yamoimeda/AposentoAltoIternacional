@@ -18,6 +18,24 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
+          <router-link
+            to="/conteo"
+            class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2"
+            title="Ver contadores compartibles sin tabla"
+          >
+            <i class="fas fa-chart-pie text-indigo-600"></i>
+            <span>Conteo en Vivo</span>
+          </router-link>
+
+          <router-link
+            to="/escanear-qr"
+            class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2"
+            title="Escanear boletos con cámara"
+          >
+            <i class="fas fa-qrcode text-indigo-600"></i>
+            <span>Escanear QR</span>
+          </router-link>
+
           <button
             @click="mostrarGestionUsuarios = true"
             class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"

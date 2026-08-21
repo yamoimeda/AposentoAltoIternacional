@@ -36,8 +36,18 @@
                   <i class="fas fa-external-link-alt"></i> Abrir en pestaña
                 </a>
                 <button
+                  type="button"
+                  @click="solicitarEliminar"
+                  class="px-3 py-1.5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Eliminar este comprobante"
+                >
+                  <i class="fas fa-trash-can"></i>
+                  <span>Eliminar</span>
+                </button>
+                <button
+                  type="button"
                   @click="cerrar"
-                  class="text-white hover:bg-white/20 rounded-lg p-1.5 transition-colors"
+                  class="text-white hover:bg-white/20 rounded-lg p-1.5 transition-colors cursor-pointer"
                 >
                   <i class="fas fa-times text-lg"></i>
                 </button>
@@ -110,6 +120,8 @@
 <script setup>
 import { ref, computed, onUnmounted } from 'vue'
 
+const emit = defineEmits(['delete'])
+
 const props = defineProps({
   // Acepta un array de URLs (strings)
   files: {
@@ -133,6 +145,22 @@ const abrirEn = (idx) => {
 }
 
 const cerrar = () => { mostrarModal.value = false }
+
+const solicitarEliminar = () => {
+  const url = urlActual.value
+  const idx = indiceActual.value
+  const confirmed = window.confirm(`¿Estás seguro de que deseas eliminar este comprobante (#${idx + 1})?`)
+  if (!confirmed) return
+
+  emit('delete', { index: idx, url: url })
+
+  // Si solo quedaba 1 archivo, cerramos el visor
+  if (props.files.length <= 1) {
+    cerrar()
+  } else if (idx >= props.files.length - 1) {
+    indiceActual.value = Math.max(0, props.files.length - 2)
+  }
+}
 
 const anterior = () => {
   if (indiceActual.value > 0) {

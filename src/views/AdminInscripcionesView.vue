@@ -23,6 +23,24 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
+          <router-link
+            :to="filtros.eventoId ? `/conteo/${filtros.eventoId}` : '/conteo'"
+            class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2"
+            title="Ver pantalla pública de conteo"
+          >
+            <i class="fas fa-chart-pie text-indigo-600"></i>
+            <span>Ver Conteo</span>
+          </router-link>
+
+          <router-link
+            to="/escanear-qr"
+            class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2"
+            title="Escanear QR de boletos"
+          >
+            <i class="fas fa-qrcode text-indigo-600"></i>
+            <span>Escanear QR</span>
+          </router-link>
+
           <button
             @click="mostrarGestionUsuarios = true"
             class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
@@ -44,7 +62,7 @@
             class="py-2.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center gap-2"
           >
             <i class="fas fa-arrow-left text-slate-400"></i>
-            <span>Volver al Panel Admin</span>
+            <span>Panel Admin</span>
           </router-link>
 
           <button
@@ -345,6 +363,7 @@
                 <FileViewer
                   v-if="obtenerArchivos(inscripcion).length > 0"
                   :files="obtenerArchivos(inscripcion)"
+                  @delete="eliminarComprobanteDeInscripcion(inscripcion, $event)"
                 />
                 <span v-else class="text-slate-400 text-[11px] italic flex-1">Sin adjunto</span>
                 <div class="flex items-center gap-1.5 ml-auto">
@@ -482,6 +501,7 @@
                     <FileViewer
                       v-if="obtenerArchivos(inscripcion).length > 0"
                       :files="obtenerArchivos(inscripcion)"
+                      @delete="eliminarComprobanteDeInscripcion(inscripcion, $event)"
                     />
                     <span v-else class="text-slate-400 text-[11px] italic">Sin adjunto</span>
                   </td>
@@ -728,23 +748,36 @@ const obtenerOpcionesEvento = (eventoId) => {
   return ev ? ev.opciones : null
 }
 
-// Recibe la inscripción completa para poder leer tanto participante como comprobantesAdicionales (raíz)
+// Recibe la inscripción completa para poder leer tanto participante como comprobantesAdicionales (raíz) sin duplicados
 const obtenerArchivos = (inscripcion) => {
   if (!inscripcion) return []
   const urls = []
+  const agregarUrl = (u) => {
+    if (typeof u === 'string' && u.trim() && !urls.includes(u.trim())) {
+      urls.push(u.trim())
+    }
+  }
 
   // Comprobantes del registro inicial (dentro de participante)
   const p = inscripcion.participante || inscripcion // retrocompatibilidad
   if (Array.isArray(p.comprobantesUrls)) {
-    urls.push(...p.comprobantesUrls)
+    p.comprobantesUrls.forEach(agregarUrl)
   } else if (p.comprobanteUrl) {
-    urls.push(p.comprobanteUrl)
+    agregarUrl(p.comprobanteUrl)
+  }
+
+  // Comprobantes en raíz si existieran
+  if (Array.isArray(inscripcion.comprobantesUrls)) {
+    inscripcion.comprobantesUrls.forEach(agregarUrl)
+  } else if (inscripcion.comprobanteUrl) {
+    agregarUrl(inscripcion.comprobanteUrl)
   }
 
   // Comprobantes adicionales agregados vía "Hacer Otro Pago" (raíz del documento)
   const adicionales = inscripcion.comprobantesAdicionales || []
   for (const ca of adicionales) {
-    if (ca.url) urls.push(ca.url)
+    const u = ca?.url || ca
+    agregarUrl(u)
   }
 
   return urls
@@ -1015,6 +1048,64 @@ const guardarCambios = async (datosActualizados) => {
   } catch (e) {
     console.error('Error actualizando inscripción:', e)
     alert('❌ Ocurrió un error al guardar los cambios en la base de datos.')
+  }
+}
+
+const eliminarComprobanteDeInscripcion = async (inscripcion, { index, url }) => {
+  if (!inscripcion || !url) return
+
+  try {
+    const id = inscripcion.id
+    const p = inscripcion.participante || {}
+    const ahora = new Date().toISOString()
+    const usuarioActualEmail = auth.currentUser?.email || 'Administrador'
+
+    // 1. Filtrar la URL eliminada de todas las listas
+    const urlsActuales = obtenerArchivos(inscripcion)
+    const nuevasUrls = urlsActuales.filter(u => u !== url)
+
+    // Actualizar participante
+    const participanteActualizado = {
+      ...p,
+      comprobanteUrl: nuevasUrls[0] || null,
+      comprobantesUrls: nuevasUrls,
+      editadoPor: usuarioActualEmail,
+      fechaEdicion: ahora
+    }
+
+    // Filtrar comprobantesAdicionales si contenía esta URL
+    const nuevosAdicionales = (inscripcion.comprobantesAdicionales || []).filter(ca => {
+      const u = ca?.url || ca
+      return u !== url
+    })
+
+    const updatePayload = {
+      participante: participanteActualizado,
+      comprobanteUrl: nuevasUrls[0] || null,
+      comprobantesUrls: nuevasUrls,
+      comprobantesAdicionales: nuevosAdicionales,
+      editadoPor: usuarioActualEmail,
+      fechaEdicion: ahora,
+      ultimaModificacion: {
+        por: usuarioActualEmail,
+        fecha: ahora
+      }
+    }
+
+    await eventosStore.actualizarInscripcion(id, updatePayload)
+
+    // Actualización local optimista
+    const idx = todasInscripciones.value.findIndex(item => item.id === id)
+    if (idx !== -1) {
+      todasInscripciones.value[idx] = {
+        ...todasInscripciones.value[idx],
+        ...updatePayload,
+        participante: participanteActualizado
+      }
+    }
+  } catch (error) {
+    console.error('Error eliminando comprobante:', error)
+    alert('❌ Ocurrió un error al eliminar el comprobante de la base de datos.')
   }
 }
 
