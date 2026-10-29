@@ -318,18 +318,22 @@
                   <i class="fas fa-clipboard-check text-indigo-600"></i>
                   Control de Puerta y Coffee Break
                 </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" v-model="formulario.verificado" class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4" />
+                    <span class="flex items-center gap-1.5"><i class="fas fa-circle-check text-emerald-600"></i> Registro Verificado</span>
+                  </label>
                   <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
                     <input type="checkbox" v-model="formulario.asistenciaConfirmada" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" />
-                    <span>Check-In (Ingreso Puerta)</span>
+                    <span class="flex items-center gap-1.5"><i class="fas fa-door-open text-indigo-600"></i> Check-In (Ingreso Puerta)</span>
                   </label>
                   <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
                     <input type="checkbox" v-model="formulario.coffee1Tomado" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4" />
-                    <span class="flex items-center gap-1"><i class="fas fa-mug-hot text-amber-500"></i> Coffee 1 Tomado</span>
+                    <span class="flex items-center gap-1.5"><i class="fas fa-mug-hot text-amber-500"></i> Coffee 1 Tomado</span>
                   </label>
                   <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
                     <input type="checkbox" v-model="formulario.coffee2Tomado" class="rounded text-orange-600 focus:ring-orange-500 w-4 h-4" />
-                    <span class="flex items-center gap-1"><i class="fas fa-mug-saucer text-orange-500"></i> Coffee 2 Tomado</span>
+                    <span class="flex items-center gap-1.5"><i class="fas fa-mug-saucer text-orange-500"></i> Coffee 2 Tomado</span>
                   </label>
                 </div>
               </div>
@@ -522,7 +526,8 @@ const formulario = ref({
   registrationToken: '',
   asistenciaConfirmada: false,
   coffee1Tomado: false,
-  coffee2Tomado: false
+  coffee2Tomado: false,
+  verificado: false
 })
 
 const cargarFormulario = () => {
@@ -621,7 +626,8 @@ const cargarFormulario = () => {
     registrationToken: p.registrationToken || '',
     asistenciaConfirmada: !!(i.asistenciaConfirmada || p.asistenciaConfirmada || i.checkIn),
     coffee1Tomado: !!(i.coffee1Tomado || i.coffeeBreak1 || p.coffee1Tomado || p.coffeeBreak1),
-    coffee2Tomado: !!(i.coffee2Tomado || i.coffeeBreak2 || p.coffee2Tomado || p.coffeeBreak2)
+    coffee2Tomado: !!(i.coffee2Tomado || i.coffeeBreak2 || p.coffee2Tomado || p.coffeeBreak2),
+    verificado: !!(i.verificado || p.verificado)
   }
   archivosNuevos.value = []
 }
@@ -710,6 +716,14 @@ const guardar = async () => {
       fechaEdicion: ahora
     }
 
+    const estaVerificado = !!formulario.value.verificado
+    const fechaVerif = estaVerificado
+      ? (props.inscripcion?.fechaVerificacion || props.inscripcion?.participante?.fechaVerificacion || ahora)
+      : null
+    const verifPor = estaVerificado
+      ? (props.inscripcion?.verificadoPor || props.inscripcion?.participante?.verificadoPor || editor)
+      : null
+
     await emit('save', {
       id: props.inscripcion.id,
       participante: {
@@ -719,7 +733,10 @@ const guardar = async () => {
         coffee1Tomado: !!formulario.value.coffee1Tomado,
         coffeeBreak1: !!formulario.value.coffee1Tomado,
         coffee2Tomado: !!formulario.value.coffee2Tomado,
-        coffeeBreak2: !!formulario.value.coffee2Tomado
+        coffeeBreak2: !!formulario.value.coffee2Tomado,
+        verificado: estaVerificado,
+        fechaVerificacion: fechaVerif,
+        verificadoPor: verifPor
       },
       asistenciaConfirmada: !!formulario.value.asistenciaConfirmada,
       checkIn: !!formulario.value.asistenciaConfirmada,
@@ -727,6 +744,9 @@ const guardar = async () => {
       coffeeBreak1: !!formulario.value.coffee1Tomado,
       coffee2Tomado: !!formulario.value.coffee2Tomado,
       coffeeBreak2: !!formulario.value.coffee2Tomado,
+      verificado: estaVerificado,
+      fechaVerificacion: fechaVerif,
+      verificadoPor: verifPor,
       comprobantesAdicionales: [], // Unificado en comprobantesUrls para evitar duplicaciones
       comprobanteUrl: todasLasUrls[0] || null,
       comprobantesUrls: todasLasUrls,

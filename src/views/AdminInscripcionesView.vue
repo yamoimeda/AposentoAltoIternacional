@@ -168,7 +168,7 @@
         <!-- Fila 2: Ordenar por, Estado de Pago, Tipo de Boleto, Botón Limpiar -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 items-center pt-3 border-t border-slate-100">
           <!-- Ordenar por -->
-          <div class="md:col-span-4">
+          <div class="md:col-span-3">
             <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               <i class="fas fa-arrow-down-wide-short text-indigo-600 mr-1.5"></i>
               Ordenar por
@@ -177,30 +177,46 @@
               v-model="filtros.orden"
               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
             >
-              <option value="fechaInscripcion_desc">Fecha de Registro (Más reciente)</option>
-              <option value="fechaInscripcion_asc">Fecha de Registro (Más antigua)</option>
+              <option value="fechaInscripcion_desc">Fecha (Más reciente)</option>
+              <option value="fechaInscripcion_asc">Fecha (Más antigua)</option>
               <option value="nombre_asc">Nombre (A - Z)</option>
               <option value="nombre_desc">Nombre (Z - A)</option>
-              <option value="monto_desc">Total Pagado (Mayor a Menor)</option>
-              <option value="monto_asc">Total Pagado (Menor a Mayor)</option>
+              <option value="monto_desc">Total Pagado (Mayor)</option>
+              <option value="monto_asc">Total Pagado (Menor)</option>
               <option value="iglesia_asc">Iglesia (A - Z)</option>
               <option value="cedula_asc">Cédula</option>
             </select>
           </div>
 
           <!-- Estado de Pago -->
-          <div class="md:col-span-3">
+          <div class="md:col-span-2">
             <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               <i class="fas fa-money-bill-wave text-indigo-600 mr-1.5"></i>
-              Estado de Pago
+              Pago
             </label>
             <select
               v-model="filtros.estadoPago"
               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
             >
-              <option value="">-- Todos los estados --</option>
-              <option value="pagado">✓ Totalmente Pagado</option>
-              <option value="pendiente">⏳ Pendiente / Saldo</option>
+              <option value="">-- Todos --</option>
+              <option value="pagado">✓ Pagado</option>
+              <option value="pendiente">⏳ Saldo</option>
+            </select>
+          </div>
+
+          <!-- Estado de Verificación -->
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <i class="fas fa-certificate text-indigo-600 mr-1.5"></i>
+              Verificación
+            </label>
+            <select
+              v-model="filtros.verificado"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition-all"
+            >
+              <option value="">-- Todos --</option>
+              <option value="verificado">✓ Verificados</option>
+              <option value="pendiente">⏳ Pendientes</option>
             </select>
           </div>
 
@@ -229,16 +245,21 @@
               class="w-full py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
               title="Restablecer todos los filtros"
             >
-              <i class="fas fa-filter-circle-xmark"></i> Limpiar Filtros
+              <i class="fas fa-filter-circle-xmark"></i> Limpiar
             </button>
           </div>
         </div>
 
         <!-- KPI Metrics Summary Bar -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-5 border-t border-slate-100">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6 pt-5 border-t border-slate-100">
           <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
             <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Inscritos</span>
             <span class="text-xl font-bold text-slate-900">{{ inscripcionesFiltradas.length }}</span>
+          </div>
+
+          <div class="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-100">
+            <span class="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block">Verificados</span>
+            <span class="text-xl font-bold text-emerald-700">{{ contarVerificados }}</span>
           </div>
 
           <div class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100">
@@ -251,7 +272,7 @@
             <span class="text-xl font-bold text-amber-700">${{ calcularTotalEsperado }}</span>
           </div>
 
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center justify-between">
+          <div class="col-span-2 sm:col-span-1 bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center justify-between">
             <div>
               <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Página</span>
               <span class="text-sm font-bold text-slate-800">{{ paginaActual }} de {{ totalPaginas || 1 }}</span>
@@ -316,6 +337,22 @@
                   <p v-if="inscripcion.participante?.cedula" class="text-[11px] text-slate-500 mt-0.5">
                     <i class="fas fa-id-card mr-1 text-slate-400"></i>{{ inscripcion.participante.cedula }}
                   </p>
+                  <div class="flex items-center gap-1.5 mt-1.5">
+                    <span
+                      :class="[
+                        'px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1',
+                        esVerificado(inscripcion)
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      ]"
+                    >
+                      <i :class="esVerificado(inscripcion) ? 'fas fa-circle-check text-emerald-600' : 'fas fa-clock text-amber-500'"></i>
+                      {{ esVerificado(inscripcion) ? 'Verificado' : 'Pendiente' }}
+                    </span>
+                    <span v-if="esVerificado(inscripcion) && obtenerVerificador(inscripcion)" class="text-[10px] text-slate-400 truncate max-w-[120px]" :title="'Por ' + obtenerVerificador(inscripcion)">
+                      por {{ obtenerVerificador(inscripcion).split('@')[0] }}
+                    </span>
+                  </div>
                 </div>
                 <span class="flex-shrink-0 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 text-sm">
                   ${{ obtenerMontoTotal(inscripcion).toFixed(2) }}
@@ -396,6 +433,20 @@
                 <span v-else class="text-slate-400 text-[11px] italic flex-1">Sin adjunto</span>
                 <div class="flex items-center gap-1.5 ml-auto">
                   <button
+                    @click="toggleVerificado(inscripcion)"
+                    :disabled="procesandoVerificacionId === inscripcion.id"
+                    :class="[
+                      'px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50',
+                      esVerificado(inscripcion)
+                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200'
+                    ]"
+                    :title="esVerificado(inscripcion) ? 'Marcar como pendiente' : 'Marcar como verificado'"
+                  >
+                    <i :class="['fas text-xs', procesandoVerificacionId === inscripcion.id ? 'fa-spinner fa-spin' : (esVerificado(inscripcion) ? 'fa-circle-check' : 'fa-certificate')]"></i>
+                    <span>{{ esVerificado(inscripcion) ? 'Verificado' : 'Verificar' }}</span>
+                  </button>
+                  <button
                     @click="abrirModalEdicion(inscripcion)"
                     class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                     title="Editar"
@@ -439,6 +490,7 @@
                       <i :class="iconoOrden('monto')"></i>
                     </div>
                   </th>
+                  <th class="px-5 py-3.5 text-center">Estado</th>
                   <th @click="cambiarOrdenColumna('fechaInscripcion')" class="px-5 py-3.5 cursor-pointer hover:bg-slate-800 transition-colors group" title="Ordenar por fecha de registro">
                     <div class="flex items-center gap-1.5">
                       <span>Fecha Registro</span>
@@ -541,6 +593,31 @@
                     </span>
                   </td>
 
+                  <!-- Estado de Verificación -->
+                  <td class="px-5 py-4 text-center">
+                    <button
+                      @click="toggleVerificado(inscripcion)"
+                      :disabled="procesandoVerificacionId === inscripcion.id"
+                      :class="[
+                        'px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all inline-flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50',
+                        esVerificado(inscripcion)
+                          ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300'
+                          : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-300'
+                      ]"
+                      :title="esVerificado(inscripcion) ? 'Registro Verificado (clic para desmarcar)' : 'Pendiente de verificación (clic para verificar)'"
+                    >
+                      <i :class="['fas text-[10px]', procesandoVerificacionId === inscripcion.id ? 'fa-spinner fa-spin' : (esVerificado(inscripcion) ? 'fa-circle-check' : 'fa-clock')]"></i>
+                      <span>{{ esVerificado(inscripcion) ? 'Verificado' : 'Pendiente' }}</span>
+                    </button>
+                    <div
+                      v-if="esVerificado(inscripcion) && obtenerVerificador(inscripcion)"
+                      class="text-[10px] text-slate-400 mt-1 truncate max-w-[110px] mx-auto"
+                      :title="'Verificado por ' + obtenerVerificador(inscripcion)"
+                    >
+                      {{ obtenerVerificador(inscripcion).split('@')[0] }}
+                    </div>
+                  </td>
+
                   <!-- Fecha Registro & Auditoría -->
                   <td class="px-5 py-4 text-slate-500">
                     <div class="text-xs text-slate-700">
@@ -569,6 +646,19 @@
                   <!-- Acciones -->
                   <td class="px-5 py-4 text-center">
                     <div class="inline-flex items-center gap-1.5">
+                      <button
+                        @click="toggleVerificado(inscripcion)"
+                        :disabled="procesandoVerificacionId === inscripcion.id"
+                        :class="[
+                          'p-2 rounded-lg transition-colors cursor-pointer border disabled:opacity-50',
+                          esVerificado(inscripcion)
+                            ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                            : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200'
+                        ]"
+                        :title="esVerificado(inscripcion) ? 'Marcar como pendiente' : 'Marcar como verificado'"
+                      >
+                        <i :class="['fas', procesandoVerificacionId === inscripcion.id ? 'fa-spinner fa-spin' : (esVerificado(inscripcion) ? 'fa-circle-check' : 'fa-certificate')]"></i>
+                      </button>
                       <button
                         @click="abrirModalEdicion(inscripcion)"
                         class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
@@ -713,6 +803,7 @@ const filtros = ref({
   eventoId: '',
   iglesia: '',
   estadoPago: '',
+  verificado: '',
   ticketType: '',
   orden: 'fechaInscripcion_desc'
 })
@@ -744,6 +835,7 @@ const hayFiltrosActivos = computed(() => {
     (!eventoFijado.value && filtros.value.eventoId) ||
     filtros.value.iglesia ||
     filtros.value.estadoPago ||
+    filtros.value.verificado ||
     filtros.value.ticketType ||
     filtros.value.orden !== 'fechaInscripcion_desc'
   )
@@ -754,6 +846,7 @@ const limpiarFiltros = () => {
   if (!eventoFijado.value) filtros.value.eventoId = ''
   filtros.value.iglesia = ''
   filtros.value.estadoPago = ''
+  filtros.value.verificado = ''
   filtros.value.ticketType = ''
   filtros.value.orden = 'fechaInscripcion_desc'
   paginaActual.value = 1
@@ -918,6 +1011,67 @@ const calcularTotalEsperado = computed(() => {
   }, 0).toFixed(2)
 })
 
+const esVerificado = (ins) => {
+  if (!ins) return false
+  const p = ins.participante || {}
+  return !!(ins.verificado || p.verificado)
+}
+
+const obtenerVerificador = (ins) => {
+  if (!ins) return ''
+  const p = ins.participante || {}
+  return ins.verificadoPor || p.verificadoPor || ''
+}
+
+const contarVerificados = computed(() => {
+  return inscripcionesFiltradas.value.filter(ins => esVerificado(ins)).length
+})
+
+const procesandoVerificacionId = ref(null)
+
+const toggleVerificado = async (inscripcion) => {
+  if (!inscripcion || !inscripcion.id || procesandoVerificacionId.value) return
+  const nuevoEstado = !esVerificado(inscripcion)
+  procesandoVerificacionId.value = inscripcion.id
+
+  try {
+    const ahora = new Date().toISOString()
+    const adminEmail = auth.currentUser?.email || 'Administrador'
+
+    const payload = {
+      verificado: nuevoEstado,
+      fechaVerificacion: nuevoEstado ? ahora : null,
+      verificadoPor: nuevoEstado ? adminEmail : null,
+      participante: {
+        ...(inscripcion.participante || {}),
+        verificado: nuevoEstado,
+        fechaVerificacion: nuevoEstado ? ahora : null,
+        verificadoPor: nuevoEstado ? adminEmail : null
+      }
+    }
+
+    await eventosStore.actualizarInscripcion(inscripcion.id, payload)
+
+    // Actualización local optimista
+    const idx = todasInscripciones.value.findIndex(item => item.id === inscripcion.id)
+    if (idx !== -1) {
+      todasInscripciones.value[idx] = {
+        ...todasInscripciones.value[idx],
+        ...payload,
+        participante: {
+          ...todasInscripciones.value[idx].participante,
+          ...payload.participante
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error al actualizar verificación:', error)
+    alert('❌ No se pudo actualizar el estado de verificación.')
+  } finally {
+    procesandoVerificacionId.value = null
+  }
+}
+
 onMounted(async () => {
   const unsubscribe = auth.onAuthStateChanged(user => {
     unsubscribe()
@@ -982,7 +1136,17 @@ const inscripcionesFiltradas = computed(() => {
     })
   }
 
-  // 5. Búsqueda por texto (nombre, cédula, teléfono, correo, mentor, iglesia)
+  // 5. Filtro por Estado de Verificación
+  if (filtros.value.verificado) {
+    resultado = resultado.filter(ins => {
+      const v = esVerificado(ins)
+      if (filtros.value.verificado === 'verificado') return v
+      if (filtros.value.verificado === 'pendiente') return !v
+      return true
+    })
+  }
+
+  // 6. Búsqueda por texto (nombre, cédula, teléfono, correo, mentor, iglesia)
   if (filtros.value.busqueda) {
     const busqueda = filtros.value.busqueda.toLowerCase().trim()
     resultado = resultado.filter(ins => {
@@ -1081,6 +1245,7 @@ watch([
   () => filtros.value.eventoId,
   () => filtros.value.iglesia,
   () => filtros.value.estadoPago,
+  () => filtros.value.verificado,
   () => filtros.value.ticketType,
   () => filtros.value.orden
 ], () => {
@@ -1212,6 +1377,9 @@ const exportarCSV = () => {
     'Monto Pagado Inicial ($)',
     'Comprobantes Adjuntos',
     'Fecha Registro',
+    'Verificado',
+    'Fecha Verificación',
+    'Verificado Por',
     'Check-In (Puerta)',
     'Fecha Ingreso',
     'Coffee 1',
@@ -1227,6 +1395,7 @@ const exportarCSV = () => {
     const c1Tomado = !!(ins.coffee1Tomado || ins.coffeeBreak1 || p.coffee1Tomado || p.coffeeBreak1)
     const c2Tomado = !!(ins.coffee2Tomado || ins.coffeeBreak2 || p.coffee2Tomado || p.coffeeBreak2)
     const checkInHecho = !!(ins.asistenciaConfirmada || p.asistenciaConfirmada || ins.checkIn)
+    const verif = esVerificado(ins)
 
     const r = [
       obtenerNombreEvento(ins.eventoId),
@@ -1245,6 +1414,9 @@ const exportarCSV = () => {
       obtenerMontoTotal(ins).toFixed(2),
       archs.length,
       formatearFecha(ins.fechaInscripcion),
+      verif ? 'SÍ' : 'NO',
+      (ins.fechaVerificacion || p.fechaVerificacion) ? formatearFecha(ins.fechaVerificacion || p.fechaVerificacion) : '',
+      obtenerVerificador(ins),
       checkInHecho ? 'SÍ' : 'NO',
       ins.fechaIngreso || p.fechaIngreso ? formatearFecha(ins.fechaIngreso || p.fechaIngreso) : '',
       c1Tomado ? 'SÍ' : 'NO',
