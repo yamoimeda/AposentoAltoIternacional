@@ -347,6 +347,34 @@
                 <div>
                   <span class="text-slate-400 font-semibold uppercase tracking-wide">Boleto</span>
                   <p class="text-slate-700">{{ inscripcion.participante?.ticketType || 'Adulto full' }}</p>
+                  <div class="flex flex-wrap items-center gap-1 mt-1 text-[10px]">
+                    <span
+                      v-if="inscripcion.asistenciaConfirmada || inscripcion.participante?.asistenciaConfirmada || inscripcion.checkIn"
+                      class="px-1.5 py-0.5 rounded font-bold bg-purple-50 text-purple-700 border border-purple-200"
+                    >
+                      <i class="fas fa-check text-[9px] mr-0.5"></i> Puerta
+                    </span>
+                    <span
+                      :class="[
+                        'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
+                        (inscripcion.coffee1Tomado || inscripcion.coffeeBreak1 || inscripcion.participante?.coffee1Tomado)
+                          ? 'bg-amber-100 text-amber-900 border-amber-300'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      ]"
+                    >
+                      <i class="fas fa-mug-hot text-[9px]"></i> C1
+                    </span>
+                    <span
+                      :class="[
+                        'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
+                        (inscripcion.coffee2Tomado || inscripcion.coffeeBreak2 || inscripcion.participante?.coffee2Tomado)
+                          ? 'bg-orange-100 text-orange-900 border-orange-300'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      ]"
+                    >
+                      <i class="fas fa-mug-saucer text-[9px]"></i> C2
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <span class="text-slate-400 font-semibold uppercase tracking-wide">Fecha</span>
@@ -471,6 +499,38 @@
                     </div>
                     <div v-if="Number(inscripcion.participante?.ticketQuantity) > 1" class="text-[11px] text-slate-500">
                       Cant: {{ inscripcion.participante.ticketQuantity }}
+                    </div>
+                    <!-- Badges Check-In y Coffee -->
+                    <div class="flex flex-wrap items-center gap-1 mt-1 text-[10px]">
+                      <span
+                        v-if="inscripcion.asistenciaConfirmada || inscripcion.participante?.asistenciaConfirmada || inscripcion.checkIn"
+                        class="px-1.5 py-0.5 rounded font-bold bg-purple-50 text-purple-700 border border-purple-200"
+                        title="Asistencia / Check-In confirmado"
+                      >
+                        <i class="fas fa-check text-[9px] mr-0.5"></i> Puerta
+                      </span>
+                      <span
+                        :class="[
+                          'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
+                          (inscripcion.coffee1Tomado || inscripcion.coffeeBreak1 || inscripcion.participante?.coffee1Tomado)
+                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : 'bg-slate-100 text-slate-400 border-slate-200'
+                        ]"
+                        :title="(inscripcion.coffee1Tomado || inscripcion.coffeeBreak1 || inscripcion.participante?.coffee1Tomado) ? 'Coffee 1: Entregado' : 'Coffee 1: No entregado'"
+                      >
+                        <i class="fas fa-mug-hot text-[9px]"></i> C1
+                      </span>
+                      <span
+                        :class="[
+                          'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
+                          (inscripcion.coffee2Tomado || inscripcion.coffeeBreak2 || inscripcion.participante?.coffee2Tomado)
+                            ? 'bg-orange-100 text-orange-900 border-orange-300'
+                            : 'bg-slate-100 text-slate-400 border-slate-200'
+                        ]"
+                        :title="(inscripcion.coffee2Tomado || inscripcion.coffeeBreak2 || inscripcion.participante?.coffee2Tomado) ? 'Coffee 2: Entregado' : 'Coffee 2: No entregado'"
+                      >
+                        <i class="fas fa-mug-saucer text-[9px]"></i> C2
+                      </span>
                     </div>
                   </td>
 
@@ -1151,13 +1211,23 @@ const exportarCSV = () => {
     'Monto Total ($)',
     'Monto Pagado Inicial ($)',
     'Comprobantes Adjuntos',
-    'Fecha Registro'
+    'Fecha Registro',
+    'Check-In (Puerta)',
+    'Fecha Ingreso',
+    'Coffee 1',
+    'Fecha Coffee 1',
+    'Coffee 2',
+    'Fecha Coffee 2'
   ]
   const rows = [headers.join(',')]
 
   inscripcionesFiltradas.value.forEach(ins => {
     const p = ins.participante || {}
     const archs = obtenerArchivos(ins)
+    const c1Tomado = !!(ins.coffee1Tomado || ins.coffeeBreak1 || p.coffee1Tomado || p.coffeeBreak1)
+    const c2Tomado = !!(ins.coffee2Tomado || ins.coffeeBreak2 || p.coffee2Tomado || p.coffeeBreak2)
+    const checkInHecho = !!(ins.asistenciaConfirmada || p.asistenciaConfirmada || ins.checkIn)
+
     const r = [
       obtenerNombreEvento(ins.eventoId),
       p.registrationToken || ins.id || '',
@@ -1174,7 +1244,13 @@ const exportarCSV = () => {
       obtenerMontoTotal(ins).toFixed(2),
       obtenerMontoTotal(ins).toFixed(2),
       archs.length,
-      formatearFecha(ins.fechaInscripcion)
+      formatearFecha(ins.fechaInscripcion),
+      checkInHecho ? 'SÍ' : 'NO',
+      ins.fechaIngreso || p.fechaIngreso ? formatearFecha(ins.fechaIngreso || p.fechaIngreso) : '',
+      c1Tomado ? 'SÍ' : 'NO',
+      ins.fechaCoffee1 || p.fechaCoffee1 ? formatearFecha(ins.fechaCoffee1 || p.fechaCoffee1) : '',
+      c2Tomado ? 'SÍ' : 'NO',
+      ins.fechaCoffee2 || p.fechaCoffee2 ? formatearFecha(ins.fechaCoffee2 || p.fechaCoffee2) : ''
     ]
     rows.push(r.map(escapeCsv).join(','))
   })

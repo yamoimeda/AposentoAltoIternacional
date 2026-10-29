@@ -156,6 +156,51 @@
           </div>
         </div>
 
+        <!-- Resumen de Coffee Break (2 Turnos) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-gradient-to-br from-slate-800 to-slate-800/60 p-5 rounded-2xl border border-slate-700/80 shadow-md flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
+                  <i class="fas fa-mug-hot"></i>
+                </div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Coffee 1 (Turno 1)</span>
+              </div>
+              <div class="text-3xl font-extrabold text-amber-400">
+                {{ metricas.totalCoffee1 }}
+                <span class="text-xs font-normal text-slate-400">/ {{ metricas.totalInscritos }} entregados</span>
+              </div>
+              <span class="text-[11px] text-slate-400">
+                {{ metricas.totalInscritos > 0 ? ((metricas.totalCoffee1 / metricas.totalInscritos) * 100).toFixed(1) + '% de entrega' : '0%' }}
+              </span>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xl text-amber-400">
+              <i class="fas fa-1"></i>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-br from-slate-800 to-slate-800/60 p-5 rounded-2xl border border-slate-700/80 shadow-md flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center text-sm">
+                  <i class="fas fa-mug-saucer"></i>
+                </div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Coffee 2 (Turno 2)</span>
+              </div>
+              <div class="text-3xl font-extrabold text-orange-400">
+                {{ metricas.totalCoffee2 }}
+                <span class="text-xs font-normal text-slate-400">/ {{ metricas.totalInscritos }} entregados</span>
+              </div>
+              <span class="text-[11px] text-slate-400">
+                {{ metricas.totalInscritos > 0 ? ((metricas.totalCoffee2 / metricas.totalInscritos) * 100).toFixed(1) + '% de entrega' : '0%' }}
+              </span>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-xl text-orange-400">
+              <i class="fas fa-2"></i>
+            </div>
+          </div>
+        </div>
+
         <!-- Meta de Cupos y Progreso (si el evento tiene cupos definidos) -->
         <div v-if="cupoMaximo > 0" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-md space-y-3">
           <div class="flex justify-between items-center text-sm font-semibold">
@@ -361,6 +406,8 @@ const metricas = computed(() => {
   let totalRecaudado = 0
   let totalEsperado = 0
   let totalIngresados = 0
+  let totalCoffee1 = 0
+  let totalCoffee2 = 0
 
   lista.forEach(ins => {
     totalRecaudado += obtenerMontoInscripcion(ins)
@@ -372,13 +419,23 @@ const metricas = computed(() => {
     if (ins.asistenciaConfirmada || ins.participante?.asistenciaConfirmada || ins.checkIn) {
       totalIngresados++
     }
+
+    // Coffee break
+    if (ins.coffee1Tomado || ins.coffeeBreak1 || ins.participante?.coffee1Tomado || ins.participante?.coffeeBreak1) {
+      totalCoffee1++
+    }
+    if (ins.coffee2Tomado || ins.coffeeBreak2 || ins.participante?.coffee2Tomado || ins.participante?.coffeeBreak2) {
+      totalCoffee2++
+    }
   })
 
   return {
     totalInscritos: lista.length,
     totalRecaudado,
     totalEsperado,
-    totalIngresados
+    totalIngresados,
+    totalCoffee1,
+    totalCoffee2
   }
 })
 

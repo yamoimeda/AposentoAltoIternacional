@@ -288,6 +288,48 @@
                 </div>
               </div>
 
+              <!-- Estado de Coffee Break del Boleto -->
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
+                    <i class="fas fa-mug-hot text-amber-600"></i>
+                    Turnos de Coffee Break
+                  </h3>
+                  <span class="text-xs font-semibold text-gray-500">2 turnos incluidos</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="font-bold text-gray-800 text-xs flex items-center gap-1.5">
+                        <i class="fas fa-mug-hot text-amber-500"></i> Coffee 1
+                      </span>
+                      <span :class="['text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1', inscripcionEncontrada.coffee1Tomado ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700']">
+                        <i :class="inscripcionEncontrada.coffee1Tomado ? 'fas fa-check' : 'fas fa-clock'"></i>
+                        {{ inscripcionEncontrada.coffee1Tomado ? 'Tomado' : 'Disponible' }}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-gray-500">
+                      {{ inscripcionEncontrada.coffee1Tomado ? 'Turno reclamado en la estación de café.' : 'Presenta tu código QR en la mesa de café para redimirlo.' }}
+                    </p>
+                  </div>
+
+                  <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="font-bold text-gray-800 text-xs flex items-center gap-1.5">
+                        <i class="fas fa-mug-saucer text-orange-500"></i> Coffee 2
+                      </span>
+                      <span :class="['text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1', inscripcionEncontrada.coffee2Tomado ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700']">
+                        <i :class="inscripcionEncontrada.coffee2Tomado ? 'fas fa-check' : 'fas fa-clock'"></i>
+                        {{ inscripcionEncontrada.coffee2Tomado ? 'Tomado' : 'Disponible' }}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-gray-500">
+                      {{ inscripcionEncontrada.coffee2Tomado ? 'Turno reclamado en la estación de café.' : 'Presenta tu código QR en la mesa de café para redimirlo.' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <!-- ID de registro -->
               <div v-if="inscripcionEncontrada.registrationToken" class="bg-gray-100 rounded-xl p-4">
                 <p class="text-xs text-gray-600 text-center mb-1">ID de Registro</p>
@@ -625,6 +667,10 @@ const buscarInscripcion = async () => {
         monto: montoTotal,
         eventoId: data.eventoId,
         fechaInscripcion: data.fechaInscripcion,
+        coffee1Tomado: !!(data.coffee1Tomado || data.coffeeBreak1 || p.coffee1Tomado || p.coffeeBreak1),
+        fechaCoffee1: data.fechaCoffee1 || data.fechaCoffeeBreak1 || p.fechaCoffee1 || null,
+        coffee2Tomado: !!(data.coffee2Tomado || data.coffeeBreak2 || p.coffee2Tomado || p.coffeeBreak2),
+        fechaCoffee2: data.fechaCoffee2 || data.fechaCoffeeBreak2 || p.fechaCoffee2 || null,
         // Incluir pagos adicionales del nivel raíz del documento
         comprobantesAdicionales: data.comprobantesAdicionales || []
       }

@@ -312,6 +312,28 @@
                 </div>
               </div>
 
+              <!-- Estado de Asistencia y Turnos de Coffee Break -->
+              <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fas fa-clipboard-check text-indigo-600"></i>
+                  Control de Puerta y Coffee Break
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" v-model="formulario.asistenciaConfirmada" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" />
+                    <span>Check-In (Ingreso Puerta)</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" v-model="formulario.coffee1Tomado" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4" />
+                    <span class="flex items-center gap-1"><i class="fas fa-mug-hot text-amber-500"></i> Coffee 1 Tomado</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" v-model="formulario.coffee2Tomado" class="rounded text-orange-600 focus:ring-orange-500 w-4 h-4" />
+                    <span class="flex items-center gap-1"><i class="fas fa-mug-saucer text-orange-500"></i> Coffee 2 Tomado</span>
+                  </label>
+                </div>
+              </div>
+
               <!-- Mensaje de estado -->
               <div
                 v-if="mensaje"
@@ -497,7 +519,10 @@ const formulario = ref({
   ticketQuantity: 1,
   totalPrice: 0,
   montoPagado: 0,
-  registrationToken: ''
+  registrationToken: '',
+  asistenciaConfirmada: false,
+  coffee1Tomado: false,
+  coffee2Tomado: false
 })
 
 const cargarFormulario = () => {
@@ -593,7 +618,10 @@ const cargarFormulario = () => {
     ticketQuantity: p.ticketQuantity ?? 1,
     totalPrice: montoNum,
     montoPagado: montoNum,
-    registrationToken: p.registrationToken || ''
+    registrationToken: p.registrationToken || '',
+    asistenciaConfirmada: !!(i.asistenciaConfirmada || p.asistenciaConfirmada || i.checkIn),
+    coffee1Tomado: !!(i.coffee1Tomado || i.coffeeBreak1 || p.coffee1Tomado || p.coffeeBreak1),
+    coffee2Tomado: !!(i.coffee2Tomado || i.coffeeBreak2 || p.coffee2Tomado || p.coffeeBreak2)
   }
   archivosNuevos.value = []
 }
@@ -684,7 +712,21 @@ const guardar = async () => {
 
     await emit('save', {
       id: props.inscripcion.id,
-      participante: participanteActualizado,
+      participante: {
+        ...participanteActualizado,
+        asistenciaConfirmada: !!formulario.value.asistenciaConfirmada,
+        checkIn: !!formulario.value.asistenciaConfirmada,
+        coffee1Tomado: !!formulario.value.coffee1Tomado,
+        coffeeBreak1: !!formulario.value.coffee1Tomado,
+        coffee2Tomado: !!formulario.value.coffee2Tomado,
+        coffeeBreak2: !!formulario.value.coffee2Tomado
+      },
+      asistenciaConfirmada: !!formulario.value.asistenciaConfirmada,
+      checkIn: !!formulario.value.asistenciaConfirmada,
+      coffee1Tomado: !!formulario.value.coffee1Tomado,
+      coffeeBreak1: !!formulario.value.coffee1Tomado,
+      coffee2Tomado: !!formulario.value.coffee2Tomado,
+      coffeeBreak2: !!formulario.value.coffee2Tomado,
       comprobantesAdicionales: [], // Unificado en comprobantesUrls para evitar duplicaciones
       comprobanteUrl: todasLasUrls[0] || null,
       comprobantesUrls: todasLasUrls,
