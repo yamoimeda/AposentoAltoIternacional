@@ -49,7 +49,7 @@ const routes = [
         path: '/escanear-qr',
         name: 'EscanearQR',
         component: EscanearQRView,
-        meta: { requiresAuth: true, requiredRoles: ['qr', 'admin'] }
+        meta: { requiresAuth: true, requiredRoles: ['qr', 'admin'], hideNavbar: true, hideFooter: true }
     },
     {
         path: '/admin/escanear-qr',

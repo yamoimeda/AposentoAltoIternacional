@@ -1,53 +1,63 @@
 <template>
-  <div class="min-h-screen bg-slate-900 text-slate-100 font-sans pt-24 pb-16 px-4 sm:px-8">
-    <div class="max-w-4xl mx-auto space-y-6">
+  <div class="min-h-screen bg-slate-900 text-slate-100 font-sans p-2 sm:p-4">
+    <div class="max-w-6xl mx-auto space-y-2.5">
 
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-          <div class="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-1">
-            <i class="fas fa-qrcode"></i>
-            <span>Control de Entrada y Asistencia</span>
-          </div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Escáner QR de Boletos
+      <!-- Header Compacto -->
+      <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-800">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <h1 class="text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
+            <i class="fas fa-qrcode text-indigo-400"></i>
+            <span>Escáner QR</span>
           </h1>
-          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Valida los boletos digitales en la puerta y registra la asistencia en tiempo real.
-          </p>
+
+          <!-- Conteos Compactos (Solo Inscritos e Ingresados) -->
+          <div v-if="tieneAccesoQR && !cargando" class="flex items-center gap-1.5 text-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">
+              <i class="fas fa-users text-indigo-400 text-[10px]"></i>
+              <span class="text-slate-400">Inscritos:</span>
+              <strong class="text-white">{{ metricas.total }}</strong>
+            </span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-emerald-400 text-[11px]">
+              <i class="fas fa-door-open text-emerald-400 text-[10px]"></i>
+              <span class="text-slate-400">Ingresados:</span>
+              <strong class="text-emerald-300">{{ metricas.ingresados }}</strong>
+            </span>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- Botones de Salida / Conteo -->
+        <div class="flex items-center gap-1.5 shrink-0">
           <router-link
             to="/conteo"
-            class="py-2 px-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all flex items-center gap-2"
+            class="py-1 px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-lg border border-slate-700 transition-all flex items-center gap-1 cursor-pointer"
+            title="Ver conteo"
           >
-            <i class="fas fa-chart-pie text-indigo-400"></i>
-            <span>Ver Conteo</span>
+            <i class="fas fa-chart-pie text-indigo-400 text-xs"></i>
+            <span class="hidden sm:inline">Conteo</span>
           </router-link>
-
           <router-link
             to="/admin"
-            class="py-2 px-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all flex items-center gap-2"
+            class="py-1 px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-lg border border-slate-700 transition-all flex items-center gap-1 cursor-pointer"
+            title="Panel Admin"
           >
-            <i class="fas fa-grip text-indigo-400"></i>
-            <span>Panel Admin</span>
+            <i class="fas fa-grip text-indigo-400 text-xs"></i>
+            <span class="hidden sm:inline">Admin</span>
           </router-link>
         </div>
       </div>
 
       <!-- Estado si no tiene permisos -->
-      <div v-if="!cargando && !tieneAccesoQR" class="bg-slate-800 p-12 rounded-2xl border border-slate-700 text-center max-w-lg mx-auto space-y-4">
-        <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-3xl mx-auto">
+      <div v-if="!cargando && !tieneAccesoQR" class="bg-slate-800 p-8 rounded-xl border border-slate-700 text-center max-w-md mx-auto space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-2xl mx-auto">
           <i class="fas fa-lock"></i>
         </div>
-        <h2 class="text-xl font-bold text-white">Acceso Restringido</h2>
+        <h2 class="text-base font-bold text-white">Acceso Restringido</h2>
         <p class="text-xs text-slate-400 leading-relaxed">
-          Esta función de escaneo y control de puerta requiere rol de <strong>Escáner QR</strong> o <strong>Administrador</strong>.
+          Esta función requiere rol de <strong>Escáner QR</strong> o <strong>Administrador</strong>.
         </p>
         <router-link
           to="/admin"
-          class="inline-flex items-center gap-2 py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-colors"
+          class="inline-flex items-center gap-1.5 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors"
         >
           <i class="fas fa-arrow-left"></i>
           <span>Volver al Panel Principal</span>
@@ -55,119 +65,73 @@
       </div>
 
       <template v-else-if="!cargando">
-        <!-- Barra de Resumen en Vivo -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg shrink-0">
-              <i class="fas fa-users"></i>
-            </div>
-            <div class="min-w-0">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">Inscritos</span>
-              <span class="text-xl font-extrabold text-white">{{ metricas.total }}</span>
-            </div>
-          </div>
-
-          <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg shrink-0">
-              <i class="fas fa-door-open"></i>
-            </div>
-            <div class="min-w-0">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block truncate">Ingresados</span>
-              <span class="text-xl font-extrabold text-emerald-400">{{ metricas.ingresados }}</span>
-            </div>
-          </div>
-
-          <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg shrink-0">
-              <i class="fas fa-mug-hot"></i>
-            </div>
-            <div class="min-w-0">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 block truncate">Coffee 1</span>
-              <span class="text-xl font-extrabold text-amber-400">{{ metricas.coffee1 }}</span>
-            </div>
-          </div>
-
-          <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center text-lg shrink-0">
-              <i class="fas fa-mug-saucer"></i>
-            </div>
-            <div class="min-w-0">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-orange-400 block truncate">Coffee 2</span>
-              <span class="text-xl font-extrabold text-orange-400">{{ metricas.coffee2 }}</span>
-            </div>
-          </div>
-        </div>
-
       <!-- Zona del Escáner y Cámara -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 sm:gap-3 items-start">
         
         <!-- Panel Izquierdo: Cámara / Escáner -->
-        <div class="md:col-span-7 space-y-4">
-          <div class="bg-slate-800/90 p-4 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+        <div class="md:col-span-5 space-y-2">
+          <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700 shadow-md">
             
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full" :class="camaraActiva ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'"></span>
-                {{ camaraActiva ? 'Cámara Activa (Enfoca el QR)' : 'Escáner Desactivado' }}
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full" :class="camaraActiva ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'"></span>
+                {{ camaraActiva ? 'Cámara Activa' : 'Escáner Apagado' }}
               </span>
 
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
                 <button
                   v-if="camaraActiva"
                   @click="detenerEscaner"
-                  class="px-3 py-1 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  class="px-2.5 py-0.5 bg-rose-600/80 hover:bg-rose-600 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <i class="fas fa-video-slash mr-1"></i> Apagar
                 </button>
                 <button
                   v-else
                   @click="iniciarEscaner"
-                  class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  class="px-2.5 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
                 >
-                  <i class="fas fa-camera mr-1"></i> Encender Cámara
+                  <i class="fas fa-camera mr-1"></i> Encender
                 </button>
               </div>
             </div>
 
             <!-- Viewport del Escáner QR HTML5 -->
-            <div class="relative bg-black rounded-xl overflow-hidden min-h-[260px] flex items-center justify-center border border-slate-700">
+            <div class="relative bg-black rounded-lg overflow-hidden flex items-center justify-center border border-slate-700 min-h-[160px] sm:min-h-[190px]">
               <div id="qr-reader" class="w-full"></div>
 
-              <div v-if="!camaraActiva" class="text-center p-6 space-y-3">
-                <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 mx-auto text-2xl">
+              <div v-if="!camaraActiva" class="text-center p-3 sm:p-4 space-y-2">
+                <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 mx-auto text-base">
                   <i class="fas fa-camera"></i>
                 </div>
-                <p class="text-xs text-slate-400 max-w-xs mx-auto">
-                  Presiona el botón para activar la cámara de tu celular o computadora y escanear el boleto.
+                <p class="text-[11px] text-slate-400 max-w-xs mx-auto">
+                  Activa la cámara para enfocar el código QR del boleto.
                 </p>
                 <button
                   @click="iniciarEscaner"
-                  class="py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
+                  class="py-1.5 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  <i class="fas fa-play"></i>
+                  <i class="fas fa-play text-[10px]"></i>
                   <span>Activar Escáner</span>
                 </button>
               </div>
             </div>
 
             <!-- Entrada Manual por Cédula o Token -->
-            <div class="mt-4 pt-4 border-t border-slate-700/60">
-              <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                O buscar manualmente por Cédula o Token:
-              </label>
-              <form @submit.prevent="buscarManual" class="flex gap-2">
+            <div class="mt-2 pt-2 border-t border-slate-700/60">
+              <form @submit.prevent="buscarManual" class="flex gap-1.5">
                 <input
                   v-model="busquedaManual"
                   type="text"
-                  placeholder="Ej: 8-123-4567 o token..."
-                  class="flex-1 px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  placeholder="Cédula o token..."
+                  class="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
                 <button
                   type="submit"
                   :disabled="!busquedaManual.trim() || buscando"
-                  class="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                  class="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs rounded-lg transition-all flex items-center gap-1 cursor-pointer"
                 >
-                  <i :class="['fas', buscando ? 'fa-spinner fa-spin' : 'fa-search']"></i>
+                  <i :class="['fas text-xs', buscando ? 'fa-spinner fa-spin' : 'fa-search']"></i>
                   <span>Buscar</span>
                 </button>
               </form>
@@ -177,102 +141,91 @@
         </div>
 
         <!-- Panel Derecho: Resultado de Validación -->
-        <div class="md:col-span-5 space-y-4">
+        <div class="md:col-span-7 space-y-2">
           
           <!-- Estado Inicial / Vacío -->
-          <div v-if="!resultadoValidacion && !buscando" class="bg-slate-800/60 border border-dashed border-slate-700 rounded-2xl p-8 text-center text-slate-500">
-            <i class="fas fa-ticket text-4xl mb-3 text-slate-600 block"></i>
-            <h3 class="text-sm font-bold text-slate-300 mb-1">Esperando Escaneo</h3>
-            <p class="text-xs text-slate-400">
-              Apunta la cámara al código QR del participante para validar su boleto y estado de pago.
+          <div v-if="!resultadoValidacion && !buscando" class="bg-slate-800/60 border border-dashed border-slate-700 rounded-xl p-4 sm:p-6 text-center text-slate-500">
+            <i class="fas fa-ticket text-2xl sm:text-3xl mb-1.5 text-slate-600 block"></i>
+            <h3 class="text-xs sm:text-sm font-bold text-slate-300">Esperando Escaneo</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Apunta la cámara al código QR para validar el boleto y el coffee break.
             </p>
           </div>
 
           <!-- Spinner al procesar -->
-          <div v-if="buscando" class="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center">
-            <i class="fas fa-circle-notch fa-spin text-3xl text-indigo-500 mb-2 block mx-auto"></i>
-            <p class="text-xs font-semibold text-slate-300">Validando boleto con la base de datos...</p>
+          <div v-if="buscando" class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+            <i class="fas fa-circle-notch fa-spin text-2xl text-indigo-500 mb-1.5 block mx-auto"></i>
+            <p class="text-xs font-semibold text-slate-300">Validando boleto...</p>
           </div>
 
           <!-- Tarjeta de Boleto Encontrado -->
-          <div v-if="resultadoValidacion" class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden animate-fade-in-up">
+          <div v-if="resultadoValidacion" class="bg-slate-800 rounded-xl border border-slate-700 shadow-md overflow-hidden animate-fade-in-up">
             
             <!-- Banner de Estado -->
             <div
               :class="[
-                'p-4 text-white text-center font-bold text-sm flex items-center justify-center gap-2',
+                'py-1.5 px-3 text-white text-center font-bold text-xs flex items-center justify-center gap-1.5',
                 resultadoValidacion.estaPagado ? 'bg-gradient-to-r from-emerald-600 to-teal-600' : 'bg-gradient-to-r from-amber-600 to-orange-600'
               ]"
             >
-              <i :class="['fas text-lg', resultadoValidacion.estaPagado ? 'fa-check-circle' : 'fa-clock']"></i>
+              <i :class="['fas text-xs', resultadoValidacion.estaPagado ? 'fa-check-circle' : 'fa-clock']"></i>
               <span>{{ resultadoValidacion.estaPagado ? 'Boleto Válido y Pagado' : 'Pago Pendiente / Saldo por Cobrar' }}</span>
             </div>
 
             <!-- Alerta de Asistencia Previa (si ya ingresó) -->
-            <div v-if="resultadoValidacion.asistenciaConfirmada" class="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 text-xs flex items-center gap-2">
-              <i class="fas fa-triangle-exclamation text-amber-400 text-base shrink-0"></i>
-              <div>
-                <b>¡Este boleto ya fue ingresado previamente!</b>
-                <span class="block text-[11px] text-amber-400/80">
-                  Hora de ingreso: {{ formatearFecha(resultadoValidacion.fechaIngreso) }}
-                </span>
-              </div>
+            <div v-if="resultadoValidacion.asistenciaConfirmada" class="py-1 px-2.5 bg-amber-500/15 border-b border-amber-500/30 text-amber-300 text-[11px] flex items-center gap-1.5">
+              <i class="fas fa-triangle-exclamation text-amber-400 text-xs shrink-0"></i>
+              <span><strong>¡Ya ingresó!</strong> Hora: {{ formatearFecha(resultadoValidacion.fechaIngreso) }}</span>
             </div>
 
-            <div class="p-5 space-y-4 text-xs">
-              <!-- Nombre y Cédula -->
-              <div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Participante</span>
-                <h2 class="text-lg font-bold text-white leading-tight mt-0.5">
-                  {{ resultadoValidacion.nombre }}
-                </h2>
-                <div class="flex items-center gap-3 text-slate-400 mt-1">
-                  <span><i class="fas fa-id-card mr-1 text-indigo-400"></i>{{ resultadoValidacion.cedula }}</span>
-                  <span v-if="resultadoValidacion.telefono"><i class="fas fa-phone mr-1 text-indigo-400"></i>{{ resultadoValidacion.telefono }}</span>
+            <div class="p-3 space-y-2 text-xs">
+              <!-- Nombre, Cédula y Monto -->
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <h2 class="text-sm sm:text-base font-bold text-white leading-tight">
+                    {{ resultadoValidacion.nombre }}
+                  </h2>
+                  <div class="flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400 mt-0.5">
+                    <span><i class="fas fa-id-card mr-1 text-indigo-400"></i>{{ resultadoValidacion.cedula }}</span>
+                    <span v-if="resultadoValidacion.telefono"><i class="fas fa-phone mr-1 text-indigo-400"></i>{{ resultadoValidacion.telefono }}</span>
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded text-xs block">
+                    ${{ resultadoValidacion.totalPagado.toFixed(2) }}
+                  </span>
+                  <span v-if="!resultadoValidacion.estaPagado" class="text-[10px] text-amber-400 font-bold block mt-0.5">
+                    Saldo: ${{ resultadoValidacion.saldoPendiente.toFixed(2) }}
+                  </span>
                 </div>
               </div>
 
-              <!-- Detalles de Iglesia, Mentor y Boleto -->
-              <div class="bg-slate-900/80 rounded-xl p-3.5 space-y-2 border border-slate-700/60">
-                <div class="flex justify-between">
-                  <span class="text-slate-400">Iglesia:</span>
-                  <span class="font-semibold text-slate-200">{{ resultadoValidacion.iglesia || 'N/A' }}</span>
+              <!-- Fila Compacta de Iglesia, Mentor y Boleto -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 bg-slate-900/80 rounded-lg p-2 text-[11px] border border-slate-700/60">
+                <div>
+                  <span class="text-slate-400 block text-[10px]">Iglesia</span>
+                  <span class="font-medium text-slate-200 truncate block">{{ resultadoValidacion.iglesia || 'N/A' }}</span>
                 </div>
-                <div v-if="resultadoValidacion.mentor" class="flex justify-between">
-                  <span class="text-slate-400">Mentor:</span>
-                  <span class="font-semibold text-slate-200">{{ resultadoValidacion.mentor }}</span>
+                <div>
+                  <span class="text-slate-400 block text-[10px]">Boleto</span>
+                  <span class="font-medium text-indigo-300 truncate block">{{ resultadoValidacion.ticketType || 'Adulto full' }}</span>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-slate-400">Tipo de Boleto:</span>
-                  <span class="font-semibold text-indigo-300">{{ resultadoValidacion.ticketType || 'Adulto full' }}</span>
-                </div>
-                <div class="flex justify-between pt-1.5 border-t border-slate-800">
-                  <span class="text-slate-400">Total Pagado:</span>
-                  <span class="font-bold text-emerald-400">${{ resultadoValidacion.totalPagado.toFixed(2) }}</span>
-                </div>
-                <div v-if="!resultadoValidacion.estaPagado" class="flex justify-between">
-                  <span class="text-amber-400 font-bold">Saldo Pendiente:</span>
-                  <span class="font-bold text-amber-400">${{ resultadoValidacion.saldoPendiente.toFixed(2) }}</span>
+                <div v-if="resultadoValidacion.mentor" class="col-span-2 sm:col-span-1">
+                  <span class="text-slate-400 block text-[10px]">Mentor</span>
+                  <span class="font-medium text-slate-200 truncate block">{{ resultadoValidacion.mentor }}</span>
                 </div>
               </div>
 
               <!-- Sección: Control de Coffee Break (2 Turnos) -->
-              <div class="bg-slate-900/90 rounded-xl p-3.5 space-y-3 border border-slate-700/70">
+              <div class="bg-slate-900/90 rounded-lg p-2 space-y-1.5 border border-slate-700/70">
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
-                      <i class="fas fa-mug-hot"></i>
-                    </div>
-                    <div>
-                      <h4 class="font-bold text-white text-xs uppercase tracking-wide">Turnos de Coffee Break</h4>
-                      <span class="text-[10px] text-slate-400">2 turnos incluidos por boleto</span>
-                    </div>
-                  </div>
-
-                  <!-- Indicador de turnos tomados -->
+                  <span class="font-bold text-white text-[11px] uppercase tracking-wide flex items-center gap-1.5">
+                    <i class="fas fa-mug-hot text-amber-400"></i>
+                    Coffee Break
+                  </span>
                   <span
                     :class="[
-                      'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border',
+                      'px-2 py-0.2 rounded-full text-[10px] font-extrabold uppercase tracking-wider border',
                       (resultadoValidacion.coffee1Tomado && resultadoValidacion.coffee2Tomado)
                         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                         : (resultadoValidacion.coffee1Tomado || resultadoValidacion.coffee2Tomado)
@@ -285,16 +238,16 @@
                 </div>
 
                 <!-- Alerta si el boleto tiene saldo pendiente -->
-                <div v-if="!resultadoValidacion.estaPagado" class="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-[11px] flex items-center gap-2">
-                  <i class="fas fa-triangle-exclamation text-amber-400 text-sm shrink-0"></i>
-                  <span><strong>Pago Pendiente:</strong> La entrega de Coffee requiere que el boleto esté totalmente pagado.</span>
+                <div v-if="!resultadoValidacion.estaPagado" class="p-1.5 bg-amber-500/10 border border-amber-500/30 rounded text-amber-300 text-[10px] flex items-center gap-1.5">
+                  <i class="fas fa-triangle-exclamation text-amber-400 shrink-0"></i>
+                  <span>Pago pendiente. Se requiere saldo pagado para coffee.</span>
                 </div>
 
-                <!-- Feedback de mensaje de Coffee -->
+                <!-- Feedback mensaje Coffee -->
                 <div
                   v-if="mensajeCoffee"
                   :class="[
-                    'p-2.5 rounded-lg text-xs font-semibold flex items-center justify-between gap-2 transition-all',
+                    'p-1.5 rounded text-[11px] font-semibold flex items-center justify-between gap-1.5 transition-all',
                     mensajeCoffee.tipo === 'exito'
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                       : mensajeCoffee.tipo === 'info'
@@ -302,174 +255,140 @@
                         : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                   ]"
                 >
-                  <div class="flex items-center gap-2 min-w-0">
-                    <i :class="['fas shrink-0', mensajeCoffee.tipo === 'exito' ? 'fa-check-circle' : mensajeCoffee.tipo === 'info' ? 'fa-info-circle' : 'fa-circle-exclamation']"></i>
-                    <span class="truncate">{{ mensajeCoffee.texto }}</span>
-                  </div>
+                  <span class="truncate">{{ mensajeCoffee.texto }}</span>
                   <button @click="mensajeCoffee = null" class="text-xs opacity-70 hover:opacity-100 p-0.5 cursor-pointer">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
 
-                <!-- Cuadrícula de Turnos: Coffee 1 y Coffee 2 -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  
-                  <!-- Tarjeta Turno 1 -->
+                <!-- Turnos 1 y 2 en cuadrícula compacta -->
+                <div class="grid grid-cols-2 gap-2">
+                  <!-- Coffee 1 -->
                   <div
                     :class="[
-                      'p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5',
+                      'p-2 rounded-lg border flex flex-col justify-between gap-1.5',
                       resultadoValidacion.coffee1Tomado
-                        ? 'bg-slate-800/90 border-emerald-500/40 shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
+                        ? 'bg-slate-800 border-emerald-500/40'
+                        : 'bg-slate-800/60 border-slate-700'
                     ]"
                   >
                     <div class="flex items-center justify-between">
-                      <span class="font-bold text-white text-xs flex items-center gap-1.5">
-                        <i class="fas fa-mug-hot text-amber-400 text-xs"></i>
-                        Coffee 1 (Turno 1)
+                      <span class="font-bold text-[11px] text-white flex items-center gap-1">
+                        <i class="fas fa-mug-hot text-amber-400 text-[10px]"></i> C1
                       </span>
                       <span
                         :class="[
-                          'px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1',
+                          'px-1.5 py-0.2 rounded text-[9px] font-bold',
                           resultadoValidacion.coffee1Tomado
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-slate-700/60 text-slate-400 border border-slate-600'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'bg-slate-700 text-slate-400'
                         ]"
                       >
-                        <i :class="resultadoValidacion.coffee1Tomado ? 'fas fa-check' : 'fas fa-clock'"></i>
-                        {{ resultadoValidacion.coffee1Tomado ? 'Tomado' : 'Disponible' }}
+                        {{ resultadoValidacion.coffee1Tomado ? 'Tomado' : 'Disp.' }}
                       </span>
                     </div>
 
-                    <!-- Estado: Tomado -->
-                    <div v-if="resultadoValidacion.coffee1Tomado" class="space-y-1.5 pt-1">
-                      <div class="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
-                        <i class="fas fa-clock text-[10px]"></i>
-                        <span>Hora: {{ formatearFechaHora(resultadoValidacion.fechaCoffee1) }}</span>
-                      </div>
-                      <div class="flex items-center justify-between pt-1 border-t border-slate-700/60">
-                        <span class="text-[10px] text-slate-400 truncate max-w-[120px]" :title="resultadoValidacion.coffee1Por">
-                          <i class="fas fa-user-check text-[9px] mr-1"></i>{{ resultadoValidacion.coffee1Por || 'Control' }}
-                        </span>
-                        <button
-                          type="button"
-                          @click="deshacerCoffee(1)"
-                          :disabled="procesandoCoffee === 1"
-                          class="text-[10px] text-slate-400 hover:text-rose-400 underline transition-colors cursor-pointer"
-                        >
-                          Deshacer
-                        </button>
-                      </div>
+                    <div v-if="resultadoValidacion.coffee1Tomado" class="text-[10px] flex items-center justify-between pt-1 border-t border-slate-700/60">
+                      <span class="text-emerald-400 truncate max-w-[85px]">
+                        {{ formatearFechaHora(resultadoValidacion.fechaCoffee1) }}
+                      </span>
+                      <button
+                        type="button"
+                        @click="deshacerCoffee(1)"
+                        :disabled="procesandoCoffee === 1"
+                        class="text-slate-400 hover:text-rose-400 underline cursor-pointer"
+                      >
+                        Deshacer
+                      </button>
                     </div>
-
-                    <!-- Estado: Disponible / Botón Redimir -->
-                    <div v-else class="pt-1">
+                    <div v-else class="pt-0.5">
                       <button
                         type="button"
                         @click="redimirCoffee(1)"
                         :disabled="!resultadoValidacion.estaPagado || procesandoCoffee === 1"
-                        class="w-full py-2 px-3 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        class="w-full py-1 px-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white font-bold text-[11px] rounded transition-all flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        <i :class="['fas', procesandoCoffee === 1 ? 'fa-spinner fa-spin' : 'fa-mug-hot']"></i>
-                        <span>{{ procesandoCoffee === 1 ? 'Registrando...' : 'Redimir Coffee 1' }}</span>
+                        <i :class="['fas text-[10px]', procesandoCoffee === 1 ? 'fa-spinner fa-spin' : 'fa-mug-hot']"></i>
+                        <span>{{ procesandoCoffee === 1 ? '...' : 'Redimir C1' }}</span>
                       </button>
                     </div>
                   </div>
 
-                  <!-- Tarjeta Turno 2 -->
+                  <!-- Coffee 2 -->
                   <div
                     :class="[
-                      'p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5',
+                      'p-2 rounded-lg border flex flex-col justify-between gap-1.5',
                       resultadoValidacion.coffee2Tomado
-                        ? 'bg-slate-800/90 border-emerald-500/40 shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
+                        ? 'bg-slate-800 border-emerald-500/40'
+                        : 'bg-slate-800/60 border-slate-700'
                     ]"
                   >
                     <div class="flex items-center justify-between">
-                      <span class="font-bold text-white text-xs flex items-center gap-1.5">
-                        <i class="fas fa-mug-saucer text-orange-400 text-xs"></i>
-                        Coffee 2 (Turno 2)
+                      <span class="font-bold text-[11px] text-white flex items-center gap-1">
+                        <i class="fas fa-mug-saucer text-orange-400 text-[10px]"></i> C2
                       </span>
                       <span
                         :class="[
-                          'px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1',
+                          'px-1.5 py-0.2 rounded text-[9px] font-bold',
                           resultadoValidacion.coffee2Tomado
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-slate-700/60 text-slate-400 border border-slate-600'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'bg-slate-700 text-slate-400'
                         ]"
                       >
-                        <i :class="resultadoValidacion.coffee2Tomado ? 'fas fa-check' : 'fas fa-clock'"></i>
-                        {{ resultadoValidacion.coffee2Tomado ? 'Tomado' : 'Disponible' }}
+                        {{ resultadoValidacion.coffee2Tomado ? 'Tomado' : 'Disp.' }}
                       </span>
                     </div>
 
-                    <!-- Estado: Tomado -->
-                    <div v-if="resultadoValidacion.coffee2Tomado" class="space-y-1.5 pt-1">
-                      <div class="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
-                        <i class="fas fa-clock text-[10px]"></i>
-                        <span>Hora: {{ formatearFechaHora(resultadoValidacion.fechaCoffee2) }}</span>
-                      </div>
-                      <div class="flex items-center justify-between pt-1 border-t border-slate-700/60">
-                        <span class="text-[10px] text-slate-400 truncate max-w-[120px]" :title="resultadoValidacion.coffee2Por">
-                          <i class="fas fa-user-check text-[9px] mr-1"></i>{{ resultadoValidacion.coffee2Por || 'Control' }}
-                        </span>
-                        <button
-                          type="button"
-                          @click="deshacerCoffee(2)"
-                          :disabled="procesandoCoffee === 2"
-                          class="text-[10px] text-slate-400 hover:text-rose-400 underline transition-colors cursor-pointer"
-                        >
-                          Deshacer
-                        </button>
-                      </div>
+                    <div v-if="resultadoValidacion.coffee2Tomado" class="text-[10px] flex items-center justify-between pt-1 border-t border-slate-700/60">
+                      <span class="text-emerald-400 truncate max-w-[85px]">
+                        {{ formatearFechaHora(resultadoValidacion.fechaCoffee2) }}
+                      </span>
+                      <button
+                        type="button"
+                        @click="deshacerCoffee(2)"
+                        :disabled="procesandoCoffee === 2"
+                        class="text-slate-400 hover:text-rose-400 underline cursor-pointer"
+                      >
+                        Deshacer
+                      </button>
                     </div>
-
-                    <!-- Estado: Disponible / Botón Redimir -->
-                    <div v-else class="pt-1">
+                    <div v-else class="pt-0.5">
                       <button
                         type="button"
                         @click="redimirCoffee(2)"
                         :disabled="!resultadoValidacion.estaPagado || procesandoCoffee === 2"
-                        class="w-full py-2 px-3 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        class="w-full py-1 px-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white font-bold text-[11px] rounded transition-all flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        <i :class="['fas', procesandoCoffee === 2 ? 'fa-spinner fa-spin' : 'fa-mug-saucer']"></i>
-                        <span>{{ procesandoCoffee === 2 ? 'Registrando...' : 'Redimir Coffee 2' }}</span>
+                        <i :class="['fas text-[10px]', procesandoCoffee === 2 ? 'fa-spinner fa-spin' : 'fa-mug-saucer']"></i>
+                        <span>{{ procesandoCoffee === 2 ? '...' : 'Redimir C2' }}</span>
                       </button>
                     </div>
                   </div>
-
-                </div>
-
-                <!-- Aviso si ambos fueron tomados -->
-                <div v-if="resultadoValidacion.coffee1Tomado && resultadoValidacion.coffee2Tomado" class="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-[11px] font-semibold text-center flex items-center justify-center gap-1.5">
-                  <i class="fas fa-check-double"></i>
-                  <span>Los 2 turnos de Coffee Break ya fueron consumidos para este boleto.</span>
                 </div>
               </div>
 
               <!-- Botones de Acción de Check-In -->
-              <div class="pt-1 space-y-2">
+              <div class="pt-1 space-y-1.5">
                 <button
                   v-if="!resultadoValidacion.asistenciaConfirmada"
                   type="button"
                   @click="confirmarCheckIn"
                   :disabled="procesandoCheckIn"
-                  class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-lg shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <i :class="['fas', procesandoCheckIn ? 'fa-spinner fa-spin' : 'fa-door-open']"></i>
                   <span>{{ procesandoCheckIn ? 'Registrando...' : 'Confirmar Ingreso (Check-In)' }}</span>
                 </button>
 
-                <div v-else class="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 font-bold text-center flex items-center justify-center gap-2">
+                <div v-else class="py-1.5 px-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 font-bold text-xs text-center flex items-center justify-center gap-1.5">
                   <i class="fas fa-check-double"></i>
-                  <span>Ingreso Registrado con Éxito</span>
+                  <span>Ingreso Confirmado</span>
                 </div>
 
-                <!-- Botón para escanear siguiente participante -->
                 <button
                   type="button"
                   @click="resetearEscaneo"
-                  class="w-full py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-600/80 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  class="w-full py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs rounded-lg border border-slate-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <i class="fas fa-rotate-right text-indigo-400"></i>
                   <span>Escanear Siguiente Boleto</span>
@@ -481,15 +400,15 @@
           </div>
 
           <!-- Alerta de No Encontrado -->
-          <div v-if="errorNoEncontrado" class="bg-rose-900/30 border border-rose-700/60 p-4 rounded-2xl text-center space-y-2">
-            <i class="fas fa-circle-xmark text-rose-400 text-2xl"></i>
-            <h4 class="text-sm font-bold text-rose-200">Boleto no registrado</h4>
-            <p class="text-xs text-rose-300">
+          <div v-if="errorNoEncontrado" class="bg-rose-900/30 border border-rose-700/60 p-3 rounded-xl text-center space-y-1.5">
+            <i class="fas fa-circle-xmark text-rose-400 text-xl"></i>
+            <h4 class="text-xs font-bold text-rose-200">Boleto no registrado</h4>
+            <p class="text-[11px] text-rose-300">
               No se encontró ninguna inscripción con los datos escaneados.
             </p>
             <button
               @click="errorNoEncontrado = false"
-              class="px-3 py-1 bg-rose-800 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold"
+              class="px-2.5 py-0.5 bg-rose-800 hover:bg-rose-700 text-white rounded text-xs font-semibold"
             >
               Intentar de nuevo
             </button>

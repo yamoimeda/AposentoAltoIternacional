@@ -1,15 +1,20 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import FooterSection from './components/FooterSection.vue'
+
+const route = useRoute()
+const ocultarNav = computed(() => !!(route.meta?.hideNavbar || route.name === 'EscanearQR' || route.path?.startsWith('/escanear-qr')))
+const ocultarFooter = computed(() => !!(route.meta?.hideFooter || route.name === 'EscanearQR' || route.path?.startsWith('/escanear-qr')))
 </script>
 
 <template>
-
-    <NavBar />
+    <NavBar v-if="!ocultarNav" />
     <main class="flex-1">
       <router-view />
     </main>
-    <FooterSection />
+    <FooterSection v-if="!ocultarFooter" />
 </template>
 
 <style>
