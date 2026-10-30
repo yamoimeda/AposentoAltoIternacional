@@ -217,6 +217,11 @@
                   <div>
                     <div class="font-bold text-gray-900">{{ t.nombre }}</div>
                     <div class="text-sm font-semibold text-blue-600">${{ Number(t.precio).toFixed(2) }}</div>
+                    <div v-if="ticketConfigIncluyeCoffee(t)" class="mt-1">
+                      <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                        <i class="fas fa-mug-hot text-[10px]"></i> Incluye Coffee Break (1 y 2)
+                      </span>
+                    </div>
                   </div>
                 </label>
               </div>
@@ -377,6 +382,7 @@ import { v4 as uuidv4 } from 'uuid'
 import RegistrationSuccessModal from '../components/RegistrationSuccessModal.vue'
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { ticketConfigIncluyeCoffee } from '../utils/ticketUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -693,6 +699,7 @@ const enviarInscripcion = async () => {
       ticketTypeId: ticketFinal ? (ticketFinal.id || null) : null,
       ticketType: ticketNombreFinal,
       ticketPrice: ticketPrecioFinal,
+      incluyeCoffee: ticketFinal ? ticketConfigIncluyeCoffee(ticketFinal) : true,
       ticketQuantity: qty,
       totalPrice: finalAmount, // Unificado para que coincida en admin y reportes
       fechaInscripcion: new Date().toISOString(),

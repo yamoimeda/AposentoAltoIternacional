@@ -392,6 +392,7 @@
                       <i class="fas fa-check text-[9px] mr-0.5"></i> Puerta
                     </span>
                     <span
+                      v-if="tieneCoffee(inscripcion)"
                       :class="[
                         'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
                         (inscripcion.coffee1Tomado || inscripcion.coffeeBreak1 || inscripcion.participante?.coffee1Tomado)
@@ -402,6 +403,7 @@
                       <i class="fas fa-mug-hot text-[9px]"></i> C1
                     </span>
                     <span
+                      v-if="tieneCoffee(inscripcion)"
                       :class="[
                         'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
                         (inscripcion.coffee2Tomado || inscripcion.coffeeBreak2 || inscripcion.participante?.coffee2Tomado)
@@ -562,6 +564,7 @@
                         <i class="fas fa-check text-[9px] mr-0.5"></i> Puerta
                       </span>
                       <span
+                        v-if="tieneCoffee(inscripcion)"
                         :class="[
                           'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
                           (inscripcion.coffee1Tomado || inscripcion.coffeeBreak1 || inscripcion.participante?.coffee1Tomado)
@@ -573,6 +576,7 @@
                         <i class="fas fa-mug-hot text-[9px]"></i> C1
                       </span>
                       <span
+                        v-if="tieneCoffee(inscripcion)"
                         :class="[
                           'px-1.5 py-0.5 rounded font-bold border flex items-center gap-0.5',
                           (inscripcion.coffee2Tomado || inscripcion.coffeeBreak2 || inscripcion.participante?.coffee2Tomado)
@@ -782,6 +786,7 @@ import FileViewer from '../components/FileViewer.vue'
 import EditInscripcionModal from '../components/EditInscripcionModal.vue'
 import ConfiguracionIglesiasModal from '../components/ConfiguracionIglesiasModal.vue'
 import GestionUsuariosModal from '../components/GestionUsuariosModal.vue'
+import { inscripcionIncluyeCoffee } from '../utils/ticketUtils'
 
 const router = useRouter()
 const route = useRoute()
@@ -1015,6 +1020,10 @@ const esVerificado = (ins) => {
   if (!ins) return false
   const p = ins.participante || {}
   return !!(ins.verificado || p.verificado)
+}
+
+const tieneCoffee = (ins) => {
+  return inscripcionIncluyeCoffee(ins, eventos.value)
 }
 
 const obtenerVerificador = (ins) => {
@@ -1394,6 +1403,7 @@ const exportarCSV = () => {
     const archs = obtenerArchivos(ins)
     const c1Tomado = !!(ins.coffee1Tomado || ins.coffeeBreak1 || p.coffee1Tomado || p.coffeeBreak1)
     const c2Tomado = !!(ins.coffee2Tomado || ins.coffeeBreak2 || p.coffee2Tomado || p.coffeeBreak2)
+    const incluyeC = tieneCoffee(ins)
     const checkInHecho = !!(ins.asistenciaConfirmada || p.asistenciaConfirmada || ins.checkIn)
     const verif = esVerificado(ins)
 
@@ -1419,10 +1429,10 @@ const exportarCSV = () => {
       obtenerVerificador(ins),
       checkInHecho ? 'SÍ' : 'NO',
       ins.fechaIngreso || p.fechaIngreso ? formatearFecha(ins.fechaIngreso || p.fechaIngreso) : '',
-      c1Tomado ? 'SÍ' : 'NO',
-      ins.fechaCoffee1 || p.fechaCoffee1 ? formatearFecha(ins.fechaCoffee1 || p.fechaCoffee1) : '',
-      c2Tomado ? 'SÍ' : 'NO',
-      ins.fechaCoffee2 || p.fechaCoffee2 ? formatearFecha(ins.fechaCoffee2 || p.fechaCoffee2) : ''
+      incluyeC ? (c1Tomado ? 'SÍ' : 'NO') : 'N/A',
+      incluyeC && (ins.fechaCoffee1 || p.fechaCoffee1) ? formatearFecha(ins.fechaCoffee1 || p.fechaCoffee1) : '',
+      incluyeC ? (c2Tomado ? 'SÍ' : 'NO') : 'N/A',
+      incluyeC && (ins.fechaCoffee2 || p.fechaCoffee2) ? formatearFecha(ins.fechaCoffee2 || p.fechaCoffee2) : ''
     ]
     rows.push(r.map(escapeCsv).join(','))
   })

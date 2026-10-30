@@ -168,10 +168,10 @@
               </div>
               <div class="text-3xl font-extrabold text-amber-400">
                 {{ metricas.totalCoffee1 }}
-                <span class="text-xs font-normal text-slate-400">/ {{ metricas.totalInscritos }} entregados</span>
+                <span class="text-xs font-normal text-slate-400">/ {{ metricas.totalConCoffee }} entregados</span>
               </div>
               <span class="text-[11px] text-slate-400">
-                {{ metricas.totalInscritos > 0 ? ((metricas.totalCoffee1 / metricas.totalInscritos) * 100).toFixed(1) + '% de entrega' : '0%' }}
+                {{ metricas.totalConCoffee > 0 ? ((metricas.totalCoffee1 / metricas.totalConCoffee) * 100).toFixed(1) + '% de boletos con coffee' : '0%' }}
               </span>
             </div>
             <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xl text-amber-400">
@@ -189,10 +189,10 @@
               </div>
               <div class="text-3xl font-extrabold text-orange-400">
                 {{ metricas.totalCoffee2 }}
-                <span class="text-xs font-normal text-slate-400">/ {{ metricas.totalInscritos }} entregados</span>
+                <span class="text-xs font-normal text-slate-400">/ {{ metricas.totalConCoffee }} entregados</span>
               </div>
               <span class="text-[11px] text-slate-400">
-                {{ metricas.totalInscritos > 0 ? ((metricas.totalCoffee2 / metricas.totalInscritos) * 100).toFixed(1) + '% de entrega' : '0%' }}
+                {{ metricas.totalConCoffee > 0 ? ((metricas.totalCoffee2 / metricas.totalConCoffee) * 100).toFixed(1) + '% de boletos con coffee' : '0%' }}
               </span>
             </div>
             <div class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-xl text-orange-400">
@@ -331,6 +331,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useEventosStore } from '../stores/eventos'
 import { auth } from '../firebase'
 import { obtenerRolesUsuario } from '../utils/authRoles'
+import { inscripcionIncluyeCoffee } from '../utils/ticketUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -406,6 +407,7 @@ const metricas = computed(() => {
   let totalRecaudado = 0
   let totalEsperado = 0
   let totalIngresados = 0
+  let totalConCoffee = 0
   let totalCoffee1 = 0
   let totalCoffee2 = 0
 
@@ -420,12 +422,15 @@ const metricas = computed(() => {
       totalIngresados++
     }
 
-    // Coffee break
-    if (ins.coffee1Tomado || ins.coffeeBreak1 || ins.participante?.coffee1Tomado || ins.participante?.coffeeBreak1) {
-      totalCoffee1++
-    }
-    if (ins.coffee2Tomado || ins.coffeeBreak2 || ins.participante?.coffee2Tomado || ins.participante?.coffeeBreak2) {
-      totalCoffee2++
+    // Coffee break (solo para boletos que incluyen coffee)
+    if (inscripcionIncluyeCoffee(ins, eventos.value)) {
+      totalConCoffee++
+      if (ins.coffee1Tomado || ins.coffeeBreak1 || ins.participante?.coffee1Tomado || ins.participante?.coffeeBreak1) {
+        totalCoffee1++
+      }
+      if (ins.coffee2Tomado || ins.coffeeBreak2 || ins.participante?.coffee2Tomado || ins.participante?.coffeeBreak2) {
+        totalCoffee2++
+      }
     }
   })
 
@@ -434,6 +439,7 @@ const metricas = computed(() => {
     totalRecaudado,
     totalEsperado,
     totalIngresados,
+    totalConCoffee,
     totalCoffee1,
     totalCoffee2
   }

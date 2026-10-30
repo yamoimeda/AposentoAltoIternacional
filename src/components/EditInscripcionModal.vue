@@ -316,7 +316,7 @@
               <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
                 <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <i class="fas fa-clipboard-check text-indigo-600"></i>
-                  Control de Puerta y Coffee Break
+                  {{ boletoSeleccionadoIncluyeCoffee ? 'Control de Puerta y Coffee Break' : 'Control de Puerta' }}
                 </h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
@@ -327,11 +327,11 @@
                     <input type="checkbox" v-model="formulario.asistenciaConfirmada" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" />
                     <span class="flex items-center gap-1.5"><i class="fas fa-door-open text-indigo-600"></i> Check-In (Ingreso Puerta)</span>
                   </label>
-                  <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
+                  <label v-if="boletoSeleccionadoIncluyeCoffee" class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
                     <input type="checkbox" v-model="formulario.coffee1Tomado" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4" />
                     <span class="flex items-center gap-1.5"><i class="fas fa-mug-hot text-amber-500"></i> Coffee 1 Tomado</span>
                   </label>
-                  <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
+                  <label v-if="boletoSeleccionadoIncluyeCoffee" class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">
                     <input type="checkbox" v-model="formulario.coffee2Tomado" class="rounded text-orange-600 focus:ring-orange-500 w-4 h-4" />
                     <span class="flex items-center gap-1.5"><i class="fas fa-mug-saucer text-orange-500"></i> Coffee 2 Tomado</span>
                   </label>
@@ -385,6 +385,7 @@ import { auth, storage } from '../firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useEventosStore } from '../stores/eventos'
 import FileViewer from './FileViewer.vue'
+import { ticketConfigIncluyeCoffee, inscripcionIncluyeCoffee } from '../utils/ticketUtils'
 
 const props = defineProps({
   show: {
@@ -467,6 +468,15 @@ const obtenerListaTickets = (ev) => {
 const ticketsDisponibles = computed(() => {
   const ev = obtenerEvento()
   return obtenerListaTickets(ev)
+})
+
+const boletoSeleccionadoIncluyeCoffee = computed(() => {
+  const nombre = (formulario.value.ticketType || '').trim()
+  const t = ticketsDisponibles.value.find(
+    tick => tick.nombre && tick.nombre.trim().toLowerCase() === nombre.toLowerCase()
+  )
+  if (t) return ticketConfigIncluyeCoffee(t)
+  return inscripcionIncluyeCoffee({ ticketType: nombre || 'Adulto full' }, obtenerEvento())
 })
 
 const onCambioTipoBoleto = (ticketNombre) => {
@@ -705,6 +715,7 @@ const guardar = async () => {
       mentor: formulario.value.mentor.trim() || null,
       ticketType: formulario.value.ticketType.trim() || 'Adulto full',
       ticketPrice: Number(formulario.value.ticketPrice) || 0,
+      incluyeCoffee: boletoSeleccionadoIncluyeCoffee.value,
       ticketQuantity: Math.max(1, Number(formulario.value.ticketQuantity) || 1),
       totalPrice: montoFinal,
       montoPagado: montoFinal,

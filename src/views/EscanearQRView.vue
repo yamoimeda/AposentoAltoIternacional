@@ -217,7 +217,7 @@
               </div>
 
               <!-- Sección: Control de Coffee Break (2 Turnos) -->
-              <div class="bg-slate-900/90 rounded-lg p-2 space-y-1.5 border border-slate-700/70">
+              <div v-if="resultadoValidacion.incluyeCoffee" class="bg-slate-900/90 rounded-lg p-2 space-y-1.5 border border-slate-700/70">
                 <div class="flex items-center justify-between">
                   <span class="font-bold text-white text-[11px] uppercase tracking-wide flex items-center gap-1.5">
                     <i class="fas fa-mug-hot text-amber-400"></i>
@@ -431,6 +431,7 @@ import { db, auth } from '../firebase'
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore'
 import { useEventosStore } from '../stores/eventos'
 import { obtenerRolesUsuario } from '../utils/authRoles'
+import { inscripcionIncluyeCoffee } from '../utils/ticketUtils'
 
 const router = useRouter()
 const eventosStore = useEventosStore()
@@ -506,6 +507,11 @@ const reproducirSonidoAlerta = () => {
 
 const cargarMetricas = async () => {
   try {
+    if (!eventosStore.eventos || eventosStore.eventos.length === 0) {
+      if (typeof eventosStore.cargarEventos === 'function') {
+        await eventosStore.cargarEventos()
+      }
+    }
     const list = await eventosStore.obtenerTodasInscripciones()
     metricas.value.total = list.length
     metricas.value.ingresados = list.filter(i => i.asistenciaConfirmada || i.participante?.asistenciaConfirmada || i.checkIn).length
@@ -643,6 +649,8 @@ const procesarCodigo = async (rawCode) => {
       const fechaCoffee2 = data.fechaCoffee2 || data.fechaCoffeeBreak2 || p.fechaCoffee2 || null
       const coffee2Por = data.coffee2Por || p.coffee2Por || null
 
+      const incluyeCoffee = inscripcionIncluyeCoffee(data, eventosStore.eventos)
+
       resultadoValidacion.value = {
         id: docSnap.id,
         nombre: p.nombre || 'N/A',
@@ -652,6 +660,7 @@ const procesarCodigo = async (rawCode) => {
         mentor: p.mentor || '',
         ticketType: p.ticketType || 'Adulto full',
         ticketPrice: ticketCost,
+        incluyeCoffee,
         totalPagado: totalPagado,
         saldoPendiente: saldoPendiente,
         estaPagado: estaPagado,

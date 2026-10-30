@@ -69,12 +69,21 @@
               Las inscripciones realizadas mantendrán su precio e historial de compra inmutable aun si modificas o archivas boletos.
             </p>
 
-            <div class="flex flex-col sm:flex-row gap-2 mb-3">
-              <input v-model="newTicket.nombre" placeholder="Nombre (ej: General / VIP)" class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-600" />
+            <div class="flex flex-col sm:flex-row gap-2 mb-2">
+              <input v-model="newTicket.nombre" placeholder="Nombre (ej: Adulto Full / General)" class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-600" />
               <div class="flex gap-2">
                 <input v-model="newTicket.precio" type="number" step="0.01" min="0" placeholder="Precio ($)" class="w-full sm:w-28 px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-600" />
                 <button type="button" @click="addTicketType" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors cursor-pointer shrink-0">Añadir</button>
               </div>
+            </div>
+            <div class="mb-3">
+              <label class="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
+                <input type="checkbox" v-model="newTicket.incluyeCoffee" @change="newTicketCoffeeManual = true" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" />
+                <span class="flex items-center gap-1.5 font-medium">
+                  <i class="fas fa-mug-hot text-amber-500"></i>
+                  Incluye Coffee Break (Turnos 1 y 2)
+                </span>
+              </label>
             </div>
 
             <!-- Sección Boletos Activos -->
@@ -90,7 +99,21 @@
               >
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div class="flex-1 min-w-0">
-                    <div class="font-bold text-slate-900 truncate">{{ t.nombre }}</div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-bold text-slate-900 truncate">{{ t.nombre }}</span>
+                      <span
+                        v-if="t.incluyeCoffee"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-semibold"
+                      >
+                        <i class="fas fa-mug-hot text-[9px]"></i> Coffee 1 y 2
+                      </span>
+                      <span
+                        v-else
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-medium"
+                      >
+                        Sin Coffee
+                      </span>
+                    </div>
                     <div class="text-xs font-semibold text-indigo-600 mt-0.5">${{ t.precio }} USD</div>
                   </div>
 
@@ -133,6 +156,15 @@
                     <input v-model="editTicketForm.nombre" placeholder="Nombre del boleto" class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-indigo-600" />
                     <input v-model="editTicketForm.precio" type="number" step="0.01" min="0" placeholder="Precio ($)" class="w-full sm:w-28 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-indigo-600" />
                   </div>
+                  <div class="pt-0.5">
+                    <label class="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
+                      <input type="checkbox" v-model="editTicketForm.incluyeCoffee" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" />
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <i class="fas fa-mug-hot text-amber-500"></i>
+                        Incluye Coffee Break (Turnos 1 y 2)
+                      </span>
+                    </label>
+                  </div>
                   <div class="flex items-center gap-2 justify-end pt-1">
                     <button type="button" @click="cancelarEdicionBoleto" class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancelar</button>
                     <button type="button" @click="guardarEdicionBoleto" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center gap-1">
@@ -157,7 +189,21 @@
               >
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div class="flex-1 min-w-0">
-                    <div class="font-bold text-slate-700 truncate opacity-75">{{ t.nombre }}</div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-bold text-slate-700 truncate opacity-75">{{ t.nombre }}</span>
+                      <span
+                        v-if="t.incluyeCoffee"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-semibold opacity-75"
+                      >
+                        <i class="fas fa-mug-hot text-[9px]"></i> Coffee 1 y 2
+                      </span>
+                      <span
+                        v-else
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-medium opacity-75"
+                      >
+                        Sin Coffee
+                      </span>
+                    </div>
                     <div class="text-xs font-semibold text-slate-500 mt-0.5">${{ t.precio }} USD</div>
                   </div>
 
@@ -199,6 +245,15 @@
                   <div class="flex flex-col sm:flex-row gap-2">
                     <input v-model="editTicketForm.nombre" placeholder="Nombre del boleto" class="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-indigo-600" />
                     <input v-model="editTicketForm.precio" type="number" step="0.01" min="0" placeholder="Precio ($)" class="w-full sm:w-28 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-indigo-600" />
+                  </div>
+                  <div class="pt-0.5">
+                    <label class="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
+                      <input type="checkbox" v-model="editTicketForm.incluyeCoffee" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" />
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <i class="fas fa-mug-hot text-amber-500"></i>
+                        Incluye Coffee Break (Turnos 1 y 2)
+                      </span>
+                    </label>
                   </div>
                   <div class="flex items-center gap-2 justify-end pt-1">
                     <button type="button" @click="cancelarEdicionBoleto" class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-100">Cancelar</button>
@@ -331,6 +386,7 @@
 import { ref, watch, computed } from 'vue'
 import { db, auth } from '../firebase'
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore'
+import { esNombreBoletoFull, ticketConfigIncluyeCoffee } from '../utils/ticketUtils'
 
 const props = defineProps({
   initialEvent: { type: Object, default: null }
@@ -384,15 +440,23 @@ const formatearFechaAuditoria = (fechaStr) => {
 const defaultEvent = () => ({ titulo: '', fecha: '', lugar: '', descripcion: '', formaPago: '', esFuturo: true, precio: '', ticketTypes: [], opciones: { habilitarIglesia: false, habilitarMentor: false, adjuntoRequerido: true, permitirMultiplesAdjuntos: false, habilitarEdad: false, habilitarCorreo: false, habilitarNota: false } })
 
 const localEvent = ref(props.initialEvent ? { ...props.initialEvent, ticketTypes: props.initialEvent.ticketTypes || [], opciones: { ...(props.initialEvent.opciones || {}), habilitarEdad: (props.initialEvent.opciones && props.initialEvent.opciones.habilitarEdad) || false, habilitarCorreo: (props.initialEvent.opciones && props.initialEvent.opciones.habilitarCorreo) || false, habilitarNota: (props.initialEvent.opciones && props.initialEvent.opciones.habilitarNota) || false } } : defaultEvent())
-const newTicket = ref({ nombre: '', precio: '' })
+const newTicket = ref({ nombre: '', precio: '', incluyeCoffee: false })
+const newTicketCoffeeManual = ref(false)
 const selectedImage = ref(null)
 const loading = ref(false)
 const error = ref('')
 const previewUrl = ref('')
 
+// Auto-marcar incluyeCoffee al escribir "full" o "completo" si no se ha modificado manualmente el checkbox
+watch(() => newTicket.value.nombre, (nombre) => {
+  if (!newTicketCoffeeManual.value) {
+    newTicket.value.incluyeCoffee = esNombreBoletoFull(nombre)
+  }
+})
+
 // Estados para edición inline de boleto
 const editingTicketId = ref(null)
-const editTicketForm = ref({ nombre: '', precio: '' })
+const editTicketForm = ref({ nombre: '', precio: '', incluyeCoffee: false })
 const ticketEnEdicionOriginal = ref(null)
 const procesandoEdicion = ref(false)
 
@@ -408,7 +472,8 @@ watch(() => props.initialEvent, (v) => {
       id: t.id || 'tkt_' + idx + '_' + Date.now(),
       nombre: t.nombre,
       precio: t.precio,
-      activo: t.activo !== false
+      activo: t.activo !== false,
+      incluyeCoffee: ticketConfigIncluyeCoffee(t)
     }))
     localEvent.value = {
       ...v,
@@ -430,7 +495,8 @@ watch(() => props.initialEvent, (v) => {
     previewUrl.value = ''
   }
   selectedImage.value = null
-  newTicket.value = { nombre: '', precio: '' }
+  newTicketCoffeeManual.value = false
+  newTicket.value = { nombre: '', precio: '', incluyeCoffee: false }
 }, { immediate: true })
 
 const boletosActivos = computed(() => {
@@ -448,9 +514,11 @@ const addTicketType = () => {
     id: ticketId,
     nombre: newTicket.value.nombre,
     precio: parseFloat(newTicket.value.precio).toFixed(2),
-    activo: true
+    activo: true,
+    incluyeCoffee: Boolean(newTicket.value.incluyeCoffee)
   })
-  newTicket.value = { nombre: '', precio: '' }
+  newTicketCoffeeManual.value = false
+  newTicket.value = { nombre: '', precio: '', incluyeCoffee: false }
 }
 
 const archivarBoleto = (identifier) => {
@@ -472,14 +540,19 @@ const eliminarBoletoPorId = (identifier) => {
 
 const iniciarEdicionBoleto = (ticket) => {
   editingTicketId.value = ticket.id
-  ticketEnEdicionOriginal.value = { ...ticket }
-  editTicketForm.value = { nombre: ticket.nombre, precio: ticket.precio }
+  const incluyeCoffeeActual = ticketConfigIncluyeCoffee(ticket)
+  ticketEnEdicionOriginal.value = { ...ticket, incluyeCoffee: incluyeCoffeeActual }
+  editTicketForm.value = {
+    nombre: ticket.nombre,
+    precio: ticket.precio,
+    incluyeCoffee: incluyeCoffeeActual
+  }
 }
 
 const cancelarEdicionBoleto = () => {
   editingTicketId.value = null
   ticketEnEdicionOriginal.value = null
-  editTicketForm.value = { nombre: '', precio: '' }
+  editTicketForm.value = { nombre: '', precio: '', incluyeCoffee: false }
 }
 
 const guardarEdicionBoleto = async () => {
@@ -489,17 +562,14 @@ const guardarEdicionBoleto = async () => {
   const original = ticketEnEdicionOriginal.value
   const nuevoNombre = editTicketForm.value.nombre.trim()
   const nuevoPrecio = parseFloat(editTicketForm.value.precio).toFixed(2)
+  const nuevoIncluyeCoffee = Boolean(editTicketForm.value.incluyeCoffee)
 
   const elPrecioCambio = parseFloat(original.precio) !== parseFloat(nuevoPrecio)
   const elNombreCambio = original.nombre !== nuevoNombre
 
-  // Si no hay evento existente guardado aún, solo actualizar localEvent
+  // Si no hay evento existente guardado aún o no cambió ni nombre ni precio, actualizar localEvent directamente
   if (!props.initialEvent || (!elPrecioCambio && !elNombreCambio)) {
-    const t = localEvent.value.ticketTypes.find(x => x.id === editingTicketId.value)
-    if (t) {
-      t.nombre = nuevoNombre
-      t.precio = nuevoPrecio
-    }
+    aplicarCambioBoletoLocal(nuevoNombre, nuevoPrecio, nuevoIncluyeCoffee)
     cancelarEdicionBoleto()
     procesandoEdicion.value = false
     return
@@ -526,23 +596,24 @@ const guardarEdicionBoleto = async () => {
       mostrarModalActualizarPasadas.value = true
     } else {
       // No hay inscripciones pasadas afectables, aplicar cambio directamente
-      aplicarCambioBoletoLocal(nuevoNombre, nuevoPrecio)
+      aplicarCambioBoletoLocal(nuevoNombre, nuevoPrecio, nuevoIncluyeCoffee)
       cancelarEdicionBoleto()
     }
   } catch (e) {
     console.error('Error verificando inscripciones pasadas:', e)
-    aplicarCambioBoletoLocal(nuevoNombre, nuevoPrecio)
+    aplicarCambioBoletoLocal(nuevoNombre, nuevoPrecio, nuevoIncluyeCoffee)
     cancelarEdicionBoleto()
   } finally {
     procesandoEdicion.value = false
   }
 }
 
-const aplicarCambioBoletoLocal = (nuevoNombre, nuevoPrecio) => {
+const aplicarCambioBoletoLocal = (nuevoNombre, nuevoPrecio, nuevoIncluyeCoffee) => {
   const t = localEvent.value.ticketTypes.find(x => x.id === editingTicketId.value)
   if (t) {
     t.nombre = nuevoNombre
     t.precio = nuevoPrecio
+    t.incluyeCoffee = Boolean(nuevoIncluyeCoffee)
   }
 }
 
@@ -551,6 +622,7 @@ const confirmarActualizacionPasadas = async (actualizarRegistradas) => {
   const original = ticketEnEdicionOriginal.value
   const nuevoNombre = editTicketForm.value.nombre.trim()
   const nuevoPrecio = parseFloat(editTicketForm.value.precio).toFixed(2)
+  const nuevoIncluyeCoffee = Boolean(editTicketForm.value.incluyeCoffee)
 
   try {
     if (actualizarRegistradas && inscripcionesDocsAfectados.value.length > 0) {
@@ -570,6 +642,7 @@ const confirmarActualizacionPasadas = async (actualizarRegistradas) => {
           'participante.ticketTypeId': original.id,
           'participante.ticketType': nuevoNombre,
           'participante.ticketPrice': Number(nuevoPrecio),
+          'participante.incluyeCoffee': nuevoIncluyeCoffee,
           'participante.totalPrice': nuevoTotal,
           'participante.montoPagado': nuevoTotal,
           'participante.monto': nuevoTotal,
@@ -584,7 +657,7 @@ const confirmarActualizacionPasadas = async (actualizarRegistradas) => {
       await batch.commit()
     }
 
-    aplicarCambioBoletoLocal(nuevoNombre, nuevoPrecio)
+    aplicarCambioBoletoLocal(nuevoNombre, nuevoPrecio, nuevoIncluyeCoffee)
   } catch (e) {
     console.error('Error al realizar actualización masiva:', e)
     alert('Ocurrió un error al actualizar las inscripciones pasadas.')

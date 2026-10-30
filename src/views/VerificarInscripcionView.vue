@@ -289,7 +289,7 @@
               </div>
 
               <!-- Estado de Coffee Break del Boleto -->
-              <div class="space-y-3">
+              <div v-if="boletoIncluyeCoffee" class="space-y-3">
                 <div class="flex items-center justify-between">
                   <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
                     <i class="fas fa-mug-hot text-amber-600"></i>
@@ -391,6 +391,7 @@ import { collection, query, where, getDocs, getDoc, doc, updateDoc, arrayUnion, 
 import { db, storage } from '../firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import QRCode from 'qrcode'
+import { inscripcionIncluyeCoffee } from '../utils/ticketUtils'
 
 const route = useRoute()
 const eventosStore = useEventosStore()
@@ -429,6 +430,15 @@ const obtenerListaTicketsEvento = (ev) => {
   }
   return []
 }
+
+// Determinar si el boleto de la inscripción incluye Coffee Break (C1 y C2)
+const boletoIncluyeCoffee = computed(() => {
+  if (!inscripcionEncontrada.value) return false
+  const p = inscripcionEncontrada.value
+  const evId = p.eventoId || eventoId.value
+  const ev = eventoCargado.value || (evId ? eventosStore.obtenerEventoPorId(evId) : null) || (evId ? eventosStore.eventos.find(e => e.id === evId || String(e.id) === String(evId)) : null)
+  return inscripcionIncluyeCoffee(p, ev)
+})
 
 // Obtener el precio esperado del boleto o evento
 const precioBoletoEsperado = computed(() => {
