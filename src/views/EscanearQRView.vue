@@ -97,10 +97,10 @@
             </div>
 
             <!-- Viewport del Escáner QR HTML5 -->
-            <div class="relative bg-black rounded-lg overflow-hidden flex items-center justify-center border border-slate-700 min-h-[160px] sm:min-h-[190px]">
-              <div id="qr-reader" class="w-full"></div>
+            <div class="relative bg-black rounded-lg overflow-hidden border border-slate-700 min-h-[220px] sm:min-h-[240px]">
+              <div id="qr-reader" class="w-full block"></div>
 
-              <div v-if="!camaraActiva" class="text-center p-3 sm:p-4 space-y-2">
+              <div v-if="!camaraActiva" class="absolute inset-0 flex flex-col items-center justify-center text-center p-3 sm:p-4 space-y-2 bg-black">
                 <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 mx-auto text-base">
                   <i class="fas fa-camera"></i>
                 </div>
@@ -524,22 +524,46 @@ const cargarMetricas = async () => {
 
 const iniciarEscaner = async () => {
   try {
+    if (html5QrCode && camaraActiva.value) {
+      await detenerEscaner()
+    }
+
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode('qr-reader')
     }
 
     const config = {
-      fps: 10,
-      qrbox: { width: 220, height: 220 },
-      aspectRatio: 1.0
+      fps: 15,
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight)
+        const size = Math.max(50, Math.min(220, Math.floor(minEdge * 0.75)))
+        return { width: size, height: size }
+      }
     }
 
-    await html5QrCode.start(
-      { facingMode: 'environment' },
-      config,
-      onScanSuccess,
-      onScanFailure
-    )
+    try {
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        config,
+        onScanSuccess,
+        onScanFailure
+      )
+    } catch (envErr) {
+      // Fallback si el dispositivo (ej. laptop/PC) no soporta facingMode environment
+      const cameras = await Html5Qrcode.getCameras()
+      if (cameras && cameras.length > 0) {
+        const backCamera = cameras.find(c => /back|trasera|environment/i.test(c.label)) || cameras[cameras.length - 1]
+        await html5QrCode.start(
+          backCamera.id,
+          config,
+          onScanSuccess,
+          onScanFailure
+        )
+      } else {
+        throw envErr
+      }
+    }
+
     camaraActiva.value = true
     errorNoEncontrado.value = false
   } catch (err) {
@@ -553,9 +577,11 @@ const detenerEscaner = async () => {
   if (html5QrCode && camaraActiva.value) {
     try {
       await html5QrCode.stop()
-      camaraActiva.value = false
+      await html5QrCode.clear()
     } catch (e) {
       console.warn('Error deteniendo scanner:', e)
+    } finally {
+      camaraActiva.value = false
     }
   }
 }
