@@ -48,14 +48,13 @@ export function inscripcionIncluyeCoffee(inscripcion, eventoOEventos = null) {
     ev = eventoOEventos
   }
 
-  // 2. Buscar en la lista de boletos del evento
+  // 2. Buscar en la lista de boletos del evento (priorizando coincidencia por nombre para respetar ediciones previas, luego por ticketTypeId)
   if (ev) {
     const list = ev.ticketTypes || ev.tickets || []
     if (Array.isArray(list) && list.length > 0) {
-      const match = list.find(tick =>
-        (ticketTypeId && tick.id && String(tick.id) === String(ticketTypeId)) ||
-        (ticketTypeName && tick.nombre && tick.nombre.trim().toLowerCase() === ticketTypeName.toLowerCase())
-      )
+      const match =
+        list.find(tick => ticketTypeName && tick.nombre && tick.nombre.trim().toLowerCase() === ticketTypeName.toLowerCase()) ||
+        list.find(tick => ticketTypeId && tick.id && String(tick.id) === String(ticketTypeId))
       if (match) {
         return ticketConfigIncluyeCoffee(match)
       }

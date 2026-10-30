@@ -994,10 +994,9 @@ const obtenerPrecioBoletoEsperado = (ins) => {
   if (ev) {
     const list = ev.ticketTypes || ev.tickets || []
     if (list.length > 0) {
-      const t = list.find(tick => 
-        (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
-        (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
-      )
+      const t =
+        list.find(tick => p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase()) ||
+        list.find(tick => p.ticketTypeId && String(tick.id) === String(p.ticketTypeId))
       if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) return Number(t.precio)
       const primerConPrecio = list.find(tick => Number(tick.precio) > 0)
       if (primerConPrecio) return Number(primerConPrecio.precio)

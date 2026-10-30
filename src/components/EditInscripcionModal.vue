@@ -481,9 +481,16 @@ const boletoSeleccionadoIncluyeCoffee = computed(() => {
 
 const onCambioTipoBoleto = (ticketNombre) => {
   formulario.value.ticketType = ticketNombre
-  const t = ticketsDisponibles.value.find(tick => tick.nombre === ticketNombre || tick.id === ticketNombre)
-  if (t && !isNaN(Number(t.precio))) {
-    formulario.value.ticketPrice = Number(t.precio)
+  const t = ticketsDisponibles.value.find(
+    tick => (tick.nombre && tick.nombre.trim().toLowerCase() === String(ticketNombre || '').trim().toLowerCase()) || tick.id === ticketNombre
+  )
+  if (t) {
+    formulario.value.ticketTypeId = t.id || null
+    if (!isNaN(Number(t.precio))) {
+      formulario.value.ticketPrice = Number(t.precio)
+    }
+  } else {
+    formulario.value.ticketTypeId = null
   }
 }
 
@@ -528,6 +535,7 @@ const formulario = ref({
   nota: '',
   iglesia: '',
   mentor: '',
+  ticketTypeId: null,
   ticketType: 'Adulto full',
   ticketPrice: 0,
   ticketQuantity: 1,
@@ -591,13 +599,14 @@ const cargarFormulario = () => {
   const ev = obtenerEvento()
   const tickets = obtenerListaTickets(ev)
   let tipoBoletoActual = p.ticketType || ''
+  let ticketIdActual = p.ticketTypeId || null
   let ticketCost = 0
 
   if (tickets.length > 0) {
-    let t = tickets.find(tick => 
-      (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
-      (tipoBoletoActual && tick.nombre?.trim().toLowerCase() === tipoBoletoActual.trim().toLowerCase())
-    )
+    // Buscar primero por nombre del boleto (para respetar ediciones previas de ticketType) y luego por ticketTypeId
+    let t =
+      tickets.find(tick => tipoBoletoActual && tick.nombre?.trim().toLowerCase() === tipoBoletoActual.trim().toLowerCase()) ||
+      tickets.find(tick => p.ticketTypeId && String(tick.id) === String(p.ticketTypeId))
 
     // Si el tipo guardado en la inscripción no existe en los tickets del evento (ej. "Adulto full"),
     // tomamos el primer ticket oficial del evento
@@ -607,6 +616,7 @@ const cargarFormulario = () => {
 
     if (t) {
       tipoBoletoActual = t.nombre
+      ticketIdActual = t.id || null
       ticketCost = Number(t.precio) || 0
     }
   }
@@ -628,6 +638,7 @@ const cargarFormulario = () => {
     nota: p.nota || '',
     iglesia: p.iglesia || '',
     mentor: p.mentor || '',
+    ticketTypeId: ticketIdActual,
     ticketType: tipoBoletoActual || 'Adulto full',
     ticketPrice: ticketCost,
     ticketQuantity: p.ticketQuantity ?? 1,
@@ -703,6 +714,14 @@ const guardar = async () => {
     const participanteExistente = props.inscripcion?.participante || {}
     const montoFinal = Number(formulario.value.totalPrice ?? formulario.value.montoPagado ?? 0) || 0
 
+    const nombreBoletoElegido = formulario.value.ticketType.trim() || 'Adulto full'
+    const ticketElegidoObj = ticketsDisponibles.value.find(
+      tick =>
+        (tick.nombre && tick.nombre.trim().toLowerCase() === nombreBoletoElegido.toLowerCase()) ||
+        (formulario.value.ticketTypeId && String(tick.id) === String(formulario.value.ticketTypeId))
+    )
+    const ticketTypeIdFinal = ticketElegidoObj ? (ticketElegidoObj.id || null) : (formulario.value.ticketTypeId || null)
+
     const participanteActualizado = {
       ...participanteExistente,
       nombre: formulario.value.nombre.trim(),
@@ -713,7 +732,8 @@ const guardar = async () => {
       nota: formulario.value.nota.trim() || null,
       iglesia: formulario.value.iglesia.trim() || null,
       mentor: formulario.value.mentor.trim() || null,
-      ticketType: formulario.value.ticketType.trim() || 'Adulto full',
+      ticketTypeId: ticketTypeIdFinal,
+      ticketType: nombreBoletoElegido,
       ticketPrice: Number(formulario.value.ticketPrice) || 0,
       incluyeCoffee: boletoSeleccionadoIncluyeCoffee.value,
       ticketQuantity: Math.max(1, Number(formulario.value.ticketQuantity) || 1),

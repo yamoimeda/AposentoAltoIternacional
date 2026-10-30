@@ -449,12 +449,11 @@ const precioBoletoEsperado = computed(() => {
 
   const tickets = obtenerListaTicketsEvento(ev)
 
-  // 1. Buscar coincidencia en los tickets del evento por ID o por Nombre
+  // 1. Buscar coincidencia en los tickets del evento por Nombre o por ID
   if (tickets.length > 0) {
-    const t = tickets.find(tick => 
-      (p.ticketTypeId && String(tick.id) === String(p.ticketTypeId)) ||
-      (p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase())
-    )
+    const t =
+      tickets.find(tick => p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase()) ||
+      tickets.find(tick => p.ticketTypeId && String(tick.id) === String(p.ticketTypeId))
     if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
       return Number(t.precio)
     }
