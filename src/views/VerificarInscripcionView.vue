@@ -454,28 +454,20 @@ const precioBoletoEsperado = computed(() => {
     const t =
       tickets.find(tick => p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase()) ||
       tickets.find(tick => p.ticketTypeId && String(tick.id) === String(p.ticketTypeId))
-    if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) {
+    if (t && t.precio !== undefined && t.precio !== null && t.precio !== '' && !isNaN(Number(t.precio))) {
       return Number(t.precio)
     }
   }
 
-  // 2. Si el evento tiene tickets configurados pero no coincidió por nombre, tomar el primer ticket con precio
-  if (tickets.length > 0) {
-    const primerTicketConPrecio = tickets.find(tick => !isNaN(Number(tick.precio)) && Number(tick.precio) > 0)
-    if (primerTicketConPrecio) {
-      return Number(primerTicketConPrecio.precio)
-    }
+  // 2. Usar ticketPrice guardado en la inscripción
+  const savedPrice = Number(p.ticketPrice)
+  if (!isNaN(savedPrice) && savedPrice >= 0 && p.ticketPrice !== undefined && p.ticketPrice !== null && p.ticketPrice !== '') {
+    return savedPrice
   }
 
   // 3. Usar precio base del evento
-  if (ev && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
+  if (ev && ev.precio !== undefined && ev.precio !== null && ev.precio !== '' && !isNaN(Number(ev.precio))) {
     return Number(ev.precio)
-  }
-
-  // 4. Usar ticketPrice guardado en la inscripción únicamente si no hay tickets en el evento
-  const savedPrice = Number(p.ticketPrice)
-  if (!isNaN(savedPrice) && savedPrice > 0) {
-    return savedPrice
   }
 
   return 0
@@ -530,12 +522,8 @@ const estaPagadoCompleto = computed(() => {
     return pagado >= (esperado - 0.01)
   }
 
-  // Si el costo esperado es 0:
-  // Solo es "Totalmente Pagado" si el evento está confirmado como gratuito
-  if (esEventoGratuito.value) return true
-
-  // Si no conocemos el costo y no es gratuito: NO está pagado
-  return false
+  // Si el costo esperado es 0 (boleto de cortesía o evento gratuito): está pagado
+  return true
 })
 
 const abrirFormularioPago = () => {

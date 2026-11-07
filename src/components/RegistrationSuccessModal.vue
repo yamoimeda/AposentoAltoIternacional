@@ -41,13 +41,13 @@
                 <span class="text-slate-600 font-medium">Tipo de Boleto:</span>
                 <span class="font-bold text-blue-900">{{ registrationData.ticketType }}</span>
               </div>
-              <div v-if="registrationData.ticketPrice" class="flex justify-between items-center">
+              <div v-if="registrationData.ticketPrice !== undefined && registrationData.ticketPrice !== null && registrationData.ticketPrice !== ''" class="flex justify-between items-center">
                 <span class="text-slate-600 font-medium">Precio del Boleto:</span>
                 <span class="font-bold text-emerald-700">${{ Number(registrationData.ticketPrice).toFixed(2) }}</span>
               </div>
-              <div v-if="registrationData.ticketPrice || registrationData.monto" class="flex justify-between items-center">
+              <div v-if="(registrationData.ticketPrice !== undefined && registrationData.ticketPrice !== null && registrationData.ticketPrice !== '') || registrationData.monto !== undefined" class="flex justify-between items-center">
                 <span class="text-slate-600 font-medium">Monto Abonado:</span>
-                <span class="font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded">${{ Number(registrationData.monto || registrationData.totalPrice || registrationData.montoPagado || 0).toFixed(2) }}</span>
+                <span class="font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded">${{ Number(registrationData.monto ?? registrationData.totalPrice ?? registrationData.montoPagado ?? 0).toFixed(2) }}</span>
               </div>
             </div>
           </div>

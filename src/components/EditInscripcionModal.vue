@@ -487,7 +487,11 @@ const onCambioTipoBoleto = (ticketNombre) => {
   if (t) {
     formulario.value.ticketTypeId = t.id || null
     if (!isNaN(Number(t.precio))) {
-      formulario.value.ticketPrice = Number(t.precio)
+      const nuevoPrecio = Number(t.precio)
+      formulario.value.ticketPrice = nuevoPrecio
+      if (nuevoPrecio === 0) {
+        formulario.value.totalPrice = 0
+      }
     }
   } else {
     formulario.value.ticketTypeId = null
@@ -619,13 +623,9 @@ const cargarFormulario = () => {
       ticketIdActual = t.id || null
       ticketCost = Number(t.precio) || 0
     }
-  }
-
-  if (ticketCost === 0 && ev && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) {
+  } else if (ev && ev.precio !== undefined && ev.precio !== null && ev.precio !== '' && !isNaN(Number(ev.precio))) {
     ticketCost = Number(ev.precio)
-  }
-
-  if (ticketCost === 0) {
+  } else {
     ticketCost = Number(p.ticketPrice || 0)
   }
 

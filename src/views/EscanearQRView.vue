@@ -662,7 +662,18 @@ const procesarCodigo = async (rawCode) => {
         }
       }
 
-      const ticketCost = Number(p.ticketPrice || 0)
+      let ticketCost = Number(p.ticketPrice || 0)
+      const evId = data.eventoId || p.eventoId
+      const ev = eventosStore.eventos.find(e => e.id === evId || String(e.id) === String(evId))
+      if (ev) {
+        const list = ev.ticketTypes || ev.tickets || []
+        const t =
+          list.find(tick => p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase()) ||
+          list.find(tick => p.ticketTypeId && String(tick.id) === String(p.ticketTypeId))
+        if (t && t.precio !== undefined && t.precio !== null && t.precio !== '' && !isNaN(Number(t.precio))) {
+          ticketCost = Number(t.precio)
+        }
+      }
       const saldoPendiente = Math.max(0, ticketCost - totalPagado)
       const estaPagado = ticketCost === 0 ? true : (totalPagado >= (ticketCost - 0.01))
 

@@ -376,6 +376,10 @@ const obtenerMontoInscripcion = (ins) => {
       if (!isNaN(n) && n > 0) return n
     }
   }
+  // Si el boleto esperado tiene costo 0 (cortesía o gratuito), el total pagado es 0
+  if (obtenerPrecioEsperadoInscripcion(ins) === 0) {
+    return 0
+  }
   const tPrice = Number(p.ticketPrice || 0)
   const tQty = Number(p.ticketQuantity || 1)
   if (tPrice > 0) return tPrice * tQty
@@ -392,13 +396,18 @@ const obtenerPrecioEsperadoInscripcion = (ins) => {
       const t =
         list.find(tick => p.ticketType && tick.nombre?.trim().toLowerCase() === p.ticketType?.trim().toLowerCase()) ||
         list.find(tick => p.ticketTypeId && String(tick.id) === String(p.ticketTypeId))
-      if (t && !isNaN(Number(t.precio)) && Number(t.precio) > 0) return Number(t.precio)
-      const primerConPrecio = list.find(tick => Number(tick.precio) > 0)
-      if (primerConPrecio) return Number(primerConPrecio.precio)
+      if (t && t.precio !== undefined && t.precio !== null && t.precio !== '' && !isNaN(Number(t.precio))) {
+        return Number(t.precio)
+      }
     }
-    if (ev.precio && !isNaN(Number(ev.precio)) && Number(ev.precio) > 0) return Number(ev.precio)
   }
-  return Number(p.ticketPrice) || 0
+  if (p.ticketPrice !== undefined && p.ticketPrice !== null && p.ticketPrice !== '' && !isNaN(Number(p.ticketPrice))) {
+    return Number(p.ticketPrice)
+  }
+  if (ev && ev.precio !== undefined && ev.precio !== null && ev.precio !== '' && !isNaN(Number(ev.precio))) {
+    return Number(ev.precio)
+  }
+  return 0
 }
 
 const metricas = computed(() => {

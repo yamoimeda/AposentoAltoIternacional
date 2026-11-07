@@ -230,18 +230,24 @@
             <div class="border-t pt-6">
               <h3 class="text-md font-semibold text-gray-800 mb-4">
                 <i class="fas fa-receipt mr-2 text-green-500"></i>
-                Comprobante de Pago {{ evento.opciones.adjuntoRequerido ? '*' : '(puede inscribirse sin pago)' }}
+                Comprobante de Pago {{ selectedTicketPrice === 0 ? '(No requerido para boleto de cortesía/gratuito)' : (evento.opciones.adjuntoRequerido ? '*' : '(puede inscribirse sin pago)') }}
               </h3>
+
+              <!-- Aviso de cortesía / gratis -->
+              <div v-if="selectedTicketPrice === 0" class="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-center gap-2 mb-4">
+                <i class="fas fa-gift text-blue-600 text-base flex-shrink-0"></i>
+                <span>Este boleto es de <strong>Cortesía / Gratuito ($0.00)</strong>. No requiere adjuntar comprobante ni ingresar monto de pago.</span>
+              </div>
               
               <div class="space-y-4">
                 <!-- Upload de imagen -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Adjuntar archivo(s)
+                    Adjuntar archivo(s) {{ selectedTicketPrice === 0 ? '(Opcional)' : '' }}
                   </label>
                   <div class="flex items-center justify-center w-full">
                     <label 
-                      for="comprobante-upload"
+                      for="comprobante-upload" 
                       :class="[
                         'flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors',
                         formulario.comprobante && formulario.comprobante.length ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
@@ -262,7 +268,7 @@
                         type="file" 
                         class="hidden" 
                         accept="image/*"
-                        :required="evento.opciones.adjuntoRequerido ?? false "
+                        :required="selectedTicketPrice > 0 && (evento.opciones.adjuntoRequerido ?? false)"
                         :multiple="evento.opciones.permitirMultiplesAdjuntos ?? false"
                         @change="manejarArchivo"
                       />
@@ -280,7 +286,7 @@
                 </div>
 
                 <!-- OCR deshabilitado: ingresar monto manualmente -->
-                <div class="bg-green-50 p-4 rounded-lg" v-if="evento.opciones.adjuntoRequerido || formulario.comprobante && formulario.comprobante.length">
+                <div class="bg-green-50 p-4 rounded-lg" v-if="selectedTicketPrice > 0 && (evento.opciones.adjuntoRequerido || (formulario.comprobante && formulario.comprobante.length))">
                   <h4 class="font-semibold text-green-800 mb-2">
                     <!-- <i class="fas fa-robot mr-2"></i> -->
                     Información del comprobante
@@ -288,7 +294,7 @@
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm items-start">
                     <div>
                       <label class="block text-green-700 font-medium">Monto (USD):</label>
-                      <input required type="number" step="0.01" min="0" v-model="formulario.monto" class="mt-1 block w-40 px-3 py-2 border rounded text-gray-800 placeholder-gray-400" />
+                      <input :required="selectedTicketPrice > 0" type="number" step="0.01" min="0" v-model="formulario.monto" class="mt-1 block w-40 px-3 py-2 border rounded text-gray-800 placeholder-gray-400" />
                       <p class="text-xs text-gray-600 mt-1">Ingresa el monto pagado manualmente.</p>
                     </div>
                     <!-- <div v-if="datosExtraidos.fecha">
@@ -466,11 +472,10 @@ const totalPrice = computed(() => {
 })
 
 const pagoValido = computed(() => {
+  const precioEsperado = selectedTicketPrice.value
+  if (precioEsperado === 0) return true
   const montoUsuario = Number(formulario.value.monto)
   if (!montoUsuario || montoUsuario <= 0) return false
-  const precioEsperado = selectedTicketPrice.value || Number(evento.value?.precio || 0)
-  // Si el precio esperado es 0 (gratis), cualquier monto es válido si se ingresó
-  if (precioEsperado === 0) return true
   return Math.abs(montoUsuario - precioEsperado) < 0.01
 })
 
@@ -602,9 +607,11 @@ const extraerDatos = (texto) => {
 */
 
 const validarMonto = (monto) => {
-  if (!monto || !evento.value) return false
+  if (!evento.value) return false
+  const precioEsperado = selectedTicketPrice.value
+  if (precioEsperado === 0) return true
+  if (!monto) return false
   const montoNumerico = parseFloat(monto)
-  const precioEsperado = selectedTicketPrice.value || parseFloat(evento.value.precio || 0)
   return Math.abs(montoNumerico - precioEsperado) < 0.01 // Tolerancia de 1 centavo
 }
 
@@ -674,14 +681,16 @@ const enviarInscripcion = async () => {
     // Calcular total numérico y unificar con monto ingresado
     const montoIngresado = parseFloat(formulario.value.monto) || 0
     const totalCalculado = parseFloat(totalPrice.value) || (selectedTicketPrice.value * qty) || 0
-    const finalAmount = montoIngresado > 0 ? montoIngresado : totalCalculado
+    const finalAmount = selectedTicketPrice.value === 0 ? 0 : (montoIngresado > 0 ? montoIngresado : totalCalculado)
 
     // Generar token único de registro
     const registrationToken = uuidv4()
 
     const ticketFinal = selectedTicket.value || (listaBoletosEvento.value.length > 0 ? listaBoletosEvento.value[0] : null)
     const ticketNombreFinal = ticketFinal ? ticketFinal.nombre : 'Adulto full'
-    const ticketPrecioFinal = ticketFinal ? Number(ticketFinal.precio) : (Number(evento.value?.precio) || 0)
+    const ticketPrecioFinal = ticketFinal && ticketFinal.precio !== undefined && ticketFinal.precio !== null && ticketFinal.precio !== '' && !isNaN(Number(ticketFinal.precio))
+      ? Number(ticketFinal.precio)
+      : (Number(evento.value?.precio) || 0)
 
     // Preparar datos de registro (sin incluir el archivo directamente)
     const registrationData = {
